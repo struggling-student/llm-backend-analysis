@@ -143,8 +143,9 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)#\s]+)(?:#[^)]*)?\)")
 def links():
     tracked = subprocess.run(["git", "ls-files", "*.md"], cwd=ROOT, capture_output=True, text=True).stdout.split()
     md_files = sorted(set(tracked) | {str(p.relative_to(ROOT)) for p in ROOT.glob("*.md")}
-                      | {str(p.relative_to(ROOT)) for d in ("docs", "data", "notebooks", "results", "scripts")
-                         for p in (ROOT / d).rglob("README.md")})
+                      | {str(p.relative_to(ROOT)) for p in (ROOT / "docs").rglob("*.md")}
+                      | {str(p.relative_to(ROOT)) for d in ("data", "notebooks", "results", "scripts")
+                         for p in (ROOT / d).glob("README.md")})
     broken = []
     for rel in md_files:
         md = ROOT / rel
