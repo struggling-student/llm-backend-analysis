@@ -13,8 +13,6 @@ from __future__ import annotations
 import json
 import os
 import re
-from pathlib import Path
-
 import plotly.graph_objects as go
 
 from .. import paths
@@ -46,7 +44,7 @@ def exports_enabled() -> bool:
 
 def export_figure(fig: go.Figure, name: str, *, topic: str = "backend_selection", source: str, caption: str,
                   formats: tuple[str, ...] = DEFAULT_FORMATS, width: int | None = None,
-                  height: int | None = None) -> list[Path]:
+                  height: int | None = None) -> None:
     """Write `fig` as results/figures/<topic>/<name>.<fmt> and record it in figures.json.
 
     `source` is the notebook that owns the figure (e.g. "04_concurrency_scaling.ipynb");
@@ -54,7 +52,7 @@ def export_figure(fig: go.Figure, name: str, *, topic: str = "backend_selection"
     if not re.fullmatch(r"[a-z0-9]+(_[a-z0-9]+)*", name):
         raise ValueError(f"figure name {name!r} must be snake_case")
     if not exports_enabled():
-        return []
+        return
     out = paths.FIGURES / topic
     out.mkdir(parents=True, exist_ok=True)
     w = width or fig.layout.width
@@ -75,4 +73,3 @@ def export_figure(fig: go.Figure, name: str, *, topic: str = "backend_selection"
     manifest[name] = {"source_notebook": f"notebooks/{topic}/{source}", "caption": caption,
                       "files": [p.name for p in written], "width": w, "height": h}
     manifest_path.write_text(json.dumps(dict(sorted(manifest.items())), indent=2, ensure_ascii=False) + "\n")
-    return written

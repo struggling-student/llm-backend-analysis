@@ -79,7 +79,7 @@ def _template() -> go.layout.Template:
         font=dict(family=FONT_FAMILY, size=FONT_SIZE, color=TEXT_PRIMARY),
         title=dict(x=0.012, xref="container", xanchor="left", font=dict(size=17, color=TEXT_PRIMARY)),
         paper_bgcolor=PAPER, plot_bgcolor=SURFACE, width=WIDTH, height=HEIGHT,
-        margin=dict(l=70, r=30, t=95, b=115),
+        margin=dict(l=70, r=30, t=140, b=115),
         # Legend under the plot area, anchored to the figure (container) so it never meets titles or axes.
         legend=dict(orientation="h", yref="container", y=0.005, yanchor="bottom", xanchor="left", x=0.0,
                     title_text="", font=dict(size=12, color=TEXT_PRIMARY)),

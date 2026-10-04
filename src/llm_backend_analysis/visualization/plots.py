@@ -36,15 +36,37 @@ class Panel:
     extra_hover: dict[str, str] = field(default_factory=dict)  # column -> label
 
 
-def _label(text: str | None, position: str = "top left") -> dict:
-    """Keyword arguments for add_hline/add_vline labels; empty when there is no text (avoids 'new text')."""
-    if not text:
-        return {}
-    return {"annotation_text": text, "annotation_position": position, "annotation_font_size": 11,
-            "annotation_font_color": theme.TEXT_SECONDARY}
+def _finish(fig: go.Figure) -> go.Figure:
+    """Subplot titles in secondary ink and a size below the figure title."""
+    fig.update_annotations(selector=dict(xref="paper", yanchor="bottom"), font_size=13,
+                           font_color=theme.TEXT_PRIMARY)
+    return fig
+
+
+def _reference_line(fig: go.Figure, *, axis: str, value: float, label: str | None, row: int, col: int,
+                    log: bool = False) -> None:
+    """Dotted reference line with an optional label.
+
+    Shapes on log axes take data coordinates, annotations take log10 coordinates, so the label
+    is added separately instead of through add_hline/add_vline's annotation_text."""
+    line = dict(color=theme.REFERENCE, dash="dot", width=1.3)
+    (fig.add_hline(y=value, row=row, col=col, line=line) if axis == "y"
+     else fig.add_vline(x=value, row=row, col=col, line=line))
+    if not label:
+        return
+    pos = np.log10(value) if log else value
+    ref = fig.get_subplot(row, col)
+    xa, ya = ref.xaxis.plotly_name.replace("axis", ""), ref.yaxis.plotly_name.replace("axis", "")
+    if axis == "y":
+        fig.add_annotation(x=0.01, xref=f"{xa} domain", y=pos, yref=ya, text=label, showarrow=False, xanchor="left",
+                           yanchor="bottom", font=dict(size=11, color=theme.TEXT_SECONDARY))
+    else:
+        fig.add_annotation(x=pos, xref=xa, y=0.99, yref=f"{ya} domain", text=label, showarrow=False, xanchor="right",
+                           yanchor="top", xshift=-4, font=dict(size=11, color=theme.TEXT_SECONDARY))
 
 
 def title_text(title: str, subtitle: str | None = None) -> str:
+    """Bold title with an optional grey subtitle line."""
     return f"<b>{title}</b>" + (f"<br><span style='font-size:12px;color:{theme.TEXT_SECONDARY}'>{subtitle}</span>"
                                 if subtitle else "")
 
@@ -58,14 +80,33 @@ def _facet_values(df: pd.DataFrame, facet: str) -> list:
     return sorted(present)
 
 
-def _facet_title(facet: str, value) -> str:
+def _facet_title(facet: str, value, compact: bool = True) -> str:
     if facet == "workload":
-        return registry.workload_label(value)
+        label = registry.workload_label(value)
+        head, _, shape = label.rpartition(" ")
+        return f"{head}<br>{shape}" if compact and head else label
     if facet == "model":
         return registry.model_label(value)
     if facet == "configuration_id":
         return registry.configuration_label(value)
     return f"{facet} = {value}"
+
+
+def log_ticks(values: Sequence[float] | pd.Series) -> list[float]:
+    """1-2-5 tick values covering the data range, for readable log axes."""
+    v = pd.Series(values, dtype=float)
+    v = v[v > 0].dropna()
+    if v.empty:
+        return []
+    lo, hi = np.floor(np.log10(v.min())), np.ceil(np.log10(v.max()))
+    ticks = [m * 10 ** e for e in range(int(lo), int(hi) + 1) for m in (1, 2, 5)]
+    return [t for t in ticks if v.min() / 1.6 <= t <= v.max() * 1.6]
+
+
+def _apply_log_ticks(fig: go.Figure, values, **where) -> None:
+    ticks = log_ticks(values)
+    if ticks:
+        fig.update_yaxes(tickvals=ticks, ticktext=[f"{t:g}" for t in ticks], **where)
 
 
 def _configurations(df: pd.DataFrame, configurations: Sequence[str] | None) -> list[str]:
@@ -107,10 +148,12 @@ def concurrency_grid(points: pd.DataFrame, panels: Sequence[Panel], *, title: st
                     error_y=dict(type="data", array=err, thickness=1.1, width=3, color=st.color) if err is not None else None,
                     customdata=custom, hovertemplate=hover), row=r, col=j)
             if p.reference is not None:
-                fig.add_hline(y=p.reference[0], row=r, col=j, line=dict(color=theme.REFERENCE, dash="dot", width=1.3),
-                              **_label(p.reference[1] if j == 1 else None))
+                _reference_line(fig, axis="y", value=p.reference[0], label=p.reference[1] if j == 1 else None,
+                                row=r, col=j, log=p.log_y)
         fig.update_yaxes(title_text=p.title, row=r, col=1)
         fig.update_yaxes(type="log" if p.log_y else "linear", row=r)
+        if p.log_y:
+            _apply_log_ticks(fig, points[p.metric] * p.scale, row=r)
         if not p.log_y and p.range_to_zero:
             fig.update_yaxes(rangemode="tozero", row=r)
         if p.share_y:
@@ -126,10 +169,9 @@ def concurrency_grid(points: pd.DataFrame, panels: Sequence[Panel], *, title: st
     fig.update_xaxes(type="log", tickvals=cs, ticktext=[str(int(c)) for c in cs])
     for j in range(1, len(facets) + 1):
         fig.update_xaxes(title_text="Concurrent requests (C)", row=len(panels), col=j)
-    fig.update_layout(title_text=title_text(title, subtitle), height=height or (190 + 330 * len(panels)),
+    fig.update_layout(title_text=title_text(title, subtitle), height=height or (210 + 330 * len(panels)),
                       width=width or theme.WIDTH)
-    fig.update_annotations(selector=dict(xref="paper"), font_size=12)
-    return fig
+    return _finish(fig)
 
 
 def concurrency_lines(points: pd.DataFrame, panel: Panel, **kw) -> go.Figure:
@@ -167,8 +209,7 @@ def ratio_vs_concurrency(ratio: pd.DataFrame, *, title: str, subtitle: str | Non
         for y_pos, x_pos, text in labels:
             fig.add_annotation(x=x_pos, y=y_pos, text=text, showarrow=False, xanchor="left", xshift=7,
                                font=dict(size=11, color=theme.TEXT_SECONDARY), row=1, col=j)
-        fig.add_hline(y=1, row=1, col=j, line=dict(color=theme.REFERENCE, dash="dot", width=1.3),
-                      **_label("parity (1×)" if j == 1 else None, "bottom right"))
+        _reference_line(fig, axis="y", value=1, label="parity (1×)" if j == 1 else None, row=1, col=j, log=log_y)
     cs = sorted(ratio["concurrency"].unique())
     fig.update_xaxes(type="log", tickvals=cs, ticktext=[str(int(c)) for c in cs], title_text="Concurrent requests (C)")
     fig.update_xaxes(range=[np.log10(min(cs)) - 0.1, np.log10(max(cs)) + 0.45])
@@ -178,17 +219,21 @@ def ratio_vs_concurrency(ratio: pd.DataFrame, *, title: str, subtitle: str | Non
         ticks = [0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8]
         fig.update_yaxes(tickvals=ticks, ticktext=[f"{t:g}×" for t in ticks])
     fig.update_layout(title_text=title_text(title, subtitle), height=520)
-    return fig
+    return _finish(fig)
 
 
-def grouped_bars(summary: pd.DataFrame, *, x: str, y: str, error: str | None, title: str, y_title: str,
+def grouped_bars(summary: pd.DataFrame, *, x: str, y: str, error: str | None, title: str, y_title: str | Sequence[str],
                  facet: str, subtitle: str | None = None, configurations: Sequence[str] | None = None,
-                 show_values: bool = True, value_fmt: str = ".0f", log_y: bool = False) -> go.Figure:
-    """Grouped bars per configuration (INT8 bars hatched), one panel per facet value."""
-    facets = _facet_values(summary, facet)
+                 show_values: bool = True, value_fmt: str = ".0f", log_y: bool = False,
+                 facet_labels: dict | None = None, height: int = 500) -> go.Figure:
+    """Grouped bars per configuration (INT8 bars hatched), one panel per facet value.
+
+    y_title may be a list (one per facet) when facets hold different quantities; each panel
+    then keeps its own y axis."""
+    facets = [f for f in (facet_labels or {}) if f in set(summary[facet])] or _facet_values(summary, facet)
     confs = _configurations(summary, configurations)
-    fig = make_subplots(rows=1, cols=len(facets), subplot_titles=[_facet_title(facet, f) for f in facets],
-                        horizontal_spacing=0.06)
+    titles = [(facet_labels or {}).get(f) or _facet_title(facet, f) for f in facets]
+    fig = make_subplots(rows=1, cols=len(facets), subplot_titles=titles, horizontal_spacing=0.07)
     xs = list(dict.fromkeys(summary.sort_values([c for c in ("workload_order",) if c in summary] or [x])[x]))
     for j, fv in enumerate(facets, start=1):
         for cid in confs:
@@ -204,11 +249,16 @@ def grouped_bars(summary: pd.DataFrame, *, x: str, y: str, error: str | None, ti
                 if error else None,
                 text=g[y].map(lambda v: f"{v:{value_fmt}}" if pd.notna(v) else "") if show_values else None,
                 textposition="outside", textfont=dict(size=10, color=theme.TEXT_SECONDARY), cliponaxis=False,
-                hovertemplate=f"<b>{st.name}</b><br>%{{x}}<br>{y_title}: %{{y:.4g}}<extra></extra>"), row=1, col=j)
-    fig.update_layout(barmode="group", bargap=0.22, bargroupgap=0.05, title_text=title_text(title, subtitle))
-    fig.update_yaxes(title_text=y_title, row=1, col=1)
+                hovertemplate=f"<b>{st.name}</b><br>%{{x}}<br>{titles[j - 1]}: %{{y:.4g}}<extra></extra>"), row=1, col=j)
+    fig.update_layout(barmode="group", bargap=0.22, bargroupgap=0.05, title_text=title_text(title, subtitle),
+                      height=height)
+    if isinstance(y_title, str):
+        fig.update_yaxes(title_text=y_title, row=1, col=1)
+    else:
+        for j, t in enumerate(y_title, start=1):
+            fig.update_yaxes(title_text=t, row=1, col=j)
     fig.update_yaxes(type="log" if log_y else "linear", rangemode="tozero")
-    return fig
+    return _finish(fig)
 
 
 def path_scatter(points: pd.DataFrame, *, x: str, y: str, x_title: str, y_title: str, title: str,
@@ -236,17 +286,22 @@ def path_scatter(points: pd.DataFrame, *, x: str, y: str, x_title: str, y_title:
                 hovertemplate=f"<b>{st.name}</b><br>C = %{{customdata}}<br>{x_title}: %{{x:.3g}}<br>"
                               f"{y_title}: %{{y:.3g}}<extra></extra>"), row=1, col=j)
         if reference_x is not None:
-            fig.add_vline(x=reference_x[0], row=1, col=j, line=dict(color=theme.REFERENCE, dash="dot", width=1.3),
-                          **_label(reference_x[1] if j == 1 else None))
+            _reference_line(fig, axis="x", value=reference_x[0], label=reference_x[1] if j == 1 else None,
+                            row=1, col=j, log=log_x)
     fig.update_xaxes(title_text=x_title, type="log" if log_x else "linear")
+    if log_x:
+        ticks = log_ticks(points[x] * x_scale)
+        fig.update_xaxes(tickvals=ticks, ticktext=[f"{v:g}" for v in ticks])
     fig.update_yaxes(type="log" if log_y else "linear")
+    if log_y:
+        _apply_log_ticks(fig, points[y] * y_scale)
     if not log_x:
         fig.update_xaxes(rangemode="tozero")
     if not log_y:
         fig.update_yaxes(rangemode="tozero")
     fig.update_yaxes(title_text=y_title, row=1, col=1)
     fig.update_layout(title_text=title_text(title, subtitle), height=height)
-    return fig
+    return _finish(fig)
 
 
 def request_distribution(requests: pd.DataFrame, *, metric: str, y_title: str, title: str, subtitle: str | None = None,
@@ -269,9 +324,11 @@ def request_distribution(requests: pd.DataFrame, *, metric: str, y_title: str, t
                                  hovertemplate=f"<b>{st.name}</b><br>%{{y:.3g}}<extra></extra>"), row=1, col=j)
     fig.update_xaxes(showticklabels=False)
     fig.update_yaxes(type="log" if log_y else "linear")
+    if log_y:
+        _apply_log_ticks(fig, requests[metric] * scale)
     fig.update_yaxes(title_text=y_title, row=1, col=1)
     fig.update_layout(title_text=title_text(title, subtitle), height=490, boxgap=0.25)
-    return fig
+    return _finish(fig)
 
 
 def stream_calibration_figure(stream: pd.DataFrame, threads: int, *, title: str, subtitle: str | None = None,
@@ -295,15 +352,41 @@ def stream_calibration_figure(stream: pd.DataFrame, threads: int, *, title: str,
         fig.add_trace(go.Scatter(x=s["working_set_gib"], y=s[col], mode="lines+markers", name=f"ratio: {name}",
                                  line=dict(color=color, width=2, dash=dash), marker=dict(size=7, color=color),
                                  hovertemplate=f"%{{x}} GiB: %{{y:.3f}}<extra>{name}</extra>"), row=1, col=2)
-    fig.add_vline(x=hbm_cache_gib, row=1, col=1, line=dict(color=theme.REFERENCE, dash="dot", width=1.3),
-                  **_label(f"HBM cache {hbm_cache_gib:g} GiB", "top right"))
+    _reference_line(fig, axis="x", value=hbm_cache_gib, label=f"HBM cache {hbm_cache_gib:g} GiB", row=1, col=1, log=True)
     fig.add_hline(y=1, row=1, col=2, line=dict(color=theme.REFERENCE, dash="dot", width=1.3))
     ws = s["working_set_gib"].tolist()
     fig.update_xaxes(type="log", tickvals=ws, ticktext=[f"{w:g}" for w in ws], title_text="Working set (GiB)")
     fig.update_yaxes(title_text="GB/s", rangemode="tozero", row=1, col=1)
     fig.update_yaxes(title_text="ratio", range=[0.85, 1.1], row=1, col=2)
     fig.update_layout(title_text=title_text(title, subtitle), height=500)
-    return fig
+    return _finish(fig)
+
+
+def traffic_components(points: pd.DataFrame, configuration_id: str, *, title: str, subtitle: str | None = None,
+                       facet: str = "workload") -> go.Figure:
+    """Measured read traffic of one configuration next to the model's weight and KV terms."""
+    d = points[points["configuration_id"] == configuration_id]
+    facets = _facet_values(d, facet)
+    st = theme.configuration_style(configuration_id)
+    series = [("mem_read_gbs_mean", "measured reads (PMU)", st.color, "solid", st.symbol),
+              ("model_weight_read_gbs", "model: weight reads", theme.TEXT_SECONDARY, "dash", "diamond-open"),
+              ("model_kv_read_gbs", "model: KV reads", theme.EXTRA_COLORS[0], "dot", "triangle-up")]
+    fig = make_subplots(rows=1, cols=len(facets), shared_yaxes=True, horizontal_spacing=0.035,
+                        subplot_titles=[_facet_title(facet, f) for f in facets])
+    for j, fv in enumerate(facets, start=1):
+        g = d[d[facet] == fv].sort_values("concurrency")
+        for col, name, color, dash, symbol in series:
+            fig.add_trace(go.Scatter(x=g["concurrency"], y=g[col], mode="lines+markers", name=name, legendgroup=name,
+                                     showlegend=(j == 1), line=dict(color=color, width=2, dash=dash),
+                                     marker=dict(color=color, size=7, symbol=symbol),
+                                     hovertemplate=f"{name}<br>C = %{{x}}<br>%{{y:.0f}} GB/s<extra></extra>"),
+                          row=1, col=j)
+    cs = sorted(d["concurrency"].unique())
+    fig.update_xaxes(type="log", tickvals=cs, ticktext=[str(int(c)) for c in cs], title_text="Concurrent requests (C)")
+    fig.update_yaxes(title_text="Read traffic (GB/s)", row=1, col=1)
+    fig.update_yaxes(rangemode="tozero")
+    fig.update_layout(title_text=title_text(title, subtitle), height=500)
+    return _finish(fig)
 
 
 def add_note(fig: go.Figure, text: str, *, x: float, y: float, row: int = 1, col: int = 1, ax: int = 0,
