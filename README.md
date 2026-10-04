@@ -169,7 +169,7 @@ bash scripts/cluster/submit.sh int8-tuning                 # ~35 min on one HBM 
 Locally, after it finishes:
 
 ```bash
-bash scripts/cluster/sync_results.sh && uv run python scripts/analysis/tuning_summary.py
+bash scripts/cluster/sync_results.sh && uv run python scripts/processing/summarize_tuning.py
 ```
 
 Copy the chosen `max_num_batched_tokens` into `[tuned.vllm-w8a8]` in `configs/experiment.toml`, sync the

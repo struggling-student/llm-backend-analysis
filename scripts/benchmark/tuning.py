@@ -3,7 +3,7 @@
 
 Not a parameter search: a handful of settings each backend's documentation
 names as the main serving knobs, so neither backend runs on an obviously
-inappropriate default. Selection rule (applied by scripts/analysis/tuning_summary.py):
+inappropriate default. Selection rule (applied by scripts/processing/summarize_tuning.py):
 highest steady total tokens/s at C=16, unless C=1 TPOT gets more than 5% worse
 than the default, in which case the default is kept.
 
