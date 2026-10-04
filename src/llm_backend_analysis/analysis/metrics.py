@@ -99,3 +99,42 @@ def summarize_offline(samples: pd.DataFrame) -> pd.DataFrame:
 def relative_difference(a: float | pd.Series, b: float | pd.Series) -> float | pd.Series:
     """(a - b) / b: positive when a is larger."""
     return a / b - 1
+
+
+def add_step_metrics(points: pd.DataFrame) -> pd.DataFrame:
+    """Forward-step time from the servers' own step counters: step_time_s = 1 / steps per second."""
+    out = points.copy()
+    out["step_time_s"] = 1 / out["engine_steps_per_s_mean"]
+    return out
+
+
+def step_cost_growth(points: pd.DataFrame) -> pd.DataFrame:
+    """Per curve: how much longer a forward step gets from the smallest to the largest batch."""
+    pts = add_step_metrics(points) if "step_time_s" not in points else points
+    rows = []
+    for key, g in pts.dropna(subset=["step_time_s", "tokens_per_step_mean"]).groupby(
+            ["model", "configuration_id", "workload"], sort=False):
+        g = g.sort_values("concurrency")
+        first, last = g.iloc[0], g.iloc[-1]
+        rows.append({"model": key[0], "configuration_id": key[1], "workload": key[2],
+                     "c_first": int(first["concurrency"]), "c_last": int(last["concurrency"]),
+                     "tokens_per_step_first": first["tokens_per_step_mean"],
+                     "tokens_per_step_last": last["tokens_per_step_mean"],
+                     "step_time_first_s": first["step_time_s"], "step_time_last_s": last["step_time_s"],
+                     "step_time_growth": last["step_time_s"] / first["step_time_s"],
+                     "batch_growth": last["tokens_per_step_mean"] / first["tokens_per_step_mean"]})
+    return pd.DataFrame(rows)
+
+
+def throughput_under_latency_budget(points: pd.DataFrame, budget_s: float, latency: str = "tpot_s_p50_mean",
+                                    throughput: str = "output_tok_s_mean") -> pd.DataFrame:
+    """Per curve: the highest measured throughput among points whose latency stays within budget_s."""
+    rows = []
+    for key, g in points.groupby(["model", "configuration_id", "workload"], sort=False):
+        ok = g[g[latency] <= budget_s]
+        best = ok.loc[ok[throughput].idxmax()] if len(ok) else None
+        rows.append({"model": key[0], "configuration_id": key[1], "workload": key[2], "budget_s": budget_s,
+                     "throughput": best[throughput] if best is not None else np.nan,
+                     "concurrency": int(best["concurrency"]) if best is not None else np.nan,
+                     "latency_s": best[latency] if best is not None else np.nan})
+    return pd.DataFrame(rows)
