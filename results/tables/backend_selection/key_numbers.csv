@@ -1,0 +1,28 @@
+key,text,low,high,n,description
+failed_requests,0,0,0,1,Failed requests in the primary online campaign
+measured_requests,"28,932",28932,28932,1,Measured requests in the primary online campaign
+throughput_cv_median,0.17%,0.0017494,0.0017494,1,Median coefficient of variation of throughput over 3 repetitions
+c1_tpot_vllm_over_llamacpp_bf16,0.99×–1.33×,0.988078,1.33215,8,"C=1 median TPOT, vLLM ÷ llama.cpp (BF16, all shapes, both models); > 1 = llama.cpp faster per token"
+c1_ttft_llamacpp_over_vllm_bf16,4.0×–9.8×,3.98182,9.82149,8,"C=1 median TTFT, llama.cpp ÷ vLLM (BF16); > 1 = vLLM faster to first token"
+c1_throughput_ratio_short_prompts,0.77×–0.89×,0.765887,0.890986,4,C=1 throughput vLLM ÷ llama.cpp (BF16) on 128→512 and 512→512
+ratio_at_highest_common_c,4.9×–7.0×,4.87657,6.98561,8,Throughput vLLM ÷ llama.cpp (BF16) at the highest concurrency both ran
+crossover_concurrency_short_prompts,2–4,2,4,4,First C at which vLLM BF16 ≥ llama.cpp BF16 on short prompts
+peak_ratio_8b,5.4×–7.2×,5.39777,7.15161,5,"Peak throughput vLLM ÷ llama.cpp (BF16), each at its best C, 8B"
+vllm_peak_over_c1_short,22.9×–42.7×,22.9409,42.7107,4,"vLLM BF16 peak ÷ C=1 throughput, short-prompt shapes"
+llamacpp_peak_over_c1_short,3.2×–5.8×,3.2275,5.76721,4,"llama.cpp BF16 peak ÷ C=1 throughput, short-prompt shapes"
+vllm_peak_concurrency_8b,64–128,64,128,5,C at which vLLM BF16 peaks (8B)
+llamacpp_peak_concurrency_8b,4–32,4,32,5,C at which llama.cpp BF16 peaks (8B)
+vllm_peak_total_tok_s_8b,"631–1,175",631.335,1175.46,5,vLLM BF16 peak total tokens/s (8B)
+llamacpp_peak_total_tok_s_8b,117–176,116.962,176.302,5,llama.cpp BF16 peak total tokens/s (8B)
+throughput_ratio_tpot_budget_100ms,4.5×–9.7×,4.47753,9.73858,8,"Output tok/s within a 100 ms median TPOT budget, vLLM ÷ llama.cpp (BF16)"
+step_cost_drop_vllm,2.5×–43.7×,2.47652,43.6647,8,"Per-token step-cost reduction over the sweep, vLLM BF16"
+step_cost_drop_llamacpp,0.9×–5.7×,0.934582,5.67465,8,"Per-token step-cost reduction over the sweep, llama.cpp BF16"
+vllm_amx_busy_at_highest_c,9%–18%,0.0862481,0.177712,8,vLLM BF16 AMX busy fraction at its highest C
+llamacpp_bf16_amx_busy,0.0%,0,0,44,llama.cpp BF16 AMX busy fraction (all points)
+stream_sustainable_gbs,502,502.319,502.319,1,"Sustainable traffic of the server layout (STREAM, same counters)"
+max_bw_share,65%,0.647312,0.647312,1,Largest share of sustainable bandwidth reached by any point
+vllm_bw_share_c1,34%–56%,0.33614,0.561842,8,vLLM BF16 share of sustainable bandwidth at C=1
+vllm_bw_share_highest_c,17%–31%,0.170604,0.307113,8,vLLM BF16 share of sustainable bandwidth at its highest C
+curves_traffic_falls,100%,1,1,1,Share of curves whose traffic at the highest C is below C=1
+traffic_ratio_c8_plus,1.5×–5.4×,1.51511,5.38957,20,Memory traffic vLLM ÷ llama.cpp (BF16) at equal C ≥ 8
+vllm_bf16_over_llamacpp_int8_peak,3.3×–6.1×,3.33066,6.12671,7,Peak throughput vLLM BF16 ÷ llama.cpp INT8 (cross-precision)

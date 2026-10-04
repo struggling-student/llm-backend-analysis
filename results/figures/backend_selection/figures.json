@@ -1,0 +1,112 @@
+{
+  "backend_ratio_vs_concurrency": {
+    "source_notebook": "notebooks/backend_selection/04_concurrency_scaling.ipynb",
+    "caption": "vLLM BF16 ÷ llama.cpp BF16 throughput at equal C per workload, 8B and 1B.",
+    "files": [
+      "backend_ratio_vs_concurrency.svg",
+      "backend_ratio_vs_concurrency.png"
+    ],
+    "width": null,
+    "height": 520
+  },
+  "latency_throughput_tradeoff": {
+    "source_notebook": "notebooks/backend_selection/05_online_serving_latency.ipynb",
+    "caption": "Median TPOT vs aggregate output tokens/s across concurrency (8B), one path per configuration.",
+    "files": [
+      "latency_throughput_tradeoff.svg",
+      "latency_throughput_tradeoff.png"
+    ],
+    "width": null,
+    "height": 530
+  },
+  "llama_cpp_int8_over_bf16": {
+    "source_notebook": "notebooks/backend_selection/08_precision_int8.ipynb",
+    "caption": "llama.cpp Q8_0 ÷ BF16 throughput vs concurrency per workload: INT8 raises the level, not the scaling.",
+    "files": [
+      "llama_cpp_int8_over_bf16.svg",
+      "llama_cpp_int8_over_bf16.png"
+    ],
+    "width": null,
+    "height": 520
+  },
+  "memory_traffic_components": {
+    "source_notebook": "notebooks/backend_selection/07_memory_traffic.ipynb",
+    "caption": "vLLM measured read traffic vs modelled weight and KV read terms across concurrency (8B).",
+    "files": [
+      "memory_traffic_components.svg",
+      "memory_traffic_components.png"
+    ],
+    "width": null,
+    "height": 500
+  },
+  "offline_decode_throughput": {
+    "source_notebook": "notebooks/backend_selection/02_offline_engine_benchmarks.ipynb",
+    "caption": "Offline decode tokens/s at batch 1, 8 and 32 for each engine (engine tools, scopes differ).",
+    "files": [
+      "offline_decode_throughput.svg",
+      "offline_decode_throughput.png"
+    ],
+    "width": null,
+    "height": 500
+  },
+  "peak_throughput_by_workload": {
+    "source_notebook": "notebooks/backend_selection/09_backend_selection_summary.ipynb",
+    "caption": "Best measured total tokens/s of each configuration per workload (8B), each at its own best concurrency.",
+    "files": [
+      "peak_throughput_by_workload.svg",
+      "peak_throughput_by_workload.png"
+    ],
+    "width": null,
+    "height": 500
+  },
+  "single_request_latency": {
+    "source_notebook": "notebooks/backend_selection/03_single_request_performance.ipynb",
+    "caption": "Median TPOT and TTFT with one request in flight, per workload and configuration (8B).",
+    "files": [
+      "single_request_latency.svg",
+      "single_request_latency.png"
+    ],
+    "width": null,
+    "height": 500
+  },
+  "step_cost_vs_batch": {
+    "source_notebook": "notebooks/backend_selection/06_batching_and_amx.ipynb",
+    "caption": "Forward-step time vs tokens per step (8B, short-prompt and long-KV shapes): vLLM steps stay cheap as batches grow.",
+    "files": [
+      "step_cost_vs_batch.svg",
+      "step_cost_vs_batch.png"
+    ],
+    "width": null,
+    "height": 530
+  },
+  "stream_calibration": {
+    "source_notebook": "notebooks/backend_selection/01_measurement_validity.ipynb",
+    "caption": "STREAM triad bandwidth vs working set on the server layout, and the PMU proxy's capture ratio.",
+    "files": [
+      "stream_calibration.svg",
+      "stream_calibration.png"
+    ],
+    "width": null,
+    "height": 500
+  },
+  "throughput_and_memory_traffic": {
+    "source_notebook": "notebooks/backend_selection/07_memory_traffic.ipynb",
+    "caption": "Output tokens/s (top) and server memory traffic (bottom) vs concurrency, with the STREAM ceiling (8B).",
+    "files": [
+      "throughput_and_memory_traffic.svg",
+      "throughput_and_memory_traffic.png"
+    ],
+    "width": 1100,
+    "height": 870
+  },
+  "throughput_vs_concurrency": {
+    "source_notebook": "notebooks/backend_selection/04_concurrency_scaling.ipynb",
+    "caption": "Aggregate output tokens/s vs concurrent requests per workload (8B); vLLM keeps scaling, llama.cpp flattens early.",
+    "files": [
+      "throughput_vs_concurrency.svg",
+      "throughput_vs_concurrency.png"
+    ],
+    "width": 1100,
+    "height": 540
+  }
+}
