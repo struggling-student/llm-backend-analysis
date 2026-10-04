@@ -130,3 +130,4 @@ metadata, and the INT8 backend pair is formed automatically once both backends h
 - [`data/README.md`](data/README.md) — data provenance and processed-table reference.
 - [`notebooks/README.md`](notebooks/README.md) — the analytical question answered by each notebook.
 - [`results/README.md`](results/README.md) — exported figures and tables, and where they are used.
+- [`docs/notion.md`](docs/notion.md) — which Notion pages summarize this analysis and how to keep them in sync.
