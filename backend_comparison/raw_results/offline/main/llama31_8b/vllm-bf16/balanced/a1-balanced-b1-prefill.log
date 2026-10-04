@@ -1,0 +1,62 @@
+INFO 10-04 05:44:23 [api_utils.py:286] non-default args: {'dtype': 'bfloat16', 'max_model_len': 1088, 'enable_prefix_caching': False, 'max_num_batched_tokens': 8192, 'max_num_seqs': 1, 'mm_device_do_normalize': None, 'enable_lora': None, 'reasoning_parser_plugin': '', 'model': '/tmp/bc-5296950/llama31_8b/hf'}
+INFO 10-04 05:44:23 [model.py:692] Resolved architecture: LlamaForCausalLM
+INFO 10-04 05:44:23 [model.py:2030] Using max model len 1088
+INFO 10-04 05:44:23 [scheduler.py:288] Chunked prefill is enabled with max_num_batched_tokens=8192.
+WARNING 10-04 05:44:23 [scheduler.py:317] max_num_batched_tokens (8192) exceeds max_num_seqs * max_model_len (1088). This may lead to unexpected behavior.
+INFO 10-04 05:44:23 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+WARNING 10-04 05:44:23 [cpu.py:293] Reset SSM cache type to float32 for accelerated GDN mamba backend 'none'.
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [core.py:123] Initializing a V1 LLM engine (v0.30.0) with config: model='/tmp/bc-5296950/llama31_8b/hf', speculative_config=None, tokenizer='/tmp/bc-5296950/llama31_8b/hf', skip_tokenizer_init=False, tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=1088, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=True, quantization=None, quantization_config=None, enforce_eager=False, enable_return_routed_experts=False, kv_cache_dtype=auto, device_config=cpu, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=/tmp/bc-5296950/llama31_8b/hf, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.DYNAMO_TRACE_ONCE: 2>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': False, 'splitting_ops': [], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'compile_sizes': None, 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'dce': True, 'size_asserts': False, 'nan_asserts': False, 'epilogue_fusion': True, 'cpp.dynamic_threads': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.NONE: 0>, 'cudagraph_num_of_warmups': 0, 'cudagraph_capture_sizes': [], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'enable_sp': False, 'fuse_gemm_comms': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': None, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native']), enable_flashinfer_autotune=True, enable_cutedsl_warmup=True, enable_jit_warmup=True, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [multiproc_executor.py:153] DP group leader: node_rank=0, node_rank_within_dp=0, master_addr=127.0.0.1, mq_connect_ip=10.171.6.91 (local), world_size=1, local_world_size=1
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [ompmultiprocessing.py:185] OpenMP thread binding info: 
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [ompmultiprocessing.py:185] 	VLLM_CPU_OMP_THREADS_BIND='0-54', auto_setup=False, skip_setup=False
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [ompmultiprocessing.py:185] 	local_world_size=1, reserve_cpu_num=1
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [ompmultiprocessing.py:185] 	local_rank=0, core ids=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+(EngineCore pid=2941924) INFO 10-04 05:44:44 [ompmultiprocessing.py:185] 	reserved_cpus=[]
+WARNING 10-04 05:45:03 [indexer_topk.py:29] Failed to import the DeepSelect extension (vllm._deepselect_C): No module named 'vllm._deepselect_C'
+[W1004 05:45:04.222943552 utils.cpp:68] Warning: NUMA binding: Using MEMBIND policy for memory allocation on the NUMA nodes (0). Memory allocations will be strictly bound to these NUMA nodes. (function init_cpu_memory_env)
+(Worker pid=2942099) INFO 10-04 05:45:04 [parallel_state.py:1827] world_size=1 rank=0 local_rank=0 distributed_init_method=file:///tmp/vllm_dist_31e593da473248f58b9823b5f32036f3 backend=gloo
+(Worker pid=2942099) INFO 10-04 05:45:04 [parallel_state.py:2267] rank 0 in world size 1 is assigned as DP rank 0, PP rank 0, PCP rank 0, TP rank 0, ETP rank 0, EP rank N/A, EPLB rank N/A
+(Worker pid=2942099) INFO 10-04 05:45:04 [cpu_worker.py:176] Using V2 Model Runner
+(Worker pid=2942099) INFO 10-04 05:45:05 [model_runner.py:396] Loading model from scratch...
+(Worker pid=2942099) INFO 10-04 05:45:05 [weight_utils.py:895] Filesystem type for checkpoints: XFS. Checkpoint size: 14.96 GiB. Available RAM: 987.20 GiB.
+(Worker pid=2942099) INFO 10-04 05:45:05 [weight_utils.py:918] Auto-prefetch is disabled because the filesystem (XFS) is not a recognized network FS (NFS/Lustre). If you want to force prefetching, start vLLM with --safetensors-load-strategy=prefetch.
+(Worker pid=2942099) Loading safetensors checkpoint shards:   0% Completed | 0/4 [00:00<?, ?it/s]
+(Worker pid=2942099) Loading safetensors checkpoint shards:  25% Completed | 1/4 [00:00<00:00,  7.22it/s]
+(Worker pid=2942099) Loading safetensors checkpoint shards:  50% Completed | 2/4 [00:00<00:00,  6.06it/s]
+(Worker pid=2942099) Loading safetensors checkpoint shards:  75% Completed | 3/4 [00:00<00:00,  5.59it/s]
+(Worker pid=2942099) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:00<00:00,  6.71it/s]
+(Worker pid=2942099) Loading safetensors checkpoint shards: 100% Completed | 4/4 [00:00<00:00,  6.44it/s]
+(Worker pid=2942099) 
+(Worker pid=2942099) INFO 10-04 05:45:06 [default_loader.py:430] Loading weights took 0.65 seconds
+(Worker pid=2942099) INFO 10-04 05:45:08 [model_runner.py:428] Model loading took 17.45 GiB memory and 3.140261 seconds
+(EngineCore pid=2941924) INFO 10-04 05:45:08 [torch_utils.py:287] Reducing Torch threads from 56 to 1 for serving. Set OMP_NUM_THREADS in the external environment to override.
+(EngineCore pid=2941924) INFO 10-04 05:45:08 [utils.py:320] Using LBHNC KV cache layout.
+(Worker pid=2942099) INFO 10-04 05:45:08 [model_runner.py:13] Warming up model for the compilation...
+(EngineCore pid=2941924) INFO 10-04 05:46:09 [shm_broadcast.py:801] No available shared memory broadcast block found in 60 seconds. This typically happens when some processes are hanging or doing some time-consuming work (e.g. compilation, weight/kv cache quantization).
+(Worker pid=2942099) INFO 10-04 05:46:33 [decorators.py:719] saved AOT compiled function to /afs/enea.it/por/user/crainic/.cache/vllm/torch_compile_cache/torch_aot_compile/bacda0fbff6fb89bdcf089ded04bc151b96577c4daab5be1e22255f6f9dd7a4a/rank_0_0/model
+(Worker pid=2942099) INFO 10-04 05:46:38 [monitor.py:81] Initial profiling/warmup run took 5.58 s
+(Worker pid=2942099) INFO 10-04 05:46:39 [model_runner.py:16] Warming up done.
+(Worker pid=2942099) INFO 10-04 05:46:39 [cpu_worker.py:271] Explicitly set (1.0/503.12) GiB for KV cache on node 0.
+(EngineCore pid=2941924) INFO 10-04 05:46:39 [kv_cache_utils.py:2395] CPU KV cache size: 7,736 tokens, Maximum concurrency for 1,088 tokens per request: 7.11x
+(EngineCore pid=2941924) INFO 10-04 05:46:39 [core.py:379] init engine (profile, create kv cache, warmup model) took 91.51 s
+(EngineCore pid=2941924) WARNING 10-04 05:46:41 [vllm.py:1570] Inductor compilation was disabled by user settings, optimizations settings that are only active during inductor compilation will be ignored.
+(EngineCore pid=2941924) INFO 10-04 05:46:41 [kernel.py:416] Final IR op priority after setting platform defaults: IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['native'])
+INFO 10-04 05:46:41 [hf.py:642] Detected the chat template content format to be 'string'. You can set `--chat-template-content-format` to override this.
+Warming up...
+Warmup iterations:   0%|          | 0/2 [00:00<?, ?it/s]Warmup iterations:  50%|█████     | 1/2 [00:00<00:00,  1.62it/s]Warmup iterations: 100%|██████████| 2/2 [00:01<00:00,  2.02it/s]Warmup iterations: 100%|██████████| 2/2 [00:01<00:00,  1.94it/s]
+Bench iterations:   0%|          | 0/10 [00:00<?, ?it/s]Bench iterations:  10%|█         | 1/10 [00:00<00:03,  2.51it/s]Bench iterations:  20%|██        | 2/10 [00:00<00:03,  2.52it/s]Bench iterations:  30%|███       | 3/10 [00:01<00:02,  2.45it/s]Bench iterations:  40%|████      | 4/10 [00:01<00:02,  2.42it/s]Bench iterations:  50%|█████     | 5/10 [00:02<00:02,  2.42it/s]Bench iterations:  60%|██████    | 6/10 [00:02<00:01,  2.41it/s]Bench iterations:  70%|███████   | 7/10 [00:02<00:01,  2.41it/s]Bench iterations:  80%|████████  | 8/10 [00:03<00:00,  2.40it/s]Bench iterations:  90%|█████████ | 9/10 [00:03<00:00,  2.39it/s]Bench iterations: 100%|██████████| 10/10 [00:04<00:00,  2.39it/s]Bench iterations: 100%|██████████| 10/10 [00:04<00:00,  2.41it/s]
+Avg latency: 0.41437763478606937 seconds
+10% percentile latency: 0.39768587574362757 seconds
+25% percentile latency: 0.41445012111216784 seconds
+50% percentile latency: 0.41854632273316383 seconds
+75% percentile latency: 0.4203073682729155 seconds
+90% percentile latency: 0.42090156404301526 seconds
+99% percentile latency: 0.42223103103227916 seconds
+INFO 10-04 05:46:46 [utils.py:632] [shutdown] Process manager: send sigterm to process EngineCore
+(EngineCore pid=2941924) INFO 10-04 05:46:46 [core.py:1342] [shutdown] EngineCore: trigger received signal=SIGTERM
+(EngineCore pid=2941924) INFO 10-04 05:46:46 [core.py:1493] [shutdown] EngineCore: start mode=abort timeout=0s
+(EngineCore pid=2941924) INFO 10-04 05:46:46 [core.py:1524] [shutdown] EngineCore: request processing complete; starting resource teardown
+(EngineCore pid=2941924) INFO 10-04 05:46:46 [core.py:1355] [shutdown] EngineCore: exiting busy loop
+(EngineCore pid=2941924) INFO 10-04 05:46:46 [multiproc_executor.py:472] [shutdown] Executor: waiting for worker exit count=1
+(Worker pid=2942099) INFO 10-04 05:46:46 [multiproc_executor.py:836] Parent process exited, terminating worker queues
+(EngineCore pid=2941924) INFO 10-04 05:46:49 [multiproc_executor.py:479] [shutdown] Executor: all workers exited gracefully

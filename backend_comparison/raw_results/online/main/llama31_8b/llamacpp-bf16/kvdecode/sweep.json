@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-10-04T11:37:42+0200",
+  "plan": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "points": [
+    {
+      "concurrency": 1,
+      "status": "ok",
+      "steady_total_tok_s_median": 68.18211521171808
+    },
+    {
+      "concurrency": 2,
+      "status": "ok",
+      "steady_total_tok_s_median": 79.26031598028992
+    },
+    {
+      "concurrency": 4,
+      "status": "ok",
+      "steady_total_tok_s_median": 102.29701616774291
+    },
+    {
+      "concurrency": 8,
+      "status": "ok",
+      "steady_total_tok_s_median": 112.35066379759677
+    },
+    {
+      "concurrency": 16,
+      "status": "ok",
+      "steady_total_tok_s_median": 117.65796868344856
+    },
+    {
+      "concurrency": 32,
+      "status": "skipped_budget",
+      "steady_total_tok_s_median": null
+    }
+  ],
+  "rule": {
+    "plateau_gain": 0.05,
+    "extend_min_gain": 0.1,
+    "max_point_seconds": 14400
+  }
+}

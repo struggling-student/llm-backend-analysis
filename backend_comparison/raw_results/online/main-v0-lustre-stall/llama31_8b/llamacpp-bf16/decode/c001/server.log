@@ -1,0 +1,80 @@
+0.02.020.300 I srv  llama_server: initializing ...
+0.03.774.306 I cmn  common_param: common_params_print_info: verbosity = 3 (adjust with the `-lv N` CLI arg)
+0.04.589.145 W srv  llama_server: security: no API key is set and CORS allows all origins (see https://github.com/ggml-org/llama.cpp/pull/25655)
+0.04.702.382 I srv    load_model: loading model '/lpor1/scratch_1/usr/crainic/backend-comparison/models/llama31_8b/llama31-8b-instruct-bf16.gguf'
+25.55.044.144 I cmn          init: llama threadpool init, n_threads = 55
+27.53.810.624 I srv    load_model: initializing, n_slots = 1, n_ctx_slot = 768, kv_unified = 'false'
+27.54.567.300 W srv          init: --cache-idle-slots requires --cache-ram, disabling
+27.54.921.570 I srv  llama_server: model loaded
+27.54.921.674 I srv  llama_server: listening on http://127.0.0.1:8080
+27.54.921.701 W srv  llama_server: notice: server default port will be changed to :9931 in a future release (ref: https://github.com/ggml-org/llama.cpp/pull/26508)
+28.32.803.642 W srv          stop: cancel task, id_task = 33
+28.33.177.928 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = -1
+28.34.783.514 W srv          stop: cancel task, id_task = 37
+28.35.783.114 W srv          stop: cancel task, id_task = 38
+28.36.196.686 I slot launch_slot_: id  0 | task 34 | processing task, is_child = 0
+28.44.598.365 W srv          stop: cancel task, id_task = 43
+28.49.498.221 W srv          stop: cancel task, id_task = 45
+28.50.055.543 W srv          stop: cancel task, id_task = 46
+28.52.509.630 W srv          stop: cancel task, id_task = 48
+28.52.509.901 W srv          stop: cancel task, id_task = 50
+28.52.510.110 W srv          stop: cancel task, id_task = 51
+28.52.510.199 W srv          stop: cancel task, id_task = 52
+28.52.827.968 W srv          stop: cancel task, id_task = 53
+28.53.382.121 W srv          stop: cancel task, id_task = 54
+28.53.936.352 W srv          stop: cancel task, id_task = 60
+30.09.785.489 W srv          stop: cancel task, id_task = 145
+30.10.783.817 W srv          stop: cancel task, id_task = 146
+30.11.783.811 W srv          stop: cancel task, id_task = 148
+30.26.615.247 W srv          stop: cancel task, id_task = 150
+30.33.324.677 W srv          stop: cancel task, id_task = 154
+30.33.325.060 W srv          stop: cancel task, id_task = 153
+30.33.325.142 W srv          stop: cancel task, id_task = 155
+30.33.325.344 W srv          stop: cancel task, id_task = 162
+30.33.325.426 W srv          stop: cancel task, id_task = 161
+30.33.325.500 W srv          stop: cancel task, id_task = 160
+30.33.325.602 W srv          stop: cancel task, id_task = 159
+30.33.325.674 W srv          stop: cancel task, id_task = 152
+30.33.325.731 W srv          stop: cancel task, id_task = 158
+30.33.325.788 W srv          stop: cancel task, id_task = 156
+30.33.325.849 W srv          stop: cancel task, id_task = 157
+30.50.784.201 W srv          stop: cancel task, id_task = 212
+30.51.806.189 W srv          stop: cancel task, id_task = 214
+30.52.783.597 W srv          stop: cancel task, id_task = 215
+30.54.091.144 W srv          stop: cancel task, id_task = 218
+30.55.746.930 I slot print_timing: id  0 | task 34 | prompt eval time =   96755.39 ms /   128 tokens (  755.90 ms per token,     1.32 tokens per second)
+30.55.746.993 I slot print_timing: id  0 | task 34 |        eval time =   35471.97 ms /    32 tokens ( 1144.26 ms per token,     0.87 tokens per second)
+30.55.747.013 I slot print_timing: id  0 | task 34 |       total time =  132227.36 ms /   160 tokens
+30.55.747.420 I slot print_timing: id  0 | task 34 |    graphs reused =         31
+30.55.753.001 I slot      release: id  0 | task 34 | stop processing: n_tokens = 159, truncated = 0
+30.55.756.021 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 5502377526830
+30.55.781.531 I slot launch_slot_: id  0 | task 242 | processing task, is_child = 0
+30.57.779.540 I slot print_timing: id  0 | task 242 | prompt eval time =     636.60 ms /   128 tokens (    4.97 ms per token,   201.07 tokens per second)
+30.57.779.608 I slot print_timing: id  0 | task 242 |        eval time =    1360.77 ms /    32 tokens (   43.90 ms per token,    22.78 tokens per second)
+30.57.780.107 I slot print_timing: id  0 | task 242 |       total time =    1997.36 ms /   160 tokens
+30.57.780.115 I slot print_timing: id  0 | task 242 |    graphs reused =         61
+30.57.780.676 I slot      release: id  0 | task 242 | stop processing: n_tokens = 159, truncated = 0
+30.58.597.912 I slot get_availabl: id  0 | task -1 | selected slot by LRU, t_last = 5502379554505
+30.58.598.207 I slot launch_slot_: id  0 | task 278 | processing task, is_child = 0
+31.03.796.085 I slot print_timing: id  0 | task 278 | n_gen =    100, tg =  22.26 t/s, tg_3s =  22.48 t/s
+31.06.803.386 I slot print_timing: id  0 | task 278 | n_gen =    166, tg =  22.13 t/s, tg_3s =  21.95 t/s
+31.09.823.888 I slot print_timing: id  0 | task 278 | n_gen =    231, tg =  21.96 t/s, tg_3s =  21.52 t/s
+31.12.843.135 I slot print_timing: id  0 | task 278 | n_gen =    296, tg =  21.86 t/s, tg_3s =  21.53 t/s
+31.15.874.484 I slot print_timing: id  0 | task 278 | n_gen =    362, tg =  21.84 t/s, tg_3s =  21.77 t/s
+31.22.925.644 I slot print_timing: id  0 | task 278 | n_gen =    386, tg =  16.33 t/s, tg_3s =   3.40 t/s
+31.44.562.128 I slot print_timing: id  0 | task 278 | n_gen =    387, tg =   8.54 t/s, tg_3s =   0.05 t/s
+32.04.160.090 I slot print_timing: id  0 | task 278 | n_gen =    388, tg =   5.98 t/s, tg_3s =   0.05 t/s
+32.18.475.528 W srv          stop: cancel task, id_task = 742
+32.18.475.850 W srv          stop: cancel task, id_task = 743
+33.22.502.112 W srv          stop: cancel task, id_task = 751
+33.35.670.370 W srv          stop: cancel task, id_task = 278
+33.40.161.530 W srv          stop: cancel task, id_task = 754
+33.40.161.992 W srv          stop: cancel task, id_task = 759
+33.40.162.042 W srv          stop: cancel task, id_task = 756
+33.40.162.084 W srv          stop: cancel task, id_task = 761
+33.40.162.124 W srv          stop: cancel task, id_task = 758
+33.40.162.161 W srv          stop: cancel task, id_task = 757
+33.40.162.228 W srv          stop: cancel task, id_task = 755
+33.40.162.262 W srv          stop: cancel task, id_task = 760
+33.41.607.405 I slot print_timing: id  0 | task 278 | n_gen =    389, tg =   2.39 t/s, tg_3s =   0.01 t/s
+34.01.541.224 I srv    operator(): operator(): cleaning up before exit...
