@@ -1,0 +1,81 @@
+# Analysis-side identity of every benchmarked configuration.
+#
+# The cluster harness names a configuration by its *arm* id (configs/experiment.toml
+# [arms.*]). That id is frozen in the raw directory names and in every metadata.json,
+# so it is never renamed. This file maps each arm to the canonical, queryable
+# dimensions used by data/processed/, the notebooks and the figures:
+#
+#   configuration id   <backend>_<precision>          e.g. llama_cpp_int8
+#   backend            vllm | llama_cpp
+#   precision          bf16 | int8                    (numeric class of weights x activations)
+#   quantization       none | q8_0 | w8a8_rtn         (how the int8 weights were produced)
+#
+# Adding a configuration (e.g. when vLLM INT8 results arrive) needs no code change:
+# the arm must exist in configs/experiment.toml and have one table here.
+# Colours and markers are derived from backend and precision in
+# src/llm_backend_analysis/visualization/theme.py, never set per configuration.
+
+schema_version = 1
+
+[backends.vllm]
+label = "vLLM"
+version = "0.30.0 (official CPU image vllm-cpu-v0.30.0.sif)"
+server = "vllm serve (OpenAI-compatible, V1 engine, continuous batching)"
+
+[backends.llama_cpp]
+label = "llama.cpp"
+version = "commit 9655061 (gcc 14.2, GGML_AMX_* and AVX-512 enabled)"
+server = "llama-server (continuous batching, one slot per in-flight request)"
+
+[precisions.bf16]
+label = "BF16"
+description = "bfloat16 weights and activations"
+
+[precisions.int8]
+label = "INT8"
+description = "int8 weights x int8 activations (dynamic activation quantization)"
+
+[configurations.vllm_bf16]
+arm = "vllm-bf16"
+backend = "vllm"
+precision = "bf16"
+quantization = "none"
+weight_format = "safetensors (HF snapshot)"
+kv_cache_dtype = "bf16"
+amx_path = "BF16 tiles for weight GEMMs and attention"
+tuning_default_variant = "mnbt4096"
+status = "measured"
+
+[configurations.llama_cpp_bf16]
+arm = "llamacpp-bf16"
+backend = "llama_cpp"
+precision = "bf16"
+quantization = "none"
+weight_format = "GGUF BF16 (lossless conversion of the same snapshot)"
+kv_cache_dtype = "f16"
+amx_path = "none: llama.cpp has no BF16 AMX kernel (AVX-512-BF16 instead)"
+tuning_default_variant = "fa-on_ub512"
+status = "measured"
+
+[configurations.llama_cpp_int8]
+arm = "llamacpp-q8_0"
+backend = "llama_cpp"
+precision = "int8"
+quantization = "q8_0"
+weight_format = "GGUF Q8_0 (RTN, one scale per 32 weights, from the BF16 GGUF)"
+kv_cache_dtype = "f16"
+amx_path = "INT8 tiles for weight GEMMs with >= 2 rows; AVX-512 VNNI at 1 row"
+tuning_default_variant = "fa-on_ub512"
+status = "measured"
+
+[configurations.vllm_int8]
+arm = "vllm-w8a8"
+backend = "vllm"
+precision = "int8"
+quantization = "w8a8_rtn"
+weight_format = "compressed-tensors W8A8 (RTN, per-channel weights, dynamic per-token activations)"
+kv_cache_dtype = "bf16"
+amx_path = "INT8 tiles via vLLM's CPU int8_scaled_mm kernel"
+tuning_default_variant = "mnbt4096"
+# Checkpoint built and quality-checked on 2026-10-04; tuning and campaign pending.
+status = "pending"

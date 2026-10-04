@@ -1,0 +1,70 @@
+# Every campaign directory under data/raw/<kind>/<campaign>/ and what it may be used for.
+#
+# role:
+#   primary     the measurements the backend-selection analysis is built on
+#   tuning      backend tuning phase (feeds configs/experiment.toml [tuned.*])
+#   validation  checks of the method itself (instrument overhead, quality, smoke runs)
+#   superseded  an earlier attempt replaced by a later campaign; kept for provenance
+#   failed      an attempt that did not produce usable measurements
+#
+# Processing reads every campaign (nothing is silently dropped) and stamps each row
+# with its campaign and role; the notebooks select campaigns explicitly by role.
+# A campaign directory that is missing here makes `make validate` fail.
+
+schema_version = 1
+
+[online.main]
+role = "primary"
+description = "Experiment B: online closed-loop serving, concurrency sweeps, 3 repetitions per point (2026-10-03/04)."
+
+[online.tuning]
+role = "tuning"
+description = "Backend tuning grid, 8B balanced 512->512 at C=1 and C=16, 1 repetition, after the client fix."
+
+[online.pmu-overhead]
+role = "validation"
+description = "A/B/A/B check of the final 5-event PMU set (telemetry on/off), 1B balanced C=1."
+
+[online.smoke]
+role = "validation"
+description = "End-to-end validation matrix before the campaign (1 repetition)."
+
+[online.smoke-staging]
+role = "validation"
+description = "Validation of node-local model staging after the Lustre stall (8B)."
+
+[online.main-v0-lustre-stall]
+role = "failed"
+description = "First campaign attempt."
+reason = "Five jobs loaded the same 16 GB from the shared Lustre pool; vLLM startup stalled > 25 min. Models are staged to node-local NVMe since."
+
+[online.tuning-v1-queue-bug]
+role = "superseded"
+description = "First tuning run."
+reason = "Client bug: workers pulled from a shared queue and the steady window collapsed. Fixed (per-worker request sets) and tuning re-run as `tuning`."
+
+[online.pmu-overhead-v1-7events]
+role = "superseded"
+description = "Overhead check of the first 7-event PMU set."
+reason = "Two multiplexed events slowed vLLM decode by ~4.5%; replaced by the 5-event set checked in `pmu-overhead`."
+
+[offline.main]
+role = "primary"
+description = "Experiment A: offline engine microbenchmarks (llama-bench, llama-batched-bench, vllm bench latency/throughput)."
+
+[offline.smoke]
+role = "validation"
+description = "Offline smoke run, 1B balanced only."
+
+[stream.calibration]
+role = "primary"
+description = "Experiment 0: STREAM triad 4-96 GiB on the server layout under the same telemetry; sustainable-bandwidth baseline and PMU-proxy validation."
+
+[stream.calibration-v1-7events]
+role = "superseded"
+description = "Calibration with the first 7-event PMU set."
+reason = "Replaced by the 5-event set used in every campaign run."
+
+[quality.quality]
+role = "validation"
+description = "INT8 quality/AMX sanity check: 16 prompts x 64 greedy tokens for all four arms, 8B, on a cresco8_cpu node (Xeon Platinum 8592+, not Xeon Max)."
