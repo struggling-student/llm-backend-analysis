@@ -28,13 +28,10 @@ differences are stated next to the results.
 | `scripts/benchmark/prepare_models.py` | BF16 and Q8_0 GGUFs from the same HF snapshot vLLM serves |
 | `scripts/benchmark/tuning.py` | Small documented tuning phase |
 | `scripts/cluster/job.sbatch`, `scripts/cluster/submit.sh` | Slurm wrapper (cache-mode check, stale-server reaping, env capture, node health check) |
-| `scripts/analysis/` | Local processing (`process.py`) and figures (`figures.py`) |
+| `scripts/analysis/` | Local processing (`process.py`); analysis is being moved to notebooks |
 | `data/raw/environment/` | Per-node environment manifests written by `scripts/benchmark/capture_env.py` |
 | `data/raw/` | Mirror of the cluster outputs (`scripts/cluster/sync_results.sh`) |
 | `data/processed/` | Normalized CSV and Parquet tables (generated) |
-| `notebooks/analysis.ipynb` | Plotly analysis notebook |
-| `plots/` | Exported figures (HTML + PNG) |
-| `report/backend_selection_report.md` | Backend-selection report |
 
 ## Design summary
 
@@ -145,8 +142,6 @@ Locally:
 ```bash
 bash scripts/cluster/sync_results.sh            # cluster -> data/raw/
 uv run python scripts/analysis/process.py
-uv run python scripts/analysis/figures.py
-uv run jupyter lab notebooks/analysis.ipynb
 ```
 
 Each concurrency point writes `metadata.json`. It holds the exact server command, the
@@ -184,11 +179,8 @@ repository to the cluster, then:
 BC_CAMPAIGN=main bash scripts/cluster/submit.sh int8-campaign   # 5 online jobs + 1 offline job, 8B
 ```
 
-When the jobs finish, rerun `sync_results.sh`, `process.py`, `figures.py`, `summary_tables.py` and
-`build_notebook.py`. The figures and tables pick up the new arm automatically: dashed blue line, and an
-"int8 pair" ratio table. Then replace §13 of the report with the results.
+When the jobs finish, rerun `sync_results.sh` and `process.py` (the analysis notebooks are being rebuilt).
 
 ## Status and deviations
 
-See `report/backend_selection_report.md` for results. Deviations from the original plan
-are listed there with their reasons.
+Results and deviations are being moved from the retired report into notebooks and `docs/`.
