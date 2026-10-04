@@ -35,6 +35,17 @@ description = "bfloat16 weights and activations"
 label = "INT8"
 description = "int8 weights x int8 activations (dynamic activation quantization)"
 
+[quantizations.none]
+label = ""
+
+[quantizations.q8_0]
+label = "Q8_0"
+description = "llama.cpp Q8_0: symmetric RTN int8, one scale per block of 32 weights"
+
+[quantizations.w8a8_rtn]
+label = "W8A8"
+description = "compressed-tensors W8A8 RTN: per-output-channel int8 weights, dynamic per-token int8 activations"
+
 [configurations.vllm_bf16]
 arm = "vllm-bf16"
 backend = "vllm"

@@ -28,7 +28,7 @@ differences are stated next to the results.
 | `scripts/benchmark/prepare_models.py` | BF16 and Q8_0 GGUFs from the same HF snapshot vLLM serves |
 | `scripts/benchmark/tuning.py` | Small documented tuning phase |
 | `scripts/cluster/job.sbatch`, `scripts/cluster/submit.sh` | Slurm wrapper (cache-mode check, stale-server reaping, env capture, node health check) |
-| `scripts/analysis/` | Local processing (`process.py`); analysis is being moved to notebooks |
+| `src/llm_backend_analysis/` | Local processing package (`scripts/processing/build_processed_data.py` runs it) |
 | `data/raw/environment/` | Per-node environment manifests written by `scripts/benchmark/capture_env.py` |
 | `data/raw/` | Mirror of the cluster outputs (`scripts/cluster/sync_results.sh`) |
 | `data/processed/` | Normalized CSV and Parquet tables (generated) |
@@ -141,7 +141,7 @@ Locally:
 
 ```bash
 bash scripts/cluster/sync_results.sh            # cluster -> data/raw/
-uv run python scripts/analysis/process.py
+uv run python scripts/processing/build_processed_data.py
 ```
 
 Each concurrency point writes `metadata.json`. It holds the exact server command, the
@@ -179,7 +179,7 @@ repository to the cluster, then:
 BC_CAMPAIGN=main bash scripts/cluster/submit.sh int8-campaign   # 5 online jobs + 1 offline job, 8B
 ```
 
-When the jobs finish, rerun `sync_results.sh` and `process.py` (the analysis notebooks are being rebuilt).
+When the jobs finish, rerun `sync_results.sh` and `scripts/processing/build_processed_data.py` (the analysis notebooks are being rebuilt).
 
 ## Status and deviations
 
