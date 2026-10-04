@@ -1,0 +1,237 @@
+# Backend-selection experiment: vLLM vs llama.cpp on Xeon Max (cache mode).
+#
+# Single source of truth for every parameter the scripts use. Paths may use
+# ${VAR} references, expanded from the environment (configs/cresco8.env).
+# Anything a run actually used is copied into that run's metadata.json, so this
+# file can evolve without losing what a past run did.
+
+schema_version = "1.0"
+experiment = "backend-selection-v2"
+
+# ---------------------------------------------------------------------------
+# Hardware layout. Both backends get exactly the same socket, cores and memory
+# node. The client, telemetry sampler and orchestrator run on the other socket
+# so they neither steal cycles from the server nor touch socket-0 memory.
+# ---------------------------------------------------------------------------
+[topology]
+memory_mode = "cache"            # HBM as memory-side cache in front of DDR
+partition = "cresco8_hbm"        # cresco8-hbm01..13 are cache-mode nodes
+socket = 0
+server_cpus = "0-55"             # affinity of the whole server process tree
+compute_cpus = "0-54"            # OpenMP compute threads, one per core
+compute_threads = 55
+frontend_cpu = 55                # left to the HTTP front end in both servers
+server_mem_node = 0              # numactl --membind
+client_cpus = "100-111"          # socket 1
+client_mem_node = 1
+
+# ---------------------------------------------------------------------------
+# Models. Same Hugging Face snapshot feeds both backends: vLLM reads the
+# safetensors directly, llama.cpp reads GGUFs converted from that snapshot.
+# ---------------------------------------------------------------------------
+[models.llama31_8b]
+hf_id = "meta-llama/Llama-3.1-8B-Instruct"
+revision = "0e9e39f249a16976918f6564b8830bc894c89659"
+snapshot = "${BC_HF_CACHE}/models--meta-llama--Llama-3.1-8B-Instruct/snapshots/0e9e39f249a16976918f6564b8830bc894c89659"
+served_name = "llama31-8b"
+params = 8.03e9
+layers = 32
+kv_heads = 8
+head_dim = 128
+kv_bytes_per_token = 131072      # 32 layers * 8 kv heads * 128 * (K,V) * 2 B
+weight_bytes_bf16 = 16060522496  # sum of safetensors tensor sizes
+# Bytes one forward step streams: all tensors except the input-embedding table
+# (only C rows of it are gathered); from file headers. w8a8 is filled from
+# models/llama31_8b/w8a8-rtn/manifest.json after scripts/quantize_w8a8.py.
+step_weight_bytes = { bf16 = 15009849344, q8_0 = 7974764800, w8a8 = 8033280000 }
+bos_token_id = 128000
+ordinary_vocab = 128000          # ids >= 128000 are special tokens
+gguf_dir = "${BC_DATA}/models/llama31_8b"
+gguf = { bf16 = "llama31-8b-instruct-bf16.gguf", q8_0 = "llama31-8b-instruct-q8_0.gguf" }
+w8a8_dir = "${BC_DATA}/models/llama31_8b/w8a8-rtn"   # scripts/quantize_w8a8.py
+primary = true
+
+[models.llama32_1b]
+hf_id = "meta-llama/Llama-3.2-1B-Instruct"
+revision = "9213176726f574b556790deb65791e0c5aa438b6"
+snapshot = "${BC_HF_CACHE}/models--meta-llama--Llama-3.2-1B-Instruct/snapshots/9213176726f574b556790deb65791e0c5aa438b6"
+served_name = "llama32-1b"
+params = 1.24e9
+layers = 16
+kv_heads = 8
+head_dim = 64
+kv_bytes_per_token = 32768       # 16 layers * 8 kv heads * 64 * (K,V) * 2 B
+weight_bytes_bf16 = 2471628800
+step_weight_bytes = { bf16 = 2471628800, q8_0 = 1313251456, w8a8 = 1499303936 }   # tied embeddings: the table is the lm_head
+bos_token_id = 128000
+ordinary_vocab = 128000
+gguf_dir = "${BC_DATA}/models/llama32_1b"
+gguf = { bf16 = "llama32-1b-instruct-bf16.gguf", q8_0 = "llama32-1b-instruct-q8_0.gguf" }
+w8a8_dir = "${BC_DATA}/models/llama32_1b/w8a8-rtn"
+primary = false
+
+# ---------------------------------------------------------------------------
+# Arms = backend + weight representation. Ratios are formed only inside a
+# `pair` (same precision class):
+#   pair "bf16": vllm-bf16  vs llamacpp-bf16  (identical BF16 weights)
+#   pair "int8": vllm-w8a8  vs llamacpp-q8_0  (int8 weights x int8 activations, RTN
+#                from the same BF16 snapshot; scale granularity differs, see
+#                scripts/quantize_w8a8.py)
+# ---------------------------------------------------------------------------
+[arms.vllm-bf16]
+backend = "vllm"
+pair = "bf16"
+precision = "bf16"
+weights = "safetensors bf16 (HF snapshot)"
+kv_cache_dtype = "bf16"
+amx_expected = true
+
+[arms.llamacpp-bf16]
+backend = "llamacpp"
+pair = "bf16"
+precision = "bf16"
+weights = "gguf bf16 (converted from the same snapshot, lossless)"
+gguf_variant = "bf16"
+build = "amx"                    # AMX build; BF16 weights still run AVX-512-BF16 kernels
+kv_cache_dtype = "f16"           # overridden by [tuned.llamacpp] if tuning picks bf16
+amx_expected = false
+
+[arms.llamacpp-q8_0]
+backend = "llamacpp"
+pair = "int8"
+precision = "q8_0"
+weights = "gguf q8_0 (quantized from the bf16 gguf)"
+gguf_variant = "q8_0"
+build = "amx"
+kv_cache_dtype = "f16"
+amx_expected = true
+
+[arms.vllm-w8a8]
+backend = "vllm"
+pair = "int8"
+precision = "w8a8"
+weights = "compressed-tensors W8A8 int8 (RTN per-channel weights, dynamic per-token activations) from the same snapshot"
+checkpoint = "w8a8_dir"          # model key holding the checkpoint directory (default: snapshot)
+kv_cache_dtype = "bf16"
+amx_expected = true              # AMX-INT8 via vLLM's CPU int8_scaled_mm kernel (check_cpu_sgl_kernel)
+added = "2026-10-04"
+
+# ---------------------------------------------------------------------------
+# Workload shapes (ISL -> OSL, tokens). Prompts are token-id lists, so both
+# servers receive exactly ISL tokens; ignore_eos + max_tokens fix OSL.
+# ---------------------------------------------------------------------------
+[workloads.decode]
+isl = 128
+osl = 512
+label = "Decode-heavy 128->512"
+
+[workloads.balanced]
+isl = 512
+osl = 512
+label = "Balanced 512->512"
+
+[workloads.prefill]
+isl = 4096
+osl = 128
+label = "Prefill-heavy 4096->128"
+
+[workloads.longctx]
+isl = 8192
+osl = 256
+label = "Long context 8192->256"
+# Enabled 2026-10-04 for the 8B model after the first results: with short contexts,
+# batching amortizes the weight read and memory traffic FALLS as concurrency rises.
+# Long contexts make KV reads (not amortized by batching) the growing term, which
+# is the regime in which concurrency can raise memory-system pressure.
+enabled = true
+
+[workloads.kvdecode]
+isl = 4096
+osl = 1024
+label = "Long-KV decode 4096->1024"
+# Added 2026-10-04 (8B only), after the planned shapes all showed memory traffic
+# falling with concurrency: 128/512->512 amortize the weight read, and 4096->128
+# and 8192->256 are prefill-dominated. Decode over a long, growing KV cache is the
+# regime in which per-step traffic grows with C (KV reads are per sequence). Same
+# shape as the c48-4096-1024 cell of the tiered-KV report.
+enabled = true
+
+# ---------------------------------------------------------------------------
+# Experiment B: online serving, closed loop.
+# ---------------------------------------------------------------------------
+[online]
+concurrency = [1, 2, 4, 8, 16, 32, 64]
+extend_concurrency = [128, 256]  # only while the last doubling still gained >= extend_min_gain
+extend_min_gain = 0.10
+plateau_gain = 0.05              # stop after two consecutive doublings below this gain
+repetitions = 3
+waves_small_c = 3                # requests per worker when C <= 16
+waves_large_c = 3                # requests per worker when C >= 32 (3: window ~2 request durations)
+min_requests = 8
+stagger = true                   # spread first requests over one estimated request duration
+warmup_osl = 32
+max_point_seconds = 14400        # projected cost above this -> point skipped and logged
+ctx_margin = 64                  # extra tokens per sequence slot
+seed = 20261003
+port_vllm = 8000
+port_llamacpp = 8080
+startup_timeout_s = 1800
+
+# ---------------------------------------------------------------------------
+# Experiment A: offline engine microbenchmarks.
+# ---------------------------------------------------------------------------
+[offline]
+batch1_repetitions = 3
+vllm_prefill_iterations = 10     # vllm bench latency --output-len 1 lasts ~0.1 s; more samples
+batched_sizes = [8, 32]
+batched_repetitions = 3
+vllm_throughput_prompts = 64     # vllm bench throughput, vLLM-only reference
+
+# ---------------------------------------------------------------------------
+# Backend settings. Defaults below are the pre-tuning starting point; the
+# tuning phase (scripts/tuning.sbatch) writes its choice into [tuned.*] and the
+# report documents every configuration that was tried.
+# ---------------------------------------------------------------------------
+[backend.vllm]
+image = "${BC_IMAGES}/vllm-cpu-v0.30.0.sif"
+dtype = "bfloat16"
+max_num_seqs = 256
+max_num_batched_tokens = 4096
+kv_space_headroom = 1.15         # KV pool = C * max_model_len * kv_bytes * headroom
+extra_args = []
+
+[backend.llamacpp]
+bin_dir_amx = "${BC_LLAMACPP}/build-amx/bin"   # amx/bin holds byte-identical copies of 3 of these tools
+bin_dir_avx512 = "${BC_LLAMACPP}/build-avx512/bin"
+src_dir = "${BC_LLAMACPP}/src"
+batch_size = 2048
+ubatch_size = 512
+flash_attn = "auto"
+load_mode = "none"               # weights in anonymous memory, like vLLM
+poll = 50
+extra_args = []
+
+# Tuning phase 2026-10-03/04 (scripts/tuning.py, 8B, balanced 512->512, C=1 and 16,
+# processed_results/tuning.csv). Rule: highest steady total tok/s at C=16 unless
+# C=1 TPOT worsens by >5% vs the default. Differences below ~2.5% are within
+# single-repetition noise; the rule was applied as declared anyway.
+[tuned.vllm]
+max_num_batched_tokens = 8192    # 445 vs 442 (4096) vs 442 (2048) tok/s; C=1 TPOT +1.5%
+
+[tuned.llamacpp]
+flash_attn = "on"                # BF16 +17%, Q8_0 +23% throughput at C=16 vs off
+
+[tuned.llamacpp-bf16]
+ubatch_size = 512                # 142.8 vs 141.6 tok/s (2048); KV bf16 -19% -> keep f16
+
+[tuned.llamacpp-q8_0]
+ubatch_size = 2048               # 231.2 vs 225.9 tok/s (512); KV bf16 -19% -> keep f16
+
+# ---------------------------------------------------------------------------
+# Telemetry.
+# ---------------------------------------------------------------------------
+[telemetry]
+interval_s = 1.0
+idle_baseline_s = 10
+pmu = true
+uncore = "auto"                  # used only if the kernel allows system-wide uncore events
