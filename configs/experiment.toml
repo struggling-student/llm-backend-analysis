@@ -189,7 +189,7 @@ vllm_throughput_prompts = 64     # vllm bench throughput, vLLM-only reference
 
 # ---------------------------------------------------------------------------
 # Backend settings. Defaults below are the pre-tuning starting point; the
-# tuning phase (scripts/tuning.sbatch) writes its choice into [tuned.*] and the
+# tuning phase (scripts/benchmark/tuning.py) feeds its choice into [tuned.*]; the
 # report documents every configuration that was tried.
 # ---------------------------------------------------------------------------
 [backend.vllm]
@@ -211,8 +211,8 @@ load_mode = "none"               # weights in anonymous memory, like vLLM
 poll = 50
 extra_args = []
 
-# Tuning phase 2026-10-03/04 (scripts/tuning.py, 8B, balanced 512->512, C=1 and 16,
-# processed_results/tuning.csv). Rule: highest steady total tok/s at C=16 unless
+# Tuning phase 2026-10-03/04 (scripts/benchmark/tuning.py, 8B, balanced 512->512, C=1 and 16,
+# data/processed/tuning.csv). Rule: highest steady total tok/s at C=16 unless
 # C=1 TPOT worsens by >5% vs the default. Differences below ~2.5% are within
 # single-repetition noise; the rule was applied as declared anyway.
 [tuned.vllm]

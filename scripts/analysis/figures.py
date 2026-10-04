@@ -240,7 +240,7 @@ def main() -> int:
     global CAMPAIGN
     CAMPAIGN = args.campaign
     root = Path(args.root)
-    proc, out = root / "processed_results", Path(args.out) if args.out else root / "plots"
+    proc, out = root / "data" / "processed", Path(args.out) if args.out else root / "plots"
     out.mkdir(exist_ok=True)
     stream = pd.read_csv(proc / "stream_calibration.csv") if (proc / "stream_calibration.csv").stat().st_size > 1 else pd.DataFrame()
     stream_figure(stream, out)

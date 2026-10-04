@@ -135,12 +135,12 @@ def window_aggregate(tel: pd.DataFrame, start: float, end: float) -> dict[str, A
 # --------------------------------------------------------------------------- STREAM
 def process_stream(root: Path) -> pd.DataFrame:
     rows = []
-    for f in sorted((root / "raw_results" / "stream").glob("*/stream_calibration.json")):
+    for f in sorted((root / "data" / "raw" / "stream").glob("*/stream_calibration.json")):
         d = json.loads(f.read_text())
         for r in d["runs"]:
             if not r.get("stream"):
                 continue
-            tel_path = root / "telemetry" / "stream" / f.parent.name / Path(r["telemetry_file"]).name
+            tel_path = root / "data" / "raw" / "telemetry" / "stream" / f.parent.name / Path(r["telemetry_file"]).name
             _, tel = read_telemetry(tel_path)
             # steady part = the last `steady_seconds_total` seconds before the process ended
             end = r["t_end_mono"]
@@ -190,7 +190,7 @@ def ci95(values: pd.Series) -> float:
 
 def process_online(root: Path, cfg: dict[str, Any], lookup) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     rep_rows, req_rows, tel_frames = [], [], []
-    for meta_path in sorted((root / "raw_results" / "online").glob("*/*/*/*/c*/metadata.json")):
+    for meta_path in sorted((root / "data" / "raw" / "online").glob("*/*/*/*/c*/metadata.json")):
         if ".attempt-" in str(meta_path):
             continue
         meta = json.loads(meta_path.read_text())
@@ -199,7 +199,7 @@ def process_online(root: Path, cfg: dict[str, Any], lookup) -> tuple[pd.DataFram
         campaign, model, arm_dir, workload, cdir = meta_path.parts[-6:-1]
         c = meta["concurrency"]
         mcfg = cfg["models"][model]
-        tel_path = root / "telemetry" / "online" / campaign / model / arm_dir / workload / f"{cdir}.jsonl"
+        tel_path = root / "data" / "raw" / "telemetry" / "online" / campaign / model / arm_dir / workload / f"{cdir}.jsonl"
         _, tel = read_telemetry(tel_path)
         keys = {"campaign": campaign, "model": model, "arm": meta["arm"], "arm_dir": arm_dir, "backend": meta["backend"],
                 "precision": meta["precision"], "workload": workload, "isl": meta["isl"], "osl": meta["osl"],
@@ -338,13 +338,13 @@ def aggregate_points(reps: pd.DataFrame, reqs: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------------------------------- offline
 def process_offline(root: Path) -> pd.DataFrame:
     rows = []
-    for f in sorted((root / "raw_results" / "offline").glob("*/*/*/*/offline.json")):
+    for f in sorted((root / "data" / "raw" / "offline").glob("*/*/*/*/offline.json")):
         d = json.loads(f.read_text())
         keys = {"campaign": f.parts[-5], "model": d["model"], "arm": d["arm"], "backend": d["backend"],
                 "precision": d["precision"], "workload": d["workload"], "isl": d["isl"], "osl": d["osl"]}
         vllm_lat: dict[tuple[int, str], list[float]] = {}
         for run in d["runs"]:
-            tel_path = root / "telemetry" / Path(run["telemetry_file"]).relative_to(Path(run["telemetry_file"]).parents[5])
+            tel_path = root / "data" / "raw" / "telemetry" / Path(run["telemetry_file"]).relative_to(Path(run["telemetry_file"]).parents[5])
             tool = run["tool"]
             if tool == "llama-bench":
                 for r in run.get("rows", []):
@@ -400,7 +400,7 @@ def main() -> int:
     args = p.parse_args()
     root = Path(args.root)
     cfg = tomllib.loads((root / "configs" / "experiment.toml").read_text())
-    out = root / "processed_results"
+    out = root / "data" / "processed"
     out.mkdir(exist_ok=True)
     stream = process_stream(root)
     stream.to_csv(out / "stream_calibration.csv", index=False)

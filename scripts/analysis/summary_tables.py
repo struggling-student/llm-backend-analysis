@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-P = ROOT / "processed_results"
+P = ROOT / "data" / "processed"
 ARMS = ["vllm-bf16", "llamacpp-bf16", "vllm-w8a8", "llamacpp-q8_0"]
 NAMES = {"vllm-bf16": "vLLM BF16", "llamacpp-bf16": "llama.cpp BF16", "vllm-w8a8": "vLLM INT8 (W8A8)",
          "llamacpp-q8_0": "llama.cpp INT8 (Q8_0)"}
@@ -44,7 +44,7 @@ def main() -> None:
                 c1 = g[g.concurrency == 1].iloc[0] if (g.concurrency == 1).any() else None
                 pk = g.loc[g.total_tok_s_mean.idxmax()]
                 last = g.iloc[-1]
-                sweep = ROOT / "raw_results" / "online" / "main" / model / arm / wl / "sweep.json"
+                sweep = ROOT / "data" / "raw" / "online" / "main" / model / arm / wl / "sweep.json"
                 sw = __import__("json").loads(sweep.read_text()) if sweep.exists() else None
                 if not sweep.exists():
                     reason = "sweep incomplete (job running or not yet run)"

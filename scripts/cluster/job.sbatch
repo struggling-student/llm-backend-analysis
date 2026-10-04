@@ -1,6 +1,6 @@
 #!/bin/bash
-# Generic job wrapper: sbatch [opts] scripts/job.sbatch <script.py> [args...]
-# Submit through scripts/submit.sh, which exports BC_ROOT and sets the log path.
+# Generic job wrapper: sbatch [opts] scripts/cluster/job.sbatch <script.py> [args...]
+# Submit through scripts/cluster/submit.sh, which exports BC_ROOT and sets the log path.
 #SBATCH --job-name=bc
 #SBATCH --partition=cresco8_hbm
 #SBATCH --nodes=1
@@ -36,7 +36,7 @@ cleanup() { pkill -9 -u "$USER" -f "$ORPHANS" 2>/dev/null || true; rm -rf "$BC_L
 trap cleanup EXIT
 
 # 3. Environment manifest (versions, build flags, topology, PMU permissions, hashes).
-"$BC_PYTHON" environment/capture_env.py || echo "WARNING: capture_env failed" >&2
+"$BC_PYTHON" scripts/benchmark/capture_env.py || echo "WARNING: capture_env failed" >&2
 
 # 4. Node health check: 10 s STREAM triad on the server layout, so results
 #    from different (nominally identical) nodes can be checked for equivalence.

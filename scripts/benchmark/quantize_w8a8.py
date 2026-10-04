@@ -14,7 +14,7 @@ weights, and llama.cpp also quantizes token_embd and output) and the kernels.
 Both are recorded in the manifest.
 
 Run with the llm-compressor venv on a compute node (any AMX node; no GPU):
-  BC_JOB_PYTHON=$BC_DATA/venvs/llmcompressor/bin/python scripts/submit.sh job ... scripts/quantize_w8a8.py
+  BC_JOB_PYTHON=$BC_DATA/venvs/llmcompressor/bin/python scripts/cluster/submit.sh job ... scripts/benchmark/quantize_w8a8.py
 """
 
 from __future__ import annotations

@@ -15,8 +15,8 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-SCRIPTS = Path(__file__).resolve().parent
-ROOT = SCRIPTS.parent
+SCRIPTS = Path(__file__).resolve().parent  # scripts/benchmark
+ROOT = SCRIPTS.parents[1]
 CONFIG = ROOT / "configs" / "experiment.toml"
 
 _VAR = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
@@ -133,7 +133,7 @@ def run_capture(cmd: list[str] | str, timeout: float = 120) -> str:
 
 
 def host_facts() -> dict[str, Any]:
-    """Cheap per-run facts; the full manifest is environment/capture_env.sh."""
+    """Cheap per-run facts; the full manifest is scripts/benchmark/capture_env.py."""
     return {
         "hostname": socket.gethostname(),
         "slurm_job_id": os.environ.get("SLURM_JOB_ID"),

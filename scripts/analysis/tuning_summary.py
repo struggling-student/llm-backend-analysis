@@ -21,7 +21,7 @@ DEFAULTS = {"vllm-bf16": "mnbt4096", "vllm-w8a8": "mnbt4096", "llamacpp-bf16": "
 
 def main() -> int:
     rows = []
-    for meta_path in sorted((ROOT / "raw_results" / "online" / "tuning").glob("*/*/*/c*/metadata.json")):
+    for meta_path in sorted((ROOT / "data" / "raw" / "online" / "tuning").glob("*/*/*/c*/metadata.json")):
         m = json.loads(meta_path.read_text())
         arm_dir = meta_path.parts[-4]
         tag = arm_dir.split("__", 1)[1] if "__" in arm_dir else "default"
@@ -37,7 +37,7 @@ def main() -> int:
             row["error"] = m.get("error") or m.get("skip_reason")
         rows.append(row)
     df = pd.DataFrame(rows)
-    out = ROOT / "processed_results"
+    out = ROOT / "data" / "processed"
     out.mkdir(exist_ok=True)
     df.to_csv(out / "tuning.csv", index=False)
     if df.empty:

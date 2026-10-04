@@ -8,7 +8,7 @@ The converter script comes from the same llama.cpp source tree (commit) as the
 runtime binaries; it runs with the Python environment of the pinned llama.cpp
 container image, which carries the converter's dependencies. Outputs go to a
 new directory ($BC_DATA/models); earlier artifacts are never touched.
-Run on a compute node (via scripts/job.sbatch).
+Run on a compute node (via scripts/cluster/job.sbatch).
 """
 
 from __future__ import annotations

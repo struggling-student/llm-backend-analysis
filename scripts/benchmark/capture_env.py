@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record the software/hardware environment of a compute node for reproducibility.
 
-Run on the compute node at the start of every job (scripts/*.sbatch do this).
+Run on the compute node at the start of every job (scripts/cluster/job.sbatch does this).
 Writes $BC_DATA/environment/<host>-<jobid>.json. Expensive facts (SIF and GGUF
 SHA-256) are cached in $BC_DATA/environment/hashes.json and reused.
 """
@@ -15,7 +15,7 @@ import socket
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import bclib  # noqa: E402
 
 
