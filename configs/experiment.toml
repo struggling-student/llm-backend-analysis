@@ -227,9 +227,14 @@ ubatch_size = 512                # 142.8 vs 141.6 tok/s (2048); KV bf16 -19% -> 
 [tuned.llamacpp-q8_0]
 ubatch_size = 2048               # 231.2 vs 225.9 tok/s (512); KV bf16 -19% -> keep f16
 
-# Tuning 2026-10-10 (job 5316476, same grid and rule). All three within 0.3%: rule applied as declared.
+# Tuning 2026-10-10 (job 5316476, same grid and rule): 771.1 (2048) vs 770.4 (4096) vs 768.8 (8192)
+# tok/s at C=16, C=1 TPOT within 0.5%. The rule picked 2048, but with 2048-token prefill chunks the
+# warm-up of 16 concurrent 8192-token prompts inflates the client's request-duration estimate
+# (238 s vs ~40 s), the stagger exceeds a request and longctx C=16 had no steady window
+# (campaign main-int8-v1-mnbt2048). Deviation from the rule: 8192, as for vllm-bf16, so the two
+# vLLM arms differ only in precision. The grid shows no measurable throughput cost.
 [tuned.vllm-w8a8]
-max_num_batched_tokens = 2048    # 771.1 vs 770.4 (4096) vs 768.8 (8192) tok/s; C=1 TPOT +0.5%
+max_num_batched_tokens = 8192
 
 # ---------------------------------------------------------------------------
 # Telemetry.

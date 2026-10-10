@@ -48,6 +48,11 @@ role = "superseded"
 description = "Overhead check of the first 7-event PMU set."
 reason = "Two multiplexed events slowed vLLM decode by ~4.5%; replaced by the 5-event set checked in `pmu-overhead`."
 
+[online.main-int8-v1-mnbt2048]
+role = "superseded"
+description = "First vLLM W8A8 campaign (8B, 5 workloads), max_num_batched_tokens = 2048 as picked by the tuning rule (2026-10-10)."
+reason = "With 2048-token prefill chunks the warm-up overestimated the longctx C=16 request duration (238 s vs ~40 s); the stagger left no steady window and the sweep stopped. Re-run as `main` with 8192, as for vllm-bf16 (configs/experiment.toml [tuned.vllm-w8a8])."
+
 [offline.main]
 role = "primary"
 description = "Experiment A: offline engine microbenchmarks (llama-bench, llama-batched-bench, vllm bench latency/throughput)."
@@ -55,6 +60,11 @@ description = "Experiment A: offline engine microbenchmarks (llama-bench, llama-
 [offline.smoke]
 role = "validation"
 description = "Offline smoke run, 1B balanced only."
+
+[offline.main-int8-v1-mnbt2048]
+role = "superseded"
+description = "First vLLM W8A8 offline job (8B), max_num_batched_tokens = 2048; cancelled during the prefill workload."
+reason = "Replaced together with online `main-int8-v1-mnbt2048`; re-run as `main` with 8192."
 
 [stream.calibration]
 role = "primary"
