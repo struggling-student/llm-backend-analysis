@@ -14,4 +14,6 @@ Peak share of sustainable bandwidth,65% (single-request decode); traffic falls w
 Against llama.cpp's fastest configuration (INT8),vLLM BF16 peak ÷ llama.cpp INT8 peak 3.3×–6.1×,vLLM
 INT8 pair: throughput at equal high concurrency,vLLM ÷ llama.cpp 5.3×–8.1× at the highest common C,vLLM
 INT8 pair: best operating point vs best operating point (8B),vLLM ÷ llama.cpp 5.6×–9.8×,vLLM
+"Roofline: share of the socket's compute roof (best point, 8B)",vLLM 42%–44% of the measured AMX GEMM roof (56%–75% of its own projection kernels); llama.cpp 5%–33% of its roof,vLLM
+Roofline: memory-bound regimes,C=1 decode uses 52%–67% of the memory roof; long-KV decode cannot exceed 29 OP/byte vs a 85 OP/byte ridge,workload property (both)
 Measurement quality,"0 failed of 39,948 requests; median CV 0.17%",both

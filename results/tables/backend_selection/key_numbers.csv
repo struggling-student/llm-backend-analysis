@@ -38,3 +38,19 @@ traffic_ratio_c8_plus_int8,2.2×–4.4×,2.21549,4.37282,12,Memory traffic vLLM 
 vllm_int8_amx_busy_at_highest_c,9%–18%,0.0902667,0.179819,5,vLLM INT8 AMX busy fraction at its highest C
 llamacpp_int8_amx_busy,0.1%–4.0%,0.000543549,0.0402311,45,llama.cpp INT8 AMX busy fraction (all points)
 vllm_int8_over_bf16_throughput,1.46×–2.21×,1.46375,2.21351,37,"Throughput vLLM INT8 ÷ vLLM BF16 at equal C (8B, all points)"
+roof_memory_in_hbm_cache_gbs,502,502.319,502.319,1,"Roofline memory roof: STREAM traffic, working set in the HBM cache (GB/s, same counters)"
+roof_memory_beyond_hbm_cache_gbs,191,190.987,190.987,1,"Roofline memory roof: STREAM traffic, 96 GiB working set beyond the HBM cache (GB/s)"
+roof_amx_bf16_gemm_tops,42.5,42.5364,42.5364,1,"Best measured AMX BF16 GEMM, 55 server cores (TFLOP/s)"
+roof_amx_int8_gemm_tops,88.3,88.3408,88.3408,1,"Best measured AMX INT8 GEMM, 55 server cores (TOP/s)"
+roof_avx512_fma_tops,8.1,8.10863,8.10863,1,"AVX-512 FP32 FMA peak, 55 server cores (TFLOP/s; llama.cpp BF16's roof)"
+roof_vllm_bf16_kernels_tops,23.6,23.5645,23.5645,1,"vLLM BF16 projection kernels on the 8B shapes, operation-weighted (TFLOP/s)"
+roof_vllm_int8_kernels_tops,68.9,68.8513,68.8513,1,"vLLM INT8 projection kernels on the 8B shapes, operation-weighted (TOP/s)"
+roofline_c1_short_bw_share,52%–67%,0.521142,0.674029,8,"Share of the memory roof at C=1, short-prompt shapes, every configuration (8B)"
+roofline_vllm_best_share_gemm_roof,42%–44%,0.417689,0.436802,2,"vLLM best point ÷ measured AMX GEMM roof of its precision (8B, BF16 and INT8)"
+roofline_vllm_best_over_own_kernels,56%–75%,0.560446,0.753972,2,"vLLM best point ÷ its own projection kernels' ceiling (8B, BF16 and INT8)"
+roofline_llamacpp_best_share_compute_roof,5%–33%,0.047302,0.328573,2,"llama.cpp best point ÷ its compute roof (AVX-512 at BF16, AMX INT8 GEMM at Q8_0)"
+roofline_vllm_bf16_ridge_c_long_prompts,4–8,4,8,2,First C at which vLLM BF16 crosses the ridge on 4096→128 and 8192→256
+roofline_bf16_ridge_in_hbm_cache,85,84.68,84.68,1,Ridge point of the AMX BF16 GEMM roof against the in-cache memory roof (OP/byte)
+roofline_long_kv_decode_intensity_limit,29,28.8507,28.8507,1,"Largest decode-step intensity reachable at any batch size, 4096→1024 mean context (OP/byte, model)"
+roofline_decode_compute_bound_max_context,"1,419",1419.34,1419.34,1,Context length above which decode cannot reach the AMX BF16 ridge at any batch size (tokens)
+roofline_amx_model_agreement,0.84×–1.14×,0.844956,1.13539,57,"Measured AMX busy ÷ modelled AMX share, vLLM points with AMX busy ≥ 2% (operation-model check)"
