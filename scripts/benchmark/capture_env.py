@@ -4,10 +4,15 @@
 Run on the compute node at the start of every job (scripts/cluster/job.sbatch does this).
 Writes $BC_DATA/environment/<host>-<jobid>.json. Expensive facts (SIF and GGUF
 SHA-256) are cached in $BC_DATA/environment/hashes.json and reused.
+
+  capture_env.py --for-job <id>   retroactive manifest for an earlier job on this node whose
+                                  own capture failed; written as <host>-<id>.json and marked
+                                  with the capturing job and time (facts are as of now)
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -42,6 +47,9 @@ def cmake_flags(build_dir: Path) -> dict[str, str]:
 
 
 def main() -> int:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--for-job", help="earlier Slurm job on this node whose manifest is missing")
+    args = p.parse_args()
     cfg = bclib.load_config()
     data = Path(os.environ["BC_DATA"])
     env_dir = data / "environment"
@@ -107,7 +115,14 @@ def main() -> int:
         }
     # The per-job manifest first: the shared hash cache is only a cache, and jobs
     # starting together on several nodes update it concurrently.
-    out = env_dir / f"{socket.gethostname().split('.')[0]}-{os.environ.get('SLURM_JOB_ID', 'nojob')}.json"
+    job = os.environ.get("SLURM_JOB_ID", "nojob")
+    if args.for_job:
+        m["retroactive"] = {"for_job": args.for_job, "capture_job": job, "captured_at": m["timestamp"],
+                            "note": "the job's own capture failed; facts are as of captured_at, not of that job"}
+        job = args.for_job
+    out = env_dir / f"{socket.gethostname().split('.')[0]}-{job}.json"
+    if args.for_job and out.exists():
+        raise SystemExit(f"{out} exists; refusing to overwrite a manifest")
     bclib.write_json(out, m)
     print(out)
     try:
