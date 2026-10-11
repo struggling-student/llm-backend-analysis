@@ -32,3 +32,4 @@ lists every figure with its source notebook and caption; `make validate` checks 
 | `evidence_summary.csv` | criterion-by-criterion evidence used for the decision |
 | `curve_summary.csv` | per configuration, model and workload: C = 1 values, peak, knee, highest C |
 | `backend_ratio_bf16.csv` | vLLM BF16 ÷ llama.cpp BF16 total throughput at every common C |
+| `backend_ratio_int8.csv` | vLLM INT8 ÷ llama.cpp INT8 total throughput at every common C (8B) |

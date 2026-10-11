@@ -34,4 +34,7 @@ vllm_int8_peak_over_c1,2.6×–33.4×,2.59227,33.4237,5,"vLLM INT8 peak ÷ C=1 t
 llamacpp_int8_peak_over_c1,1.0×–6.6×,1.02846,6.64852,5,"llama.cpp INT8 peak ÷ C=1 throughput (8B, same shapes)"
 vllm_int8_peak_total_tok_s_8b,"1,208–2,553",1208.03,2552.92,5,vLLM INT8 peak total tokens/s (8B)
 throughput_ratio_tpot_budget_100ms_int8,5.4×–13.0×,5.36744,12.9548,5,"Output tok/s within a 100 ms median TPOT budget, vLLM ÷ llama.cpp (INT8 pair)"
+traffic_ratio_c8_plus_int8,2.2×–4.4×,2.21549,4.37282,12,Memory traffic vLLM ÷ llama.cpp (INT8 pair) at equal C ≥ 8
+vllm_int8_amx_busy_at_highest_c,9%–18%,0.0902667,0.179819,5,vLLM INT8 AMX busy fraction at its highest C
+llamacpp_int8_amx_busy,0.1%–4.0%,0.000543549,0.0402311,45,llama.cpp INT8 AMX busy fraction (all points)
 vllm_int8_over_bf16_throughput,1.46×–2.21×,1.46375,2.21351,37,"Throughput vLLM INT8 ÷ vLLM BF16 at equal C (8B, all points)"
