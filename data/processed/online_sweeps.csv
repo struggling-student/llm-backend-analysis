@@ -6,6 +6,7 @@ main,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,longctx,"1,2,4
 main,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,prefill,"1,2,4,8,16,32,64",8,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-bf16/prefill/sweep.json
 main,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,balanced,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-q8_0/balanced/sweep.json
 main,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,decode,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-q8_0/decode/sweep.json
+main,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,kvdecode,"1,2,4,8,16,32,64",64,skipped_budget,projected 21149s > max_point_seconds 14400,21148.984906117807,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-q8_0/kvdecode/sweep.json
 main,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,longctx,"1,2,4,8,16,32,64",4,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-q8_0/longctx/sweep.json
 main,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,prefill,"1,2,4,8,16,32,64",8,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/llamacpp-q8_0/prefill/sweep.json
 main,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,balanced,"1,2,4,8,16,32,64,128",128,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-bf16/balanced/sweep.json
@@ -13,6 +14,11 @@ main,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,decode,"1,2,4,8,16,32,64,128
 main,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,kvdecode,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-bf16/kvdecode/sweep.json
 main,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,longctx,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-bf16/longctx/sweep.json
 main,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,prefill,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-bf16/prefill/sweep.json
+main,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,balanced,"1,2,4,8,16,32,64,128",128,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-w8a8/balanced/sweep.json
+main,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,decode,"1,2,4,8,16,32,64,128,256",256,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-w8a8/decode/sweep.json
+main,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,kvdecode,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-w8a8/kvdecode/sweep.json
+main,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,longctx,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-w8a8/longctx/sweep.json
+main,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,prefill,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama31_8b/vllm-w8a8/prefill/sweep.json
 main,llama32_1b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,balanced,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/llamacpp-bf16/balanced/sweep.json
 main,llama32_1b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,decode,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/llamacpp-bf16/decode/sweep.json
 main,llama32_1b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,prefill,"1,2,4,8,16,32,64",8,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/llamacpp-bf16/prefill/sweep.json
@@ -22,6 +28,9 @@ main,llama32_1b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0,,prefill,"1,2,4
 main,llama32_1b,vllm_bf16,vllm,bf16,none,vllm-bf16,,balanced,"1,2,4,8,16,32,64,128,256",256,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/vllm-bf16/balanced/sweep.json
 main,llama32_1b,vllm_bf16,vllm,bf16,none,vllm-bf16,,decode,"1,2,4,8,16,32,64,128,256",256,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/vllm-bf16/decode/sweep.json
 main,llama32_1b,vllm_bf16,vllm,bf16,none,vllm-bf16,,prefill,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main/llama32_1b/vllm-bf16/prefill/sweep.json
+main-int8-v1-mnbt2048,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,balanced,"1,2,4,8,16,32,64,128",128,ok,,,0.05,0.1,14400,data/raw/online/main-int8-v1-mnbt2048/llama31_8b/vllm-w8a8/balanced/sweep.json
+main-int8-v1-mnbt2048,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,decode,"1,2,4,8,16,32,64,128,256",256,ok,,,0.05,0.1,14400,data/raw/online/main-int8-v1-mnbt2048/llama31_8b/vllm-w8a8/decode/sweep.json
+main-int8-v1-mnbt2048,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8,,prefill,"1,2,4,8,16,32,64",64,ok,,,0.05,0.1,14400,data/raw/online/main-int8-v1-mnbt2048/llama31_8b/vllm-w8a8/prefill/sweep.json
 main-v0-lustre-stall,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16,,balanced,"1,2,4,8,16,32,64",1,failed,,,0.05,0.1,14400,data/raw/online/main-v0-lustre-stall/llama31_8b/llamacpp-bf16/balanced/sweep.json
 main-v0-lustre-stall,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,balanced,"1,2,4,8,16,32,64",1,failed,,,0.05,0.1,14400,data/raw/online/main-v0-lustre-stall/llama31_8b/vllm-bf16/balanced/sweep.json
 main-v0-lustre-stall,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16,,prefill,"1,2,4,8,16,32,64",1,failed,,,0.05,0.1,14400,data/raw/online/main-v0-lustre-stall/llama31_8b/vllm-bf16/prefill/sweep.json
@@ -61,6 +70,9 @@ tuning,llama31_8b,llama_cpp_int8,llama_cpp,int8,q8_0,llamacpp-q8_0__fa-on_ub512_
 tuning,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16__mnbt2048,mnbt2048,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-bf16__mnbt2048/balanced/sweep.json
 tuning,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16__mnbt4096,mnbt4096,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-bf16__mnbt4096/balanced/sweep.json
 tuning,llama31_8b,vllm_bf16,vllm,bf16,none,vllm-bf16__mnbt8192,mnbt8192,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-bf16__mnbt8192/balanced/sweep.json
+tuning,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8__mnbt2048,mnbt2048,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-w8a8__mnbt2048/balanced/sweep.json
+tuning,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8__mnbt4096,mnbt4096,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-w8a8__mnbt4096/balanced/sweep.json
+tuning,llama31_8b,vllm_int8,vllm,int8,w8a8_rtn,vllm-w8a8__mnbt8192,mnbt8192,balanced,16,16,ok,,,0.05,0.1,14400,data/raw/online/tuning/llama31_8b/vllm-w8a8__mnbt8192/balanced/sweep.json
 tuning-v1-queue-bug,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16__fa-off_ub2048,fa-off_ub2048,balanced,16,16,ok,,,0.05,0.1,10800,data/raw/online/tuning-v1-queue-bug/llama31_8b/llamacpp-bf16__fa-off_ub2048/balanced/sweep.json
 tuning-v1-queue-bug,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16__fa-off_ub512,fa-off_ub512,balanced,16,16,ok,,,0.05,0.1,10800,data/raw/online/tuning-v1-queue-bug/llama31_8b/llamacpp-bf16__fa-off_ub512/balanced/sweep.json
 tuning-v1-queue-bug,llama31_8b,llama_cpp_bf16,llama_cpp,bf16,none,llamacpp-bf16__fa-on_ub2048,fa-on_ub2048,balanced,16,16,ok,,,0.05,0.1,10800,data/raw/online/tuning-v1-queue-bug/llama31_8b/llamacpp-bf16__fa-on_ub2048/balanced/sweep.json
