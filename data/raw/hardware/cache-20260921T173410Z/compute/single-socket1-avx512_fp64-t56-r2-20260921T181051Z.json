@@ -1,0 +1,50 @@
+{
+  "campaign_repetition": 2,
+  "command": [
+    "numactl",
+    "--physcpubind=56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111",
+    "--membind=1",
+    "/lpor1/store_0/usr/crainic/hw-bench-stage-v2/build/compute_peak",
+    "--mode",
+    "fp64",
+    "--iterations",
+    "300000000"
+  ],
+  "cpu_bind": "56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111",
+  "cpu_frequency_khz_after": 1908804.6875,
+  "cpu_frequency_khz_before": 1908809.5546875,
+  "environment": {
+    "KMP_AFFINITY": null,
+    "OMP_NUM_THREADS": "56",
+    "OMP_PLACES": "cores",
+    "OMP_PROC_BIND": "close"
+  },
+  "hostname": "cresco8x001.portici.enea.it",
+  "mem_bind": "1",
+  "memory_mode": "cache",
+  "memory_target": "registers",
+  "notes": "",
+  "pair_id": null,
+  "physical_cores": 56,
+  "result": {
+    "benchmark": "avx512_peak",
+    "checksum": 3496.01281655,
+    "dtype": "fp64",
+    "elapsed_seconds": 0.701526716352,
+    "iterations": 300000000,
+    "kernel": "avx512_fp64_fma",
+    "operations": 3225600000000,
+    "performance_gops": 4597.97171628,
+    "threads": 56,
+    "valid": true
+  },
+  "returncode": 0,
+  "schema_version": "1.0",
+  "socket": 1,
+  "socket_scope": "single",
+  "stderr": "",
+  "stdout": "{\"benchmark\":\"avx512_peak\",\"kernel\":\"avx512_fp64_fma\",\"dtype\":\"fp64\",\"threads\":56,\"iterations\":300000000,\"operations\":3225600000000,\"elapsed_seconds\":0.701526716352,\"performance_gops\":4597.97171628,\"checksum\":3496.01281655,\"valid\":true}\n",
+  "threads": 56,
+  "timestamp": "2026-09-21T18:10:52.028906+00:00",
+  "working_set_bytes": null
+}

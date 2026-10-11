@@ -1,0 +1,28 @@
+{
+  "kernel": "torch_int_mm",
+  "shape": [
+    6144,
+    6144,
+    6144
+  ],
+  "implementations": [
+    "gemm_api:"
+  ],
+  "returncode": 0,
+  "verbose_lines": [
+    "onednn_verbose,v1,info,oneDNN v3.12.0 (commit 80afa71049cd69a3df32adcccb623b12cd7baa22)",
+    "onednn_verbose,v1,info,cpu,runtime:OpenMP,nthr:55",
+    "onednn_verbose,v1,info,cpu,isa:Intel AVX10.1 and Intel AMX with bfloat16 and 8-bit integer support",
+    "onednn_verbose,v1,info,gpu,runtime:none",
+    "onednn_verbose,v1,info,graph,backend,0:dnnl_backend",
+    "onednn_verbose,v1,primitive,info,template:operation,engine,primitive,implementation,prop_kind,memory_descriptors,attributes,auxiliary,problem_desc,exec_time",
+    "onednn_verbose,v1,graph,info,template:operation,engine,partition_id,partition_kind,op_names,data_formats,logical_tensors,fpmath_mode,implementation,backend,exec_time",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,184.245",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,22.179",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,18.9971",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,17.708",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,16.3179",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,15.0391",
+    "onednn_verbose,v1,primitive,exec,cpu,gemm_api,,undef,src_s8::blocked:ab:f0 wei_s8::blocked:ab:f0 dst_s32::blocked:ab:f0,,,6144x6144:6144x6144,14.0359"
+  ]
+}

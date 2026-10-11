@@ -1,0 +1,28 @@
+{
+  "kernel": "torch_mm_bf16",
+  "shape": [
+    6144,
+    6144,
+    6144
+  ],
+  "implementations": [
+    "matmul:brg_matmul:avx10_1_512_amx"
+  ],
+  "returncode": 0,
+  "verbose_lines": [
+    "onednn_verbose,v1,info,oneDNN v3.12.0 (commit 80afa71049cd69a3df32adcccb623b12cd7baa22)",
+    "onednn_verbose,v1,info,cpu,runtime:OpenMP,nthr:55",
+    "onednn_verbose,v1,info,cpu,isa:Intel AVX10.1 and Intel AMX with bfloat16 and 8-bit integer support",
+    "onednn_verbose,v1,info,gpu,runtime:none",
+    "onednn_verbose,v1,info,graph,backend,0:dnnl_backend",
+    "onednn_verbose,v1,primitive,info,template:operation,engine,primitive,implementation,prop_kind,memory_descriptors,attributes,auxiliary,problem_desc,exec_time",
+    "onednn_verbose,v1,graph,info,template:operation,engine,partition_id,partition_kind,op_names,data_formats,logical_tensors,fpmath_mode,implementation,backend,exec_time",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,54.8469",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,26.7329",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,28.363",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,18.0461",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,18.9421",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,18.9839",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:bf16::blocked:ab::f0 wei:bf16::blocked:ab::f0 dst:bf16::blocked:ab::f0,attr-scratchpad:user,,6144x6144:6144x6144,18.6628"
+  ]
+}

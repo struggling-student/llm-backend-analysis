@@ -1,0 +1,31 @@
+{
+  "kernel": "vllm_onednn_int8",
+  "shape": [
+    512,
+    6144,
+    4096
+  ],
+  "implementations": [
+    "matmul:brg_matmul:avx10_1_512_amx",
+    "reorder:jit:uni"
+  ],
+  "returncode": 0,
+  "verbose_lines": [
+    "onednn_verbose,v1,info,oneDNN v3.13.0 (commit 0e2a5bfeef1bfbffc3137464606540233086ce9b)",
+    "onednn_verbose,v1,info,cpu,runtime:OpenMP,nthr:55",
+    "onednn_verbose,v1,info,cpu,isa:Intel AVX10.1 and Intel AMX with bfloat16 and 8-bit integer support",
+    "onednn_verbose,v1,info,gpu,runtime:none",
+    "onednn_verbose,v1,primitive,info,template:operation,engine,primitive,implementation,prop_kind,memory_descriptors,attributes,auxiliary,problem_desc,exec_time",
+    "onednn_verbose,v1,primitive,exec,cpu,reorder,jit:uni,undef,src:s8::blocked:ba::f0 dst:s8::blocked:BA16a32b4a::f0,,,4096x6144,2.12305",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,14.5869",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,5.43506",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.708984",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.739014",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.673828",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.751953",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.7771",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.705078",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.656982",
+    "onednn_verbose,v1,primitive,exec,cpu,matmul,brg_matmul:avx10_1_512_amx,undef,src:s8::blocked:ab::f0 wei:s8::blocked:BA16a32b4a::f0 dst:f32::blocked:ab::f0,attr-scratchpad:user attr-scales:wei:2:f32,,512x4096:4096x6144,0.691895"
+  ]
+}
