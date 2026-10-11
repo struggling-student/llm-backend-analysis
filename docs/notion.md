@@ -8,7 +8,7 @@ tables exported next to it, and embeds only figures from
 
 | Page (language) | Role | Quotes | Figures |
 | --- | --- | --- | --- |
-| *Backend selection: vLLM vs llama.cpp on Xeon Max with AMX* (EN) | detailed technical report: objective, setup, fairness, baseline, single request, scaling, serving, offline, AMX, BF16/INT8, memory traffic, limitations, interpretation, decision, INT8 plan | `key_numbers.csv`, `curve_summary.csv`, `backend_ratio_bf16.csv`, `evidence_summary.csv`, the 8B offline table of notebook 02, the traffic table of notebook 07 | all eleven exports |
+| *Backend selection: vLLM vs llama.cpp on Xeon Max with AMX* (EN) | detailed technical report: objective, setup, fairness, baseline, single request, scaling, serving, offline, AMX, BF16/INT8, memory traffic, limitations, interpretation, decision, INT8 plan | `key_numbers.csv`, `curve_summary.csv`, `backend_ratio_bf16.csv`, `backend_ratio_int8.csv`, `evidence_summary.csv`, the 8B offline table of notebook 02, the traffic table of notebook 07 | all twelve exports |
 | *Perché vLLM — sintesi della selezione del backend* (IT) | concise reasoning: obiettivo, confronto, evidenze, concorrenza e memoria, ruolo di llama.cpp, limitazioni, decisione | `key_numbers.csv`, `evidence_summary.csv` | `backend_ratio_vs_concurrency`, `throughput_and_memory_traffic` |
 | *MSc Thesis — HBM-Aware LLM Inference*, section "TL;DR — Perché vLLM" (IT) | short summary for the supervisors | `key_numbers.csv` | `throughput_vs_concurrency` |
 
@@ -23,6 +23,10 @@ ablation and of the attention/GEMM decomposition and is labelled as archived sup
 
 - 2026-10-04, analysis at commit `531abd8` (notebooks 01–09 and their exports), BF16 campaign plus llama.cpp INT8;
   vLLM INT8 pending.
+- 2026-10-11, analysis at commit `95a6a18`: vLLM INT8 pair added to all three pages (text, tables, evidence rows,
+  new `backend_ratio_vs_concurrency_int8` figure). The Notion API cannot replace existing image blocks, so each
+  regenerated figure was inserted below its predecessor with a "supersedes the figure above" note; the older images
+  are to be deleted by hand (8 on the detailed page, 1 on the Italian summary, 1 on the TL;DR).
 
 ## Updating after new results
 
