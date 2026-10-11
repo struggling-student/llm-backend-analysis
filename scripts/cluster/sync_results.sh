@@ -23,4 +23,12 @@ rsync -a "$HOST:$REMOTE/environment/" "$RAW/environment/nodes/"
 rsync -a "$HOST:$REMOTE/node_checks/" "$RAW/environment/node_checks/" 2>/dev/null || true
 rsync -a --include '*/' --include 'manifest.json' --include 'preparation.log' --exclude '*' \
   "$HOST:$REMOTE/models/" "$RAW/environment/models/"
+# Hardware compute ceilings from hw-bench (cache-mode campaign used by notebook 10): full-socket, 56-thread records only.
+# (The GEMM-ceiling job writes to $BC_DATA/raw_results/hardware/ and arrives with the raw_results rsync above.)
+HW_CAMPAIGN="${BC_HW_CAMPAIGN:-cache-20260921T173410Z}"
+HW_REMOTE="$(ssh "$HOST" 'echo /lpor1/store_0/usr/$USER/results/hw-roofline')/$HW_CAMPAIGN"
+mkdir -p "$RAW/hardware/$HW_CAMPAIGN/compute" "$RAW/hardware/$HW_CAMPAIGN/system"
+rsync -a --include 'single-socket*-t56-*.json' --exclude '*' "$HOST:$HW_REMOTE/compute/" "$RAW/hardware/$HW_CAMPAIGN/compute/"
+rsync -a --include 'topology.json' --include 'build_metadata.json' --include 'system.txt' --exclude '*' \
+  "$HOST:$HW_REMOTE/system/" "$RAW/hardware/$HW_CAMPAIGN/system/"
 echo "synced into $RAW"

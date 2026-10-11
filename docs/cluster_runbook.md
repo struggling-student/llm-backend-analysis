@@ -67,6 +67,17 @@ make checksums      # record the new raw files; refuses if an existing raw file 
 make data notebooks validate
 ```
 
+## GEMM ceilings (roofline compute roofs, notebook 10)
+
+```bash
+bash scripts/cluster/submit.sh job 01:00:00 gemm scripts/benchmark/gemm_ceilings.py --campaign gemm-ceilings-<date>
+```
+
+About 17 minutes on one HBM node. Results go to `$BC_DATA/raw_results/hardware/<campaign>/` and arrive with `make sync`;
+declare the campaign in `data/metadata/campaigns.toml`. The first run (job 5317636, 2026-10-11) was submitted from a
+staged copy of the working tree on Lustre (`$BC_STORE/staging/llm-backend-analysis-gemm-20261011/`, with a
+`STAGED_FROM.txt`), because these scripts were not yet committed.
+
 ## INT8 pair: vLLM W8A8 vs llama.cpp Q8_0
 
 Already done: W8A8 checkpoints in `$BC_DATA/models/<model>/w8a8-rtn/` (built by
