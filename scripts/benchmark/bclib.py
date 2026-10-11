@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import tomllib
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -93,12 +94,18 @@ def mono() -> float:
 
 
 def write_json(path: Path, obj: Any) -> None:
+    """Atomic write. The temp name is unique per writer (jobs on several nodes may
+    write the same shared file at once), so each os.replace is its own."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w") as f:
-        json.dump(obj, f, indent=2, sort_keys=False, default=str)
-        f.write("\n")
-    os.replace(tmp, path)
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with open(tmp, "x") as f:
+            json.dump(obj, f, indent=2, sort_keys=False, default=str)
+            f.write("\n")
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 def write_jsonl_gz(path: Path, rows: list[dict[str, Any]]) -> None:

@@ -47,7 +47,11 @@ def main() -> int:
     env_dir = data / "environment"
     env_dir.mkdir(parents=True, exist_ok=True)
     hashes_path = env_dir / "hashes.json"
-    hashes = json.loads(hashes_path.read_text()) if hashes_path.exists() else {}
+    try:
+        hashes = json.loads(hashes_path.read_text()) if hashes_path.exists() else {}
+    except (OSError, ValueError) as exc:  # only a cache: recompute rather than fail
+        print(f"WARNING: ignoring unreadable {hashes_path}: {exc}", file=sys.stderr)
+        hashes = {}
 
     sh = bclib.run_capture
     lc = cfg["backend"]["llamacpp"]
@@ -101,10 +105,15 @@ def main() -> int:
             "gguf": {v: {"path": p, "sha256": cached_sha(p, hashes), "bytes": Path(p).stat().st_size if Path(p).exists() else None}
                      for v, p in ggufs.items()},
         }
-    bclib.write_json(hashes_path, hashes)
+    # The per-job manifest first: the shared hash cache is only a cache, and jobs
+    # starting together on several nodes update it concurrently.
     out = env_dir / f"{socket.gethostname().split('.')[0]}-{os.environ.get('SLURM_JOB_ID', 'nojob')}.json"
     bclib.write_json(out, m)
     print(out)
+    try:
+        bclib.write_json(hashes_path, hashes)
+    except OSError as exc:
+        print(f"WARNING: could not update {hashes_path}: {exc}", file=sys.stderr)
     return 0
 
 
