@@ -1,0 +1,8 @@
+ceiling,label,basis,tops,tops_measured_socket,measured_threads,n_records,kernel
+amx_int8_peak,AMX INT8 tile peak,measured,214.211,218.106,56,5,amx_int8_dot
+amx_bf16_peak,AMX BF16 tile peak,derived: ½ × AMX INT8 tile peak,107.106,,,,
+amx_int8_gemm,AMX INT8 GEMM,"measured: best of 48 GEMM configurations (vllm_sgl_int8, 8192×28672×4096, vllm_pinned)",88.3408,88.3408,55,3,vllm_sgl_int8
+vllm_int8_kernels,vLLM INT8 projection kernels,"measured: vllm_sgl_int8 over the 4 projection shapes, operation-weighted (M = 8192, vllm_pinned)",68.8513,,,,vllm_sgl_int8
+amx_bf16_gemm,AMX BF16 GEMM,"measured: best of 27 GEMM configurations (vllm_onednn_bf16, 2048×4096×4096, vllm_pinned)",42.5364,42.5364,55,3,vllm_onednn_bf16
+vllm_bf16_kernels,vLLM BF16 projection kernels,"measured: vllm_onednn_bf16 over the 4 projection shapes, operation-weighted (M = 2048, vllm_pinned)",23.5645,,,,vllm_onednn_bf16
+avx512_fma,AVX-512 FP32 FMA,measured,8.10863,8.25606,56,5,avx512_fp32_fma

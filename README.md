@@ -15,6 +15,8 @@ run on.
 > every concurrency, including a single request. Concurrency does *not* by itself raise total memory traffic for
 > either backend. Evidence, numbers and caveats:
 > [`notebooks/backend_selection/09_backend_selection_summary.ipynb`](notebooks/backend_selection/09_backend_selection_summary.ipynb).
+> Where each backend sits against the socket's memory and compute roofs, and how concurrency and context length move
+> it: [`notebooks/backend_selection/10_roofline.ipynb`](notebooks/backend_selection/10_roofline.ipynb).
 
 ## Source-of-truth hierarchy
 
@@ -43,7 +45,7 @@ data/raw  ──make data──▶  data/processed  ──make notebooks──�
 │   │                         telemetry, environment)
 │   ├── metadata/             configurations.toml, campaigns.toml, raw_checksums.sha256
 │   └── processed/            CSV/Parquet tables built from raw data
-├── notebooks/backend_selection/   01–09: one analytical question per notebook
+├── notebooks/backend_selection/   01–10: one analytical question per notebook
 ├── results/
 │   ├── figures/backend_selection/ selected SVG + PNG exports and their manifest (figures.json)
 │   └── tables/backend_selection/  derived tables quoted by documentation (key_numbers.csv, …)
@@ -53,7 +55,7 @@ data/raw  ──make data──▶  data/processed  ──make notebooks──�
 │   ├── processing/           build_processed_data.py, summarize_tuning.py
 │   └── utilities/            execute_notebooks.py, validate_repository.py, raw_checksums.py
 ├── src/llm_backend_analysis/ installable package: data (registry, telemetry, processing, loaders, schema),
-│                             analysis (metrics, comparisons, memory, tuning), visualization (theme, plots, export)
+│                             analysis (metrics, comparisons, memory, roofline, tuning), visualization (theme, plots, export)
 ├── docs/                     methodology, cluster runbook, how to extend the analysis
 └── tests/
 ```

@@ -19,6 +19,7 @@ interactive Plotly output and a PNG fallback per figure (for viewers that do not
 | [`07_memory_traffic`](backend_selection/07_memory_traffic.ipynb) | Does concurrency raise memory-system pressure, and which backend keeps HBM busier? |
 | [`08_precision_int8`](backend_selection/08_precision_int8.ipynb) | What does INT8 change in each engine, and does the backend ranking hold for the INT8 pair? |
 | [`09_backend_selection_summary`](backend_selection/09_backend_selection_summary.ipynb) | Synthesis: measured result → interpretation → implication → decision |
+| [`10_roofline`](backend_selection/10_roofline.ipynb) | Roofline: which regimes are memory- or compute-bound, how close each backend gets to the socket's roofs, and how concurrency and context length move it |
 
 Primary model: Llama-3.1-8B-Instruct; Llama-3.2-1B-Instruct is the cross-check. Direct backend comparisons are formed
 within one precision: the BF16 pair (both models) and the INT8 pair (vLLM W8A8 vs llama.cpp Q8_0, 8B).

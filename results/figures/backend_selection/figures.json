@@ -1,4 +1,14 @@
 {
+  "amx_model_cross_check": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "Modelled arithmetic as a share of the AMX tile peak vs measured AMX busy fraction, every 8B point.",
+    "files": [
+      "amx_model_cross_check.svg",
+      "amx_model_cross_check.png"
+    ],
+    "width": 780,
+    "height": 520
+  },
   "backend_ratio_vs_concurrency": {
     "source_notebook": "notebooks/backend_selection/04_concurrency_scaling.ipynb",
     "caption": "vLLM BF16 ÷ llama.cpp BF16 throughput at equal C per workload, 8B and 1B.",
@@ -18,6 +28,16 @@
     ],
     "width": null,
     "height": 520
+  },
+  "decode_intensity_limit": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "Modelled decode-step intensity vs batch for the measured mean contexts, with AMX ridge points, 8B.",
+    "files": [
+      "decode_intensity_limit.svg",
+      "decode_intensity_limit.png"
+    ],
+    "width": null,
+    "height": 540
   },
   "latency_throughput_tradeoff": {
     "source_notebook": "notebooks/backend_selection/05_online_serving_latency.ipynb",
@@ -68,6 +88,46 @@
     ],
     "width": null,
     "height": 500
+  },
+  "ridge_ratio_vs_concurrency": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "Operational intensity divided by each configuration's ridge point vs concurrency (8B); above 1 = compute-bound side.",
+    "files": [
+      "ridge_ratio_vs_concurrency.svg",
+      "ridge_ratio_vs_concurrency.png"
+    ],
+    "width": 1100,
+    "height": 540
+  },
+  "roofline_by_configuration": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "Roofline of every 8B serving point per configuration, with measured memory roofs (STREAM in and beyond the HBM cache) and the compute roof of each configuration's kernels.",
+    "files": [
+      "roofline_by_configuration.svg",
+      "roofline_by_configuration.png"
+    ],
+    "width": null,
+    "height": 1030
+  },
+  "roofline_by_workload": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "vLLM and llama.cpp (BF16 and INT8) on one roofline per workload, 8B, paths over concurrency.",
+    "files": [
+      "roofline_by_workload.svg",
+      "roofline_by_workload.png"
+    ],
+    "width": null,
+    "height": 1030
+  },
+  "roofline_utilization": {
+    "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
+    "caption": "Share of the memory roof vs share of the compute roof for every 8B point, paths over concurrency.",
+    "files": [
+      "roofline_utilization.svg",
+      "roofline_utilization.png"
+    ],
+    "width": null,
+    "height": 560
   },
   "single_request_latency": {
     "source_notebook": "notebooks/backend_selection/03_single_request_performance.ipynb",

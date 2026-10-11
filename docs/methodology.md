@@ -111,6 +111,29 @@ An earlier 7-event set (two multiplexed events) measurably slowed vLLM and was r
 data are kept as superseded campaigns. If an administrator lowers `perf_event_paranoid` on a node, the sampler
 reads HBM/DDR CAS and near-memory-cache counters automatically.
 
+## Roofline (notebook 10)
+
+Each online point is placed by its **arithmetic rate** — operations of the tokens processed in the steady window,
+modelled from the architecture in `configs/experiment.toml` (2 per multiply-accumulate: projections, causal attention,
+LM head; `src/llm_backend_analysis/analysis/roofline.py`) — and its **operational intensity**, that rate divided by
+the *measured* memory traffic. The model is checked against the measured AMX busy cycles. Roofs:
+
+- **Memory:** STREAM triad on the server cores under the same PMU counters (Experiment 0), taken at each point's
+  modelled working set, so working sets beyond the 64 GiB HBM cache get the lower, DDR-dominated roof.
+- **Compute, instruction peaks:** the hardware-only roofline study *hw-bench* (2026-09-21, cache-mode node
+  `cresco8-hbm15`, one socket, 56 threads), scaled to the 55 server cores: AVX-512 FP32 FMA and the AMX INT8 tile peak;
+  the AMX BF16 tile peak is derived (½ × INT8) and labelled so. hw-bench's acceptance rules are applied in processing:
+  records from the login host and the superseded oneDNN affinity series are excluded, not deleted.
+- **Compute, GEMM roofs:** `scripts/benchmark/gemm_ceilings.py` (job 5317636, 2026-10-11) times AMX GEMMs on the server
+  layout inside the vLLM image: oneDNN BF16 and INT8 square GEMMs, and the kernels vLLM 0.30 runs for the Llama
+  projections (`onednn_mm` for BF16, `int8_scaled_mm_with_quant` for W8A8, plus the oneDNN W8A8 alternative) at the four
+  Llama-3.1-8B projection shapes and M = 512/2048/8192, with the affinity mask only and with vLLM-style KMP pinning,
+  3 repetitions each. The GEMM roof of each data type is the best measured GEMM whose AMX use is confirmed
+  (`torch._int_mm` is excluded: oneDNN runs it through its legacy gemm API and names no AMX implementation). A
+  second, engine-level ceiling for vLLM weights its projection kernels' rates by each projection's share of the
+  operations. Each configuration is bounded by the units its weight GEMMs run on (AMX BF16, AVX-512 for llama.cpp
+  BF16, AMX INT8).
+
 ## Deviations from the plan and incidents
 
 All affected data are kept in `data/raw/` and labelled in `data/metadata/campaigns.toml`.
