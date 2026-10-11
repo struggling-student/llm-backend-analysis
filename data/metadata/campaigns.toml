@@ -81,7 +81,7 @@ description = "Hardware compute ceilings from the hw-bench roofline study (2026-
 
 [hardware.gemm-ceilings-20261011]
 role = "primary"
-description = "GEMM ceilings on the server layout (Slurm job 5317636, scripts/benchmark/gemm_ceilings.py, run from a staged copy of the working tree): 55 threads on cores 0-54, membind 0, inside vllm-cpu-v0.30.0.sif. oneDNN BF16 (torch.mm) and INT8 (torch._int_mm) 6144^3, and vLLM's own projection kernels (onednn_mm BF16, int8_scaled_mm_with_quant and onednn_scaled_mm W8A8) at the Llama-3.1-8B projection shapes, M = 512/2048/8192; affinity mask only and vLLM-style KMP pinning; 3 repetitions. Gives the measured AMX INT8 GEMM roof (notebook 10)."
+description = "GEMM ceilings on the server layout (Slurm job 5317636, scripts/benchmark/gemm_ceilings.py as committed in 7513b80): 55 threads on cores 0-54, membind 0, inside vllm-cpu-v0.30.0.sif. oneDNN BF16 (torch.mm) and INT8 (torch._int_mm) 6144^3, and vLLM's own projection kernels (onednn_mm BF16, int8_scaled_mm_with_quant and onednn_scaled_mm W8A8) at the Llama-3.1-8B projection shapes, M = 512/2048/8192; affinity mask only and vLLM-style KMP pinning; 3 repetitions. Gives the measured AMX INT8 GEMM roof (notebook 10)."
 
 [quality.quality]
 role = "validation"
