@@ -396,3 +396,169 @@ def add_note(fig: go.Figure, text: str, *, x: float, y: float, row: int = 1, col
                        arrowhead=0, arrowwidth=1, arrowcolor=theme.TEXT_MUTED, ax=ax, ay=ay,
                        font=dict(size=11, color=theme.TEXT_PRIMARY), bgcolor="rgba(255,255,255,0.85)",
                        row=row, col=col)
+
+
+# --------------------------------------------------------------------------- roofline
+def _roof_lines(fig: go.Figure, *, compute: list[tuple[float, str, bool]], memory: Sequence[tuple[float, str]],
+                x_range: tuple[float, float], row: int, col: int) -> None:
+    """Compute roofs (horizontal, bold when `emphasized`) and memory roofs (slope 1) on a log-log panel.
+
+    Each compute roof starts at its ridge point with the highest memory roof; each memory roof
+    ends where it meets the highest compute roof drawn in the panel. Memory roofs are named in the
+    legend (roofline_grid), compute roofs by a label at their right end."""
+    x0, x1 = x_range
+    m_top = max(m for m, _ in memory)
+    c_top = max(c for c, _, _ in compute)
+    ref = fig.get_subplot(row, col)
+    xa, ya = ref.xaxis.plotly_name.replace("axis", ""), ref.yaxis.plotly_name.replace("axis", "")
+    for k, (gbs, _) in enumerate(sorted(memory, reverse=True)):
+        x_end = min(x1, c_top * 1e3 / gbs)
+        fig.add_trace(go.Scatter(x=[x0, x_end], y=[x0 * gbs / 1e3, x_end * gbs / 1e3], mode="lines",
+                                 line=MEMORY_ROOF_LINES[min(k, 1)], hoverinfo="skip", showlegend=False),
+                      row=row, col=col)
+    for tops, label, emphasized in compute:
+        x_start = max(x0, tops * 1e3 / m_top)
+        fig.add_trace(go.Scatter(x=[x_start, x1], y=[tops, tops], mode="lines",
+                                 line=dict(color=theme.TEXT_PRIMARY if emphasized else theme.TEXT_MUTED,
+                                           width=2.2 if emphasized else 1.1, dash="solid" if emphasized else "dot"),
+                                 hoverinfo="skip", showlegend=False), row=row, col=col)
+        fig.add_annotation(x=np.log10(x1), y=np.log10(tops), xref=xa, yref=ya, text=f"{label}: {tops:.3g}",
+                           showarrow=False, xanchor="right", yanchor="bottom" if emphasized else "top",
+                           yshift=1 if emphasized else -1,
+                           font=dict(size=10, color=theme.TEXT_PRIMARY if emphasized else theme.TEXT_SECONDARY))
+
+
+MEMORY_ROOF_LINES = [dict(color=theme.REFERENCE, width=1.6), dict(color=theme.REFERENCE, width=1.2, dash="dash")]
+COMPUTE_ROOF_LINES = {True: dict(color=theme.TEXT_PRIMARY, width=2.2), False: dict(color=theme.TEXT_MUTED, width=1.1, dash="dot")}
+
+
+def roofline_grid(points: pd.DataFrame, *, facet: str, facets: Sequence, cols: int, trace_key: str,
+                  roofs: dict, memory: Sequence[tuple[float, str]], title: str, subtitle: str | None = None,
+                  facet_titles: dict | None = None, x_range: tuple[float, float] = (0.5, 2000),
+                  y_range: tuple[float, float] = (0.15, 300), label_cs: Sequence[int] = (1,),
+                  compute_legend: Sequence[str] = ("Compute roof of the configuration's kernels",
+                                                   "Other compute roof (reference)"),
+                  height: int | None = None) -> go.Figure:
+    """Log-log roofline panels: one path per `trace_key` value through its concurrency points.
+
+    `roofs[facet_value]` lists (TOP/s, label, emphasized) compute roofs for that panel; `memory`
+    lists (GB/s, label) memory roofs shared by all panels. Marker size grows with C; the first
+    and last C of each path are labelled."""
+    rows = int(np.ceil(len(facets) / cols))
+    titles = [(facet_titles or {}).get(f) or _facet_title(facet, f) for f in facets]
+    fig = make_subplots(rows=rows, cols=cols, subplot_titles=titles, horizontal_spacing=0.06, vertical_spacing=0.11,
+                        shared_xaxes="all", shared_yaxes="all")
+    fig.update_layout(height=height or (230 + 400 * rows))
+    keys = (registry.configuration_order() if trace_key == "configuration_id" else registry.workload_order())
+    style = theme.configuration_style if trace_key == "configuration_id" else theme.workload_style
+    shown = set()
+    for i, fv in enumerate(facets):
+        r, c = i // cols + 1, i % cols + 1
+        _roof_lines(fig, compute=roofs[fv], memory=memory, x_range=x_range, row=r, col=c)
+        d = points[points[facet] == fv]
+        for key in [k for k in keys if k in set(d[trace_key])]:
+            g = d[d[trace_key] == key].sort_values("concurrency")
+            st = style(key)
+            last_c = int(g["concurrency"].max())
+            text = [f"C{int(cc)}" if (int(cc) in label_cs or int(cc) == last_c) else "" for cc in g["concurrency"]]
+            custom = np.column_stack([g["concurrency"], g["mem_total_gbs_mean"], g["bw_utilization"],
+                                      g["compute_utilization"], g["regime"], g["working_set_gib_model"]])
+            fig.add_trace(go.Scatter(
+                x=g["intensity"], y=g["op_rate_tops"], mode="lines+markers+text", text=text,
+                textposition="bottom right", textfont=dict(size=9, color=st.color),
+                name=st.name, legendgroup=key, showlegend=key not in shown,
+                line=dict(color=st.color, width=1.6, dash=st.dash),
+                marker=dict(color=st.color, symbol=st.symbol, size=5 + 1.4 * np.log2(g["concurrency"]),
+                            line=dict(color=st.color, width=1.2)),
+                customdata=custom,
+                hovertemplate=(f"<b>{st.name}</b> · {_facet_title(facet, fv, compact=False)}<br>C = %{{customdata[0]}}"
+                               "<br>intensity: %{x:.3g} OP/byte<br>arithmetic: %{y:.3g} TOP/s"
+                               "<br>memory traffic: %{customdata[1]:.0f} GB/s"
+                               "<br>share of memory roof: %{customdata[2]:.0%}<br>share of compute roof: %{customdata[3]:.0%}"
+                               "<br>%{customdata[4]} · working set %{customdata[5]:.0f} GiB<extra></extra>")),
+                row=r, col=c)
+            shown.add(key)
+    legend = [(f"Memory roof: {label}", MEMORY_ROOF_LINES[min(k, 1)])
+              for k, (_, label) in enumerate(sorted(memory, reverse=True))]
+    kinds = {e for rf in roofs.values() for _, _, e in rf}
+    legend += [(name, COMPUTE_ROOF_LINES[e]) for name, e in zip(compute_legend, (True, False)) if e in kinds]
+    for k, (name, line) in enumerate(legend):
+        fig.add_trace(go.Scatter(x=[None], y=[None], mode="lines", line=line, name=name, hoverinfo="skip"))
+    dense = cols >= 3
+    xt = [v for v in ((1, 10, 100, 1000) if dense else (0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000))
+          if x_range[0] <= v <= x_range[1]]
+    yt = [v for v in (0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200) if y_range[0] <= v <= y_range[1]]
+    fig.update_xaxes(type="log", range=[np.log10(x_range[0]), np.log10(x_range[1])], tickvals=xt,
+                     ticktext=[f"{v:g}" for v in xt], tickangle=0)
+    fig.update_yaxes(type="log", range=[np.log10(y_range[0]), np.log10(y_range[1])], tickvals=yt,
+                     ticktext=[f"{v:g}" for v in yt])
+    for c in range(1, cols + 1):
+        last_row = max(i // cols + 1 for i in range(len(facets)) if i % cols + 1 == c)
+        fig.update_xaxes(title_text="Operational intensity (OP/byte)", showticklabels=True, row=last_row, col=c)
+    for r in range(1, rows + 1):
+        fig.update_yaxes(title_text="Arithmetic rate (TOP/s)", row=r, col=1)
+    fig.update_layout(title_text=title_text(title, subtitle))
+    return _finish(fig)
+
+
+def intensity_model_curves(curves: pd.DataFrame, *, facet: str, title: str, subtitle: str | None = None,
+                           ridges: dict, limits: pd.DataFrame | None = None, height: int = 540) -> go.Figure:
+    """Modelled decode-step intensity vs batch, one curve per context length, with ridge points.
+
+    curves: facet, context, context_label, batch, intensity; ridges[facet] = [(OP/byte, label), ...];
+    limits: facet, context, limit (large-batch asymptote, drawn dotted at the right edge)."""
+    facets = list(dict.fromkeys(curves[facet]))
+    fig = make_subplots(rows=1, cols=len(facets), subplot_titles=facets, shared_yaxes=True, horizontal_spacing=0.06)
+    contexts = list(dict.fromkeys(curves.sort_values("context")["context"]))
+    for j, fv in enumerate(facets, start=1):
+        d = curves[curves[facet] == fv]
+        for k, ctx in enumerate(contexts):
+            g = d[d["context"] == ctx].sort_values("batch")
+            color = theme.EXTRA_COLORS[k % len(theme.EXTRA_COLORS)]
+            fig.add_trace(go.Scatter(x=g["batch"], y=g["intensity"], mode="lines", name=g["context_label"].iloc[0],
+                                     legendgroup=str(ctx), showlegend=(j == 1), line=dict(color=color, width=2.2),
+                                     hovertemplate=f"<b>{g['context_label'].iloc[0]}</b><br>batch %{{x:.0f}}<br>"
+                                                   "%{y:.3g} OP/byte<extra></extra>"), row=1, col=j)
+            if limits is not None:
+                lim = limits[(limits[facet] == fv) & (limits["context"] == ctx)]
+                if len(lim):
+                    fig.add_trace(go.Scatter(x=[g["batch"].min(), g["batch"].max()], y=[lim["limit"].iloc[0]] * 2,
+                                             mode="lines", line=dict(color=color, width=1, dash="dot"), hoverinfo="skip",
+                                             showlegend=False, legendgroup=str(ctx)), row=1, col=j)
+        for value, label in ridges.get(fv, []):
+            _reference_line(fig, axis="y", value=value, label=label, row=1, col=j, log=True)
+    b = sorted(curves["batch"].unique())
+    bt = [v for v in (1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024) if b[0] <= v <= b[-1]]
+    fig.update_xaxes(type="log", tickvals=bt, ticktext=[str(v) for v in bt], title_text="Sequences per decode step (batch)")
+    fig.update_yaxes(type="log")
+    _apply_log_ticks(fig, pd.concat([curves["intensity"], *(pd.Series([v for v, _ in r]) for r in ridges.values())]))
+    fig.update_yaxes(title_text="Minimum-traffic intensity (OP/byte)", row=1, col=1)
+    fig.update_layout(title_text=title_text(title, subtitle), height=height)
+    return _finish(fig)
+
+
+def parity_scatter(points: pd.DataFrame, *, x: str, y: str, x_title: str, y_title: str, title: str,
+                   subtitle: str | None = None, symbol_by: str = "workload", height: int = 520) -> go.Figure:
+    """Configuration-coloured scatter of two estimates of the same quantity, with the y = x line."""
+    fig = go.Figure()
+    top = float(np.nanmax(points[[x, y]].to_numpy())) * 1.08
+    fig.add_trace(go.Scatter(x=[0, top], y=[0, top], mode="lines", line=dict(color=theme.REFERENCE, dash="dot", width=1.3),
+                             name="y = x", hoverinfo="skip"))
+    order = registry.workload_order()
+    for cid in _configurations(points, None):
+        g = points[points["configuration_id"] == cid]
+        st = theme.configuration_style(cid)
+        hollow = st.symbol.endswith("-open")
+        symbols = [theme.WORKLOAD_SYMBOLS[order.index(w) % len(theme.WORKLOAD_SYMBOLS)] + ("-open" if hollow else "")
+                   for w in g[symbol_by]]
+        fig.add_trace(go.Scatter(
+            x=g[x], y=g[y], mode="markers", name=st.name,
+            marker=dict(color=st.color, symbol=symbols, size=8, line=dict(color=st.color, width=1.5),
+                        opacity=0.85),
+            customdata=np.column_stack([g["workload_shape"], g["concurrency"]]),
+            hovertemplate=f"<b>{st.name}</b> %{{customdata[0]}} C = %{{customdata[1]}}<br>{x_title}: %{{x:.3f}}"
+                          f"<br>{y_title}: %{{y:.3f}}<extra></extra>"))
+    fig.update_xaxes(title_text=x_title, range=[0, top])
+    fig.update_yaxes(title_text=y_title, range=[0, top])
+    fig.update_layout(title_text=title_text(title, subtitle), height=height, width=780)
+    return _finish(fig)
