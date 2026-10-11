@@ -9,10 +9,11 @@ run on.
 > Xeon Max — one whose throughput responds to concurrency and that can load the memory subsystem enough to study
 > HBM/DDR behaviour?
 >
-> **Current answer.** **vLLM**, on the precision-matched BF16 comparison. llama.cpp is the better single-request
-> decoder but stops scaling after a few doublings of concurrency; vLLM keeps scaling and delivers several times
-> more throughput under load. Concurrency does *not* by itself raise total memory traffic for either backend.
-> The vLLM INT8 validation is pending. Evidence, numbers and caveats:
+> **Current answer.** **vLLM**, on both precision-matched comparisons: BF16, and INT8 (vLLM W8A8 vs llama.cpp
+> Q8_0, 8B). At BF16 llama.cpp is the better single-request decoder but stops scaling after a few doublings of
+> concurrency; vLLM keeps scaling and delivers several times more throughput under load. At INT8 vLLM leads at
+> every concurrency, including a single request. Concurrency does *not* by itself raise total memory traffic for
+> either backend. Evidence, numbers and caveats:
 > [`notebooks/backend_selection/09_backend_selection_summary.ipynb`](notebooks/backend_selection/09_backend_selection_summary.ipynb).
 
 ## Source-of-truth hierarchy
@@ -84,7 +85,7 @@ notebooks and SVG/PNG exports are byte-reproducible. Open the notebooks with `uv
 
 | Dimension | Values | Defined in |
 | --- | --- | --- |
-| `configuration_id` | `vllm_bf16`, `llama_cpp_bf16`, `llama_cpp_int8`, `vllm_int8` (pending) | `data/metadata/configurations.toml` |
+| `configuration_id` | `vllm_bf16`, `llama_cpp_bf16`, `llama_cpp_int8`, `vllm_int8` | `data/metadata/configurations.toml` |
 | `backend` | `vllm`, `llama_cpp` | idem |
 | `precision` | `bf16`, `int8` | idem |
 | `quantization` | `none`, `q8_0`, `w8a8_rtn` | idem |
@@ -113,7 +114,7 @@ data/raw/environment/{nodes,node_checks,models}/                          node m
 1. Run the jobs on the cluster ([`docs/cluster_runbook.md`](docs/cluster_runbook.md)) and `make sync`.
 2. `make checksums` to record the new raw files (existing files must be unchanged).
 3. If a new arm or campaign appears, add one table to `data/metadata/configurations.toml` /
-   `campaigns.toml` (`vllm_int8` is already declared; set its `status` to `"measured"`).
+   `campaigns.toml`; a configuration declared ahead of its data has `status = "pending"`, set it to `"measured"`.
 4. `make data && make notebooks && make validate`.
 
 No analysis code changes are needed: configurations, colours (backend) and line styles (precision) come from

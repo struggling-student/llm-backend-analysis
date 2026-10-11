@@ -35,12 +35,12 @@ microbenchmarks (Experiment A) are kept as a controlled reference and reported w
 | `vllm_bf16` | vLLM 0.30.0 (official CPU image) | safetensors BF16 (HF snapshot) | BF16 | BF16 tiles: GEMMs and attention |
 | `llama_cpp_bf16` | llama.cpp `9655061` (gcc 14, AMX build) | GGUF BF16, lossless conversion of the same snapshot | F16 | none (no BF16 AMX kernel) |
 | `llama_cpp_int8` | same | GGUF Q8_0 from the BF16 GGUF | F16 | INT8 tiles for weight GEMMs with ≥ 2 rows |
-| `vllm_int8` (pending) | vLLM 0.30.0 | compressed-tensors W8A8 RTN from the same snapshot | BF16 | INT8 tiles (`int8_scaled_mm`) |
+| `vllm_int8` | vLLM 0.30.0 | compressed-tensors W8A8 RTN from the same snapshot | BF16 | INT8 tiles (`int8_scaled_mm`) |
 
 `vllm_bf16` vs `llama_cpp_bf16` is the **precision-matched pair** and the basis of every backend ratio.
 `llama_cpp_int8` is llama.cpp's fastest configuration; it is shown next to the others and compared with vLLM BF16
-only with an explicit precision caveat. `vllm_int8` vs `llama_cpp_int8` will be the second precision-matched pair
-(both on AMX-INT8). Its checkpoint was built with `scripts/benchmark/quantize_w8a8.py` (data-free RTN,
+only with an explicit precision caveat. `vllm_int8` vs `llama_cpp_int8` is the second precision-matched pair
+(both with AMX-INT8 weight GEMMs; 8B only). Its checkpoint was built with `scripts/benchmark/quantize_w8a8.py` (data-free RTN,
 per-channel weights, dynamic per-token activations; versions pinned in
 [`configs/requirements/llmcompressor.txt`](../configs/requirements/llmcompressor.txt)) and passed a
 quality/AMX sanity check (`data/raw/quality/`, notebook 08).
@@ -82,7 +82,8 @@ doubling added ≥ 10%; skip a point projected to take more than 4 h (logged in 
 A small documented grid on the 8B balanced workload at C = 1 and 16 (one repetition): vLLM
 `max_num_batched_tokens` ∈ {2048, 4096, 8192}; llama.cpp flash attention on/off × ubatch {512, 2048}, plus a BF16
 KV cache. Rule: highest steady throughput at C = 16 unless C = 1 TPOT worsens by more than 5% versus the default.
-Choices are in `configs/experiment.toml` `[tuned.*]`; the grid and the rule are reproduced in notebook 01 and by
+vLLM INT8 was tuned the same way after the BF16 campaign, and its result was overridden (deviation 10). Choices are
+in `configs/experiment.toml` `[tuned.*]`; the grid and the rule are reproduced in notebook 01 and by
 `scripts/processing/summarize_tuning.py`.
 
 ## Telemetry
@@ -127,8 +128,17 @@ All affected data are kept in `data/raw/` and labelled in `data/metadata/campaig
 6. **Storage quota** on the project store; outputs moved to scratch.
 7. **Budget skip**: llama.cpp BF16 4096→1024 at C = 32 exceeded the 4 h budget (see its `sweep.json`).
 8. **Maintenance**: HBM nodes were drained on 2026-10-04 before llama.cpp INT8 4096→1024 (8B) and the 1B INT8
-   offline job ran. Neither affects the BF16 comparison.
+   offline job ran. Both ran after the maintenance and are included.
 9. `vllm bench throughput` (vLLM-only offline reference) ran once per shape.
+10. **vLLM INT8 batching setting** (2026-10-10): the tuning rule picked `max_num_batched_tokens` = 2048, with all
+    three values within noise. With 2048-token prefill chunks the warm-up of 8192→256 at C = 16 overestimated a
+    request's duration several times over; the stagger left no steady window and that sweep stopped. vLLM INT8
+    was re-run with 8192, as vLLM BF16, so the two vLLM configurations differ only in precision. The first
+    attempt is kept as `main-int8-v1-mnbt2048` (superseded).
+11. **Node manifest race**: jobs starting together raced on the shared hash cache of
+    `scripts/benchmark/capture_env.py`, and some jobs lost their node manifest (benign: the per-point
+    `metadata.json` records host facts). Fixed on 2026-10-11. The manifest of vLLM INT8 job 5316756 was
+    captured afterwards on the same node with `capture_env.py --for-job` and is marked `retroactive`.
 
 ## Processing corrections
 

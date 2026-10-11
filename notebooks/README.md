@@ -17,8 +17,8 @@ interactive Plotly output and a PNG fallback per figure (for viewers that do not
 | [`05_online_serving_latency`](backend_selection/05_online_serving_latency.ipynb) | What per-request latency comes with that throughput; how much throughput fits a latency budget? |
 | [`06_batching_and_amx`](backend_selection/06_batching_and_amx.ipynb) | Why do they scale differently: batching, step cost, AMX use, core occupancy? |
 | [`07_memory_traffic`](backend_selection/07_memory_traffic.ipynb) | Does concurrency raise memory-system pressure, and which backend keeps HBM busier? |
-| [`08_precision_int8`](backend_selection/08_precision_int8.ipynb) | What does INT8 change, and what is the status of the vLLM INT8 pair? |
+| [`08_precision_int8`](backend_selection/08_precision_int8.ipynb) | What does INT8 change in each engine, and does the backend ranking hold for the INT8 pair? |
 | [`09_backend_selection_summary`](backend_selection/09_backend_selection_summary.ipynb) | Synthesis: measured result → interpretation → implication → decision |
 
-Primary model: Llama-3.1-8B-Instruct; Llama-3.2-1B-Instruct is the cross-check. Direct backend comparisons use the
-precision-matched BF16 pair; llama.cpp INT8 is shown for context and in the precision analysis.
+Primary model: Llama-3.1-8B-Instruct; Llama-3.2-1B-Instruct is the cross-check. Direct backend comparisons are formed
+within one precision: the BF16 pair (both models) and the INT8 pair (vLLM W8A8 vs llama.cpp Q8_0, 8B).

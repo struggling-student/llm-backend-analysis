@@ -1,7 +1,8 @@
 Criterion,Measured result,Favours
-"Single request, per-token latency (C=1)",vLLM ÷ llama.cpp TPOT 0.99×–1.33×,llama.cpp
-"Single request, time to first token (C=1)",llama.cpp ÷ vLLM TTFT 4.0×–9.8×,vLLM
-"Single request, throughput, short prompts",vLLM ÷ llama.cpp 0.77×–0.89×,llama.cpp
+"Single request, per-token latency (C=1, BF16)",vLLM ÷ llama.cpp TPOT 0.99×–1.33×,llama.cpp
+"Single request, time to first token (C=1, BF16)",llama.cpp ÷ vLLM TTFT 4.0×–9.8×,vLLM
+"Single request, throughput, short prompts (BF16)",vLLM ÷ llama.cpp 0.77×–0.89×,llama.cpp
+"Single request, per-token latency (C=1, INT8 pair)",vLLM ÷ llama.cpp TPOT 0.67×–0.97×,vLLM
 "Scaling with concurrency (peak ÷ C=1, short prompts)",vLLM 22.9×–42.7× vs llama.cpp 3.2×–5.8×,vLLM
 Throughput at equal high concurrency,vLLM ÷ llama.cpp 4.9×–7.0× at the highest common C,vLLM
 Best operating point vs best operating point (8B),vLLM ÷ llama.cpp 5.4×–7.2×,vLLM
@@ -11,4 +12,6 @@ AMX use under load,vLLM 9%–18% busy at highest C; llama.cpp BF16 0.0%,vLLM
 Memory traffic at equal C ≥ 8,vLLM ÷ llama.cpp 1.5×–5.4×,vLLM
 Peak share of sustainable bandwidth,65% (single-request decode); traffic falls with C on 100% of curves,neither saturates
 Against llama.cpp's fastest configuration (INT8),vLLM BF16 peak ÷ llama.cpp INT8 peak 3.3×–6.1×,vLLM
+INT8 pair: throughput at equal high concurrency,vLLM ÷ llama.cpp 5.3×–8.1× at the highest common C,vLLM
+INT8 pair: best operating point vs best operating point (8B),vLLM ÷ llama.cpp 5.6×–9.8×,vLLM
 Measurement quality,"0 failed of 39,948 requests; median CV 0.17%",both

@@ -51,6 +51,14 @@ bash scripts/cluster/submit.sh online           # Experiment B (one job per mode
 concurrency point writes `metadata.json` with the exact server and client commands, settings, host facts and
 per-repetition summaries; per-request records are in `rep*.jsonl.gz`.
 
+A job whose node manifest is missing can get a retroactive one, captured later on the same node and marked as
+such in the file:
+
+```bash
+sbatch --partition=cresco8_hbm --account=$SLURM_ACCOUNT --nodelist=<node> --exclusive --time=00:20:00 \
+  --wrap "cd ~/dev/llm-backend-analysis && source configs/cresco8.env && \$BC_PYTHON scripts/benchmark/capture_env.py --for-job <jobid>"
+```
+
 ## Getting results into the repository (local machine)
 
 ```bash
@@ -64,8 +72,10 @@ make data notebooks validate
 Already done: W8A8 checkpoints in `$BC_DATA/models/<model>/w8a8-rtn/` (built by
 `scripts/benchmark/quantize_w8a8.py` with the llm-compressor venv, versions in
 [`configs/requirements/llmcompressor.txt`](../configs/requirements/llmcompressor.txt)) and the quality/AMX check
-(`data/raw/quality/`). Still queued from the BF16 campaign: llama.cpp Q8_0 4096→1024 (8B) and the 1B Q8_0
-offline job.
+(`data/raw/quality/`).
+
+Status: done on 2026-10-10 (tuning job 5316476, campaign jobs 5316752–5316757). The tuned value was overridden
+with 8192 (`docs/methodology.md`, deviation 10). The steps below are kept as the procedure for a re-run.
 
 1. Tuning (login node, ~35 min on one HBM node):
 
