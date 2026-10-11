@@ -23,6 +23,8 @@ Byte-identical copies of the cluster outputs (`$BC_DATA` on CRESCO8 scratch), sy
 | `environment/nodes/<host>-<job>.json` | `scripts/benchmark/capture_env.py` | per-job environment manifest (kernel, CPU flags, versions, hashes) |
 | `environment/node_checks/<host>-<job>.json` | `scripts/cluster/job.sbatch` | per-job 10 s STREAM node health check |
 | `environment/models/<model>/manifest.json` | `scripts/benchmark/prepare_models.py`, `quantize_w8a8.py` | model files, sizes, SHA-256 |
+| `hardware/cache-20260921T173410Z/{compute,system}/` | hw-bench (hardware-only roofline study, separate repository) | full-socket compute ceilings of one cache-mode node (AVX-512 FMA, AMX tile peak, oneDNN AMX GEMM), node topology and build facts; copied from the cluster's `results/hw-roofline/<campaign>/`, subset `compute/single-socket*-t56-*` |
+| `hardware/gemm-ceilings-<date>/{compute,system}/` | `scripts/benchmark/gemm_ceilings.py` | AMX GEMM throughput on the server layout inside the vLLM image (one record per kernel, shape, binding and repetition, hw-bench schema), oneDNN verbose implementation names, node facts |
 
 Arm ids (`vllm-bf16`, `llamacpp-bf16`, `llamacpp-q8_0`, `vllm-w8a8`) and campaign names are the harness's
 identifiers and stay as recorded; `metadata/configurations.toml` maps arms to canonical names and
@@ -50,6 +52,7 @@ canonical `configuration_id`, `backend`, `precision`, `quantization` where appli
 | `tuning_runs.csv` | tuning point | `variant`, `is_default_variant`, `total_tok_s`, `tpot_s_p50`, server settings and command |
 | `pmu_overhead.csv` | PMU on/off run | `pmu_enabled`, `run_order`, throughput and latency |
 | `quality_check.csv` | (configuration, reference) | identical continuations, common-prefix words, AMX busy fraction |
+| `hardware_ceilings.csv` | compute-ceiling record (hw-bench and GEMM job) | `kernel`, `dtype`, `binding`, `gemm_m/n/k`, `threads`, `gops`, `amx_confirmed`, `accepted` and `reject_reason` (hw-bench's acceptance rules) |
 
 Units: tokens/s, seconds (latency columns end in `_s`), GB/s (10⁹ B/s), GiB for working sets, fractions in
 [0, 1] for utilizations.

@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 from ... import paths
+from .hardware import process_hardware
 from .offline import process_offline
 from .online import aggregate_points, process_online, read_sweeps
 from .stream import process_stream, read_node_checks, sustainable_lookup
@@ -28,6 +29,7 @@ OUTPUTS = {
     "tuning_runs": "tuning_runs.csv",
     "pmu_overhead": "pmu_overhead.csv",
     "quality_check": "quality_check.csv",
+    "hardware_ceilings": "hardware_ceilings.csv",
 }
 
 
@@ -46,6 +48,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
         "tuning_runs": process_tuning(),
         "pmu_overhead": process_pmu_overhead(reps),
         "quality_check": process_quality(),
+        "hardware_ceilings": process_hardware(),
     }
 
 

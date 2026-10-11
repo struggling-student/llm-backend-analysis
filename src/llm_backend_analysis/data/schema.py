@@ -40,6 +40,9 @@ TABLES: dict[str, tuple[list[str], list[str]]] = {
                      ["campaign", "configuration_id", "variant"]),
     "quality_check": ([*CONFIGURATION_COLUMNS, "model", "comparison", "amx_busy_frac"],
                       ["campaign", "model", "configuration_id", "comparison"]),
+    "hardware_ceilings": (["campaign", "campaign_role", "host", "socket_scope", "socket", "threads", "kernel", "gops",
+                           "accepted", "source"],
+                          ["source"]),
 }
 
 

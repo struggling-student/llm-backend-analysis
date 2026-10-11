@@ -99,6 +99,16 @@ def stream_calibration(campaign: str | None = registry.ANALYSIS_CAMPAIGN["stream
     return (df[df["campaign"] == campaign] if campaign else df).reset_index(drop=True)
 
 
+def hardware_ceilings(campaign: str | None = None, accepted_only: bool = True) -> pd.DataFrame:
+    """Compute-ceiling records of one socket: every primary hardware campaign by default (hw-bench and
+    the server-layout GEMM job); accepted ones only unless asked (rejections carry a reason)."""
+    df = _read("hardware_ceilings")
+    df = df[df["campaign"] == campaign] if campaign else df[df["campaign_role"] == "primary"]
+    if accepted_only:
+        df = df[df["accepted"]]
+    return df.reset_index(drop=True)
+
+
 def node_checks() -> pd.DataFrame:
     return load_table("node_checks")
 
