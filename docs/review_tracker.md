@@ -147,7 +147,7 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T2.2 | **Run Experiment A** (explicit authorisation required: Slurm submission). | O2, P7 | **High (thesis)** | Per-cell throughput ratio `membind=1 ÷ membind=0` with repetitions; remote STREAM roof measured; raw data synced and checksummed | NEEDS CLUSTER |
+| T2.2 | **Run Experiment A** (explicit authorisation required: Slurm submission). | O2, P7 | **High (thesis)** | Per-cell throughput ratio `membind=1 ÷ membind=0` with repetitions; remote STREAM roof measured; raw data synced and checksummed | **SUBMITTED 2026-10-16**: STREAM roof 5384320; cells 5384321 (vllm-decode-c1), 5384322 (vllm-decode-c128), 5384323 (vllm-kvdecode-c32), 5384324 (llamacpp-decode-c1). Cluster checkout fast-forwarded to `7bc7941` via a git bundle (nothing pushed). Next: `make sync checksums`, remove `prepared = true` from the two campaigns |
 | T2.3 | **Analyse and report Experiment A** as a short notebook section (or notebook 11) and one nb09 status-table row moved from "untested" to "measured". State the confound (remote memory changes latency as well as bandwidth). | O2, P7 | High (thesis) | Result tied to a specific regime; limitation stated; nb09 row updated; key numbers exported | OPEN (after T2.2) |
 
 ### Phase 3 — Mechanism (optional; only if the thesis states a causal mechanism)
