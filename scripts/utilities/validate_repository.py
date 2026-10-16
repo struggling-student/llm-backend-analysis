@@ -62,7 +62,10 @@ def metadata():
     on_disk = {(k.name, c.name) for k in paths.RAW.iterdir() if k.is_dir() and k.name not in {"telemetry", "environment"}
                for c in k.iterdir() if c.is_dir()}
     problems = [f"undeclared campaign {k}/{c}" for k, c in sorted(on_disk - declared)]
-    problems += [f"declared campaign {k}/{c} has no data" for k, c in sorted(declared - on_disk)]
+    camp = registry.campaigns()
+    prepared = {(r.kind, r.campaign) for r in camp.itertuples() if getattr(r, "prepared", False) is True}
+    problems += [f"declared campaign {k}/{c} has no data" for k, c in sorted(declared - on_disk - prepared)]
+    problems += [f"campaign {k}/{c} has data but is still marked `prepared = true`" for k, c in sorted(prepared & on_disk)]
     arms = {registry.split_arm_dir(d.name)[0] for d in (paths.RAW / "online").glob("*/*/*") if d.is_dir()}
     arms |= {d.name for d in (paths.RAW / "offline").glob("*/*/*") if d.is_dir()}
     known = {c.arm for c in registry.configurations().values()}

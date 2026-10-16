@@ -111,3 +111,24 @@ with 8192 (`docs/methodology.md`, deviation 10). The steps below are kept as the
    `data/metadata/configurations.toml`, then `make data notebooks validate`. The INT8 pair appears in notebooks
    04–09 automatically (blue dashed lines, open circles); revisit any interpretation the claim tables flag, and
    update the Notion pages from `results/tables/backend_selection/key_numbers.csv`.
+
+## Memory-node sensitivity (review Experiment A; prepared, not run)
+
+Question: does vLLM's throughput respond to the memory system in the regimes the thesis will study? Same cores
+(socket 0), server memory on node 0 (reference) or node 1 (remote, over the socket interconnect). Remote memory lowers
+the bandwidth **and** raises the latency, so a drop is sensitivity to the memory system, not to bandwidth alone.
+
+Cells (`configs/experiment.toml` `[membind_sensitivity]`): vLLM BF16 decode C=1, decode C=128, 4096→1024 C=32; llama.cpp BF16 decode
+C=1 as a control. Each cell runs node 0 / node 1 / node 0 / node 1 inside one job (campaign `membind`, arm directories
+`<arm>__mem<node>_p<pass>`, 3 harness repetitions per point), so the ratio `node 1 ÷ node 0` is formed on one node and day.
+Every point checks with `numastat` that at least 90% of the server's memory sits on the requested node.
+
+```bash
+source configs/cresco8.env
+uv run python scripts/benchmark/membind_sensitivity.py --dry-run   # every command line, nothing started (any machine)
+scripts/cluster/submit.sh membind-stream                          # remote STREAM roof (campaign stream/calibration-membind1)
+scripts/cluster/submit.sh membind                                 # one job per cell; or: submit.sh membind vllm-decode-c1
+```
+
+Submitting needs the user's explicit authorisation (tracker T2.2). Afterwards `make sync` and `make checksums`; processing
+treats the new arm directories as variants, and the analysis (T2.3) forms the ratios.

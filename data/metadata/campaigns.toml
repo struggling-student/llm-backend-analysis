@@ -3,9 +3,14 @@
 # role:
 #   primary     the measurements the backend-selection analysis is built on
 #   tuning      backend tuning phase (feeds configs/experiment.toml [tuned.*])
+#   sensitivity prepared or run to test how a result responds to a hardware condition (memory-node sensitivity);
+#               never part of the primary analysis
 #   validation  checks of the method itself (instrument overhead, quality, smoke runs)
 #   superseded  an earlier attempt replaced by a later campaign; kept for provenance
 #   failed      an attempt that did not produce usable measurements
+#
+# prepared = true marks a campaign that is declared before its raw data exist (validation then does not demand data,
+# and fails once data exist while the flag is still set).
 #
 # Processing reads every campaign (nothing is silently dropped) and stamps each row
 # with its campaign and role; the notebooks select campaigns explicitly by role.
@@ -53,6 +58,11 @@ role = "superseded"
 description = "First vLLM W8A8 campaign (8B, 5 workloads), max_num_batched_tokens = 2048 as picked by the tuning rule (2026-10-10)."
 reason = "With 2048-token prefill chunks the warm-up overestimated the longctx C=16 request duration (238 s vs ~40 s); the stagger left no steady window and the sweep stopped. Re-run as `main` with 8192, as for vllm-bf16 (configs/experiment.toml [tuned.vllm-w8a8])."
 
+[online.membind]
+role = "sensitivity"
+prepared = true   # declared before any data exists; remove this line when the raw data are synced
+description = "Memory-node sensitivity (review Experiment A; prepared, not run): server memory on node 0 vs remote node 1, same cores, A/B/A/B per cell inside one job (configs/experiment.toml [membind_sensitivity]). Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
+
 [offline.main]
 role = "primary"
 description = "Experiment A: offline engine microbenchmarks (llama-bench, llama-batched-bench, vllm bench latency/throughput)."
@@ -69,6 +79,11 @@ reason = "Replaced together with online `main-int8-v1-mnbt2048`; re-run as `main
 [stream.calibration]
 role = "primary"
 description = "Experiment 0: STREAM triad 4-96 GiB on the server layout under the same telemetry; sustainable-bandwidth baseline and PMU-proxy validation."
+
+[stream.calibration-membind1]
+role = "sensitivity"
+prepared = true   # declared before any data exists; remove this line when the raw data are synced
+description = "Memory-node sensitivity (review Experiment A; prepared, not run): STREAM triad with memory on node 1 (remote), 55 threads, same PMU counters; the roof for the remote-memory cells."
 
 [stream.calibration-v1-7events]
 role = "superseded"

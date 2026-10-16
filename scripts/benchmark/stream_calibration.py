@@ -41,9 +41,13 @@ def main() -> int:
     p.add_argument("--threads", default="55,56")
     p.add_argument("--target-seconds", type=float, default=20)
     p.add_argument("--campaign", default="calibration")
+    p.add_argument("--mem-node", type=int, help="override topology.server_mem_node (1 = remote memory over the socket "
+                                                "interconnect, the roof of the memory-node sensitivity runs)")
     args = p.parse_args()
     cfg = bclib.load_config()
     topo = cfg["topology"]
+    if args.mem_node is not None:
+        topo["server_mem_node"] = args.mem_node
     binary = os.environ["BC_STREAM_BIN"]
     out_dir = Path(os.environ["BC_DATA"]) / "raw_results" / "stream" / args.campaign
     tel_dir = Path(os.environ["BC_DATA"]) / "telemetry" / "stream" / args.campaign
@@ -84,6 +88,7 @@ def main() -> int:
             results.append(row)
     bclib.write_json(out_dir / "stream_calibration.json", {"timestamp": bclib.now_iso(), **bclib.host_facts(),
                                                            "memory_mode": topo["memory_mode"], "binary": binary,
+                                                           "server_mem_node": topo["server_mem_node"],
                                                            "runs": results})
     return 0
 

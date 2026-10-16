@@ -9,6 +9,8 @@
 #   scripts/cluster/submit.sh online   [models] [arms] [workloads]   # Experiment B, one job per cell
 #   scripts/cluster/submit.sh int8-tuning                   # tuning for vllm-w8a8 (then set [tuned.vllm-w8a8])
 #   scripts/cluster/submit.sh int8-campaign                 # vllm-w8a8, 8B: 5 online workloads + offline
+#   scripts/cluster/submit.sh membind [cell ...]            # memory-node sensitivity: remote vs local server memory, one job per cell
+#   scripts/cluster/submit.sh membind-stream                # memory-node sensitivity: STREAM roof with remote memory (node 1)
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
 #
 # Defaults: models=llama31_8b,llama32_1b  arms=vllm-bf16,llamacpp-bf16,llamacpp-q8_0
@@ -54,6 +56,13 @@ case "$what" in
       echo "online llama31_8b vllm-w8a8 $w: $(sub 24:00:00 "on-llama31_8b-vllm-w8a8-$w" scripts/benchmark/run_online.py --model llama31_8b --arm vllm-w8a8 --workload "$w" --campaign "$CAMPAIGN")"
     done
     echo "offline llama31_8b vllm-w8a8: $(sub 24:00:00 off-llama31_8b-vllm-w8a8 scripts/benchmark/run_offline.py --model llama31_8b --arm vllm-w8a8 --campaign "$CAMPAIGN")" ;;
+  membind)   # one job per cell: node 0 / node 1 / node 0 / node 1 inside one job, so the ratio is on one node
+    CELLS=("$@"); [[ ${#CELLS[@]} -gt 0 ]] || mapfile -t CELLS < <("$BC_PYTHON" scripts/benchmark/membind_sensitivity.py --list)
+    for c in "${CELLS[@]}"; do
+      echo "membind $c: $(sub 12:00:00 "mb-$c" scripts/benchmark/membind_sensitivity.py --cell "$c")"
+    done ;;
+  membind-stream)
+    echo "membind stream: $(sub 02:00:00 stream-membind1 scripts/benchmark/stream_calibration.py --mem-node 1 --threads 55 --campaign calibration-membind1)" ;;
   job) t=$1 n=$2; shift 2; sub "$t" "$n" "$@" ;;
   *) sed -n '2,15p' "$0"; exit 1 ;;
 esac

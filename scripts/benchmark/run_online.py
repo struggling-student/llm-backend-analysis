@@ -14,6 +14,10 @@ doublings each add less than `plateau_gain` throughput; continue past the base
 list only while the last doubling still added at least `extend_min_gain`. A
 point whose projected duration exceeds `max_point_seconds` is skipped and the
 skip is recorded. Results are resumable: finished points are not rerun.
+
+`--mem-node N` moves the server's memory (numactl --membind) to node N while the cores stay on socket 0; with
+N = 1 every server memory access crosses the socket interconnect (memory-node sensitivity, scripts/benchmark/membind_sensitivity.py).
+`--print-commands` prints the server and client command lines of every requested point and exits.
 """
 
 from __future__ import annotations
@@ -186,6 +190,7 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
         "memory_mode": topo["memory_mode"], "sockets_used": 1, "socket": topo["socket"],
         "server_cpus": topo["server_cpus"], "compute_cpus": topo["compute_cpus"],
         "compute_threads": topo["compute_threads"], "numa_policy": f"membind={topo['server_mem_node']}",
+        "server_mem_node_override": args.mem_node,
         "client_cpus": topo["client_cpus"], "backend_settings": settings, "server_info": sinfo,
         "server_command": cmd, "server_command_str": shlex.join(cmd),
         "sampling": {"temperature": 0.0, "top_p": 1.0, "ignore_eos": True, "max_tokens": wl["osl"]},
@@ -310,6 +315,17 @@ def _terminate(signum, _frame):
     raise SystemExit(128 + signum)
 
 
+def print_commands(cfg: dict[str, Any], args: argparse.Namespace, settings: dict[str, Any]) -> int:
+    wl = cfg["workloads"][args.workload]
+    port = cfg["online"]["port_vllm" if cfg["arms"][args.arm]["backend"] == "vllm" else "port_llamacpp"]
+    for c in [int(x) for x in args.concurrency.split(",")] if args.concurrency else cfg["online"]["concurrency"]:
+        cmd, _, _ = server_command(cfg, args.model, args.arm, wl, c, settings, port)
+        print(f"# C={c}  server (membind={cfg['topology']['server_mem_node']})\n{shlex.join(cmd)}")
+        n_req, _ = requests_for(cfg, c, args.num_requests)
+        print(f"# C={c}  client\n{shlex.join(client_cmd(cfg, args.model, args.arm, wl, c, port, ['--num-requests', str(n_req)]))}")
+    return 0
+
+
 def main() -> int:
     signal.signal(signal.SIGTERM, _terminate)
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -324,13 +340,20 @@ def main() -> int:
     p.add_argument("--tag", default="", help="suffix for the arm directory (tuning variants)")
     p.add_argument("--ignore-budget", action="store_true")
     p.add_argument("--no-pmu", action="store_true", help="telemetry without core PMU counters (overhead check)")
+    p.add_argument("--mem-node", type=int, help="override topology.server_mem_node (numactl --membind of the server)")
+    p.add_argument("--print-commands", action="store_true",
+                   help="print the server and client commands of each point and exit (nothing is started or staged)")
     p.add_argument("--config", default=str(bclib.CONFIG))
     args = p.parse_args()
 
     cfg = bclib.load_config(args.config)
+    if args.mem_node is not None:
+        cfg["topology"]["server_mem_node"] = args.mem_node
+    settings = bclib.backend_settings(cfg, args.arm, bclib.parse_overrides(args.set))
+    if args.print_commands:
+        return print_commands(cfg, args, settings)
     args.staging = bclib.stage_model(cfg, args.model, args.arm)
     arm = cfg["arms"][args.arm]
-    settings = bclib.backend_settings(cfg, args.arm, bclib.parse_overrides(args.set))
     arm_dir = args.arm + (f"__{args.tag}" if args.tag else "")
     base = Path(os.environ["BC_DATA"])
     rel = Path("online") / args.campaign / args.model / arm_dir / args.workload

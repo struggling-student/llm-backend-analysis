@@ -159,6 +159,7 @@ enabled = true
 isl = 4096
 osl = 1024
 label = "Long-KV decode 4096->1024"
+panel_note = "mostly prefill"   # shown in panel titles: ~78% of the operations are prefill (notebook 10, section 4)
 # Added 2026-10-04 (8B only), after the planned shapes all showed memory traffic
 # falling with concurrency: 128/512->512 amortize the weight read, and 4096->128
 # and 8192->256 are prefill-dominated. Decode over a long, growing KV cache is the
@@ -254,3 +255,44 @@ interval_s = 1.0
 idle_baseline_s = 10
 pmu = true
 uncore = "auto"                  # used only if the kernel allows system-wide uncore events
+
+# ---------------------------------------------------------------------------
+# Memory-node sensitivity (the review's Experiment A, prepared, not yet run): does the server's throughput respond to memory bandwidth?
+# Same cores (socket 0), memory on node 0 (local HBM-cached DDR) vs node 1 (remote, over the socket
+# interconnect, so lower bandwidth and higher latency). Each cell runs A/B/A/B (node 0, node 1, node 0,
+# node 1) inside ONE job, so the ratio is formed on the same node and day; the repetitions of the
+# harness (3 per point) are kept. Driver: scripts/benchmark/membind_sensitivity.py.
+# ---------------------------------------------------------------------------
+[membind_sensitivity]
+campaign = "membind"
+reference_node = 0
+remote_node = 1
+passes = 2
+
+[[membind_sensitivity.cells]]
+name = "vllm-decode-c1"
+model = "llama31_8b"
+arm = "vllm-bf16"
+workload = "decode"
+concurrency = 1
+
+[[membind_sensitivity.cells]]
+name = "vllm-decode-c128"
+model = "llama31_8b"
+arm = "vllm-bf16"
+workload = "decode"
+concurrency = 128
+
+[[membind_sensitivity.cells]]
+name = "vllm-kvdecode-c32"
+model = "llama31_8b"
+arm = "vllm-bf16"
+workload = "kvdecode"
+concurrency = 32
+
+[[membind_sensitivity.cells]]
+name = "llamacpp-decode-c1"          # control: bandwidth-bound single-stream decode in the other engine
+model = "llama31_8b"
+arm = "llamacpp-bf16"
+workload = "decode"
+concurrency = 1
