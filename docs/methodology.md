@@ -170,5 +170,6 @@ Corrections are applied in code, never to raw files:
 - **STREAM read model (2026-10-04).** Triad reads two arrays and writes one (non-temporal stores), so reads are 2/3
   of STREAM's modelled bytes. The earlier processing compared PMU reads with the full modelled traffic. Fixed in
   `src/llm_backend_analysis/data/processing/stream.py`.
-- **HBM working set.** The retired report stated that every working set was ≤ 47 GiB; the processed data show one
-  point above the 64 GiB HBM cache (vLLM 8192→256 at C = 64). Notebook 07 computes this explicitly.
+- **HBM working set.** The retired report stated that every working set was ≤ 47 GiB; the processed data
+  (`online_points.working_set_gib_model`) show two points above the 64 GiB HBM cache, vLLM BF16 and vLLM INT8 at
+  8192→256 and C = 64. Notebooks 01 (section 4) and 07 compute the range and list these points.
