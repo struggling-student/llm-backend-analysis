@@ -178,6 +178,61 @@ def concurrency_lines(points: pd.DataFrame, panel: Panel, **kw) -> go.Figure:
     return concurrency_grid(points, [panel], **kw)
 
 
+def throughput_and_ratio(points: pd.DataFrame, ratios: pd.DataFrame, *, title: str, subtitle: str | None = None,
+                         metric: str = "total_tok_s_mean", y_title: str = "Total tokens/s",
+                         ratio_title: str = "vLLM ÷ llama.cpp", height: int | None = None) -> go.Figure:
+    """Top row: throughput vs C per workload, one trace per configuration (error bars ±1 SD over the
+    repetitions of one server instance). Bottom row: the backend ratio at matched precision per workload,
+    one trace per precision pair (`ratios` from comparisons.backend_ratio, with a `precision` column)."""
+    facets = _facet_values(points, "workload")
+    confs = _configurations(points, None)
+    fig = make_subplots(rows=2, cols=len(facets), shared_xaxes=True, row_heights=[0.6, 0.4],
+                        subplot_titles=[_facet_title("workload", f) for f in facets],
+                        horizontal_spacing=0.035 if len(facets) > 3 else 0.06, vertical_spacing=0.07)
+    spread = metric.replace("_mean", "_std")
+    for j, wl in enumerate(facets, start=1):
+        for cid in confs:
+            g = points[(points["workload"] == wl) & (points["configuration_id"] == cid)].sort_values("concurrency")
+            if g.empty:
+                continue
+            st = theme.configuration_style(cid)
+            err = g[spread] if spread in g else None
+            fig.add_trace(go.Scatter(
+                x=g["concurrency"], y=g[metric], mode="lines+markers", name=st.name, legendgroup=cid,
+                showlegend=(j == 1), line=st.line(), marker=st.marker(),
+                error_y=dict(type="data", array=err, thickness=1.1, width=3, color=st.color) if err is not None else None,
+                hovertemplate=f"<b>{st.name}</b><br>C = %{{x}}<br>{y_title}: %{{y:.0f}}<extra></extra>"), row=1, col=j)
+        for prec, d in ratios[ratios["workload"] == wl].groupby("precision", sort=False):
+            d = d.sort_values("concurrency")
+            ps = theme.PRECISION_STYLES.get(prec, {"dash": "dot", "open": True})
+            name = f"{ratio_title}, {prec.upper()} pair"
+            err = d["ratio"] * d["ratio_rel_err"] if "ratio_rel_err" in d else None
+            fig.add_trace(go.Scatter(
+                x=d["concurrency"], y=d["ratio"], mode="lines+markers", name=name, legendgroup=f"ratio_{prec}",
+                showlegend=(j == 1), line=dict(color=theme.TEXT_PRIMARY, width=2, dash=ps["dash"]),
+                marker=dict(color=theme.TEXT_PRIMARY, size=7, symbol="diamond" + ("-open" if ps["open"] else "")),
+                error_y=dict(type="data", array=err, thickness=1, width=3) if err is not None else None,
+                hovertemplate=f"<b>{name}</b><br>C = %{{x}}<br>ratio: %{{y:.2f}}×<extra></extra>"), row=2, col=j)
+        _reference_line(fig, axis="y", value=1, label="parity" if j == 1 else None, row=2, col=j, log=True)
+    fig.update_yaxes(type="log", row=1)
+    _apply_log_ticks(fig, points[metric], row=1)
+    v = points[metric].dropna()
+    fig.update_yaxes(range=[np.log10(v.min()) - 0.08, np.log10(v.max()) + 0.08], row=1)
+    fig.update_yaxes(type="log", row=2)
+    rt = [0.5, 1, 2, 4, 8]
+    fig.update_yaxes(tickvals=rt, ticktext=[f"{t:g}×" for t in rt], row=2)
+    r = ratios["ratio"].dropna()
+    fig.update_yaxes(range=[np.log10(min(r.min(), 1)) - 0.08, np.log10(r.max()) + 0.08], row=2)
+    fig.update_yaxes(title_text=y_title, row=1, col=1)
+    fig.update_yaxes(title_text=ratio_title, row=2, col=1)
+    cs = sorted(points["concurrency"].unique())
+    fig.update_xaxes(type="log", tickvals=cs, ticktext=[str(int(c)) for c in cs])
+    for j in range(1, len(facets) + 1):
+        fig.update_xaxes(title_text="Concurrent requests (C)", row=2, col=j)
+    fig.update_layout(title_text=title_text(title, subtitle), height=height or 760, width=theme.WIDTH)
+    return _finish(fig)
+
+
 def ratio_vs_concurrency(ratio: pd.DataFrame, *, title: str, subtitle: str | None = None, y_title: str,
                          facet: str = "model", log_y: bool = True) -> go.Figure:
     """Ratio between two configurations per workload (colour = workload, direct end labels)."""
@@ -424,7 +479,7 @@ def _roof_lines(fig: go.Figure, *, compute: list[tuple[float, str, bool]], memor
                                  hoverinfo="skip", showlegend=False), row=row, col=col)
         fig.add_annotation(x=np.log10(x1), y=np.log10(tops), xref=xa, yref=ya, text=f"{label}: {tops:.3g}",
                            showarrow=False, xanchor="right", yanchor="bottom" if emphasized else "top",
-                           yshift=1 if emphasized else -1,
+                           yshift=1 if emphasized else -1, bgcolor="rgba(252,252,251,0.85)",
                            font=dict(size=10, color=theme.TEXT_PRIMARY if emphasized else theme.TEXT_SECONDARY))
 
 
@@ -442,8 +497,8 @@ def roofline_grid(points: pd.DataFrame, *, facet: str, facets: Sequence, cols: i
     """Log-log roofline panels: one path per `trace_key` value through its concurrency points.
 
     `roofs[facet_value]` lists (TOP/s, label, emphasized) compute roofs for that panel; `memory`
-    lists (GB/s, label) memory roofs shared by all panels. Marker size grows with C; the first
-    and last C of each path are labelled."""
+    lists (GB/s, label) memory roofs shared by all panels. Marker size grows with C; only the C values in
+    `label_cs` (default C = 1) and the last C of each path are labelled, placed so labels do not overlap."""
     rows = int(np.ceil(len(facets) / cols))
     titles = [(facet_titles or {}).get(f) or _facet_title(facet, f) for f in facets]
     fig = make_subplots(rows=rows, cols=cols, subplot_titles=titles, horizontal_spacing=0.06, vertical_spacing=0.11,
@@ -452,6 +507,7 @@ def roofline_grid(points: pd.DataFrame, *, facet: str, facets: Sequence, cols: i
     keys = (registry.configuration_order() if trace_key == "configuration_id" else registry.workload_order())
     style = theme.configuration_style if trace_key == "configuration_id" else theme.workload_style
     shown = set()
+    pending: dict[tuple[int, int], list] = {}
     for i, fv in enumerate(facets):
         r, c = i // cols + 1, i % cols + 1
         _roof_lines(fig, compute=roofs[fv], memory=memory, x_range=x_range, row=r, col=c)
@@ -460,13 +516,12 @@ def roofline_grid(points: pd.DataFrame, *, facet: str, facets: Sequence, cols: i
             g = d[d[trace_key] == key].sort_values("concurrency")
             st = style(key)
             last_c = int(g["concurrency"].max())
-            text = [f"C{int(cc)}" if (int(cc) in label_cs or int(cc) == last_c) else "" for cc in g["concurrency"]]
+            for row in g[g["concurrency"].isin(set(label_cs) | {last_c})].itertuples():
+                pending.setdefault((r, c), []).append((row.intensity, row.op_rate_tops, f"C{int(row.concurrency)}", st.color))
             custom = np.column_stack([g["concurrency"], g["mem_total_gbs_mean"], g["bw_utilization"],
                                       g["compute_utilization"], g["regime"], g["working_set_gib_model"]])
             fig.add_trace(go.Scatter(
-                x=g["intensity"], y=g["op_rate_tops"], mode="lines+markers+text", text=text,
-                textposition="bottom right", textfont=dict(size=9, color=st.color),
-                name=st.name, legendgroup=key, showlegend=key not in shown,
+                x=g["intensity"], y=g["op_rate_tops"], mode="lines+markers", name=st.name, legendgroup=key, showlegend=key not in shown,
                 line=dict(color=st.color, width=1.6, dash=st.dash),
                 marker=dict(color=st.color, symbol=st.symbol, size=5 + 1.4 * np.log2(g["concurrency"]),
                             line=dict(color=st.color, width=1.2)),
@@ -478,6 +533,33 @@ def roofline_grid(points: pd.DataFrame, *, facet: str, facets: Sequence, cols: i
                                "<br>%{customdata[4]} · working set %{customdata[5]:.0f} GiB<extra></extra>")),
                 row=r, col=c)
             shown.add(key)
+    # Concurrency labels (first and last C of each path) placed without overlaps: each label takes the
+    # first offset around its point whose box (in approximate pixels) meets no label already placed.
+    fig_h = height or (230 + 400 * rows)
+    px_x = (theme.WIDTH - 100) / cols * 0.94 / (np.log10(x_range[1]) - np.log10(x_range[0]))
+    px_y = (fig_h - 255) / rows * 0.89 / (np.log10(y_range[1]) - np.log10(y_range[0]))
+    offsets = [(14, 12), (-14, -12), (14, -12), (-14, 12), (0, 20), (0, -20), (26, 22), (-26, -22), (26, -22),
+               (-26, 22), (34, 0), (-34, 0), (0, 34), (0, -34), (40, 30), (-40, -30), (40, -30), (-40, 30)]
+    for (r, c), labels in pending.items():
+        ref = fig.get_subplot(r, c)
+        xa, ya = ref.xaxis.plotly_name.replace("axis", ""), ref.yaxis.plotly_name.replace("axis", "")
+        boxes = []
+        for tops, label, emphasized in roofs[facets[(r - 1) * cols + c - 1]]:  # roof labels sit at the right edge
+            text = f"{label}: {tops:.3g}"
+            right, y0 = np.log10(x_range[1]) * px_x, np.log10(tops) * px_y
+            boxes.append((right - 5.6 * len(text), y0 - (0 if emphasized else 14), right, y0 + (14 if emphasized else 0)))
+        for xv, yv, text, color in sorted(labels, key=lambda t: (t[0], t[1])):
+            px, py = np.log10(xv) * px_x, np.log10(yv) * px_y
+            w, h = 6.2 * len(text) + 4, 13
+            for ax, ay in offsets:
+                cx, cy = px + ax, py - ay  # plotly's ay is downwards in pixels
+                box = (cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2)
+                if not any(box[0] < b[2] and b[0] < box[2] and box[1] < b[3] and b[1] < box[3] for b in boxes):
+                    break
+            boxes.append(box)
+            fig.add_annotation(x=np.log10(xv), y=np.log10(yv), xref=xa, yref=ya, text=text, ax=ax, ay=ay,
+                               showarrow=True, arrowhead=0, arrowwidth=0.8, arrowcolor=color, standoff=4,
+                               font=dict(size=9, color=color), bgcolor="rgba(252,252,251,0.8)")
     legend = [(f"Memory roof: {label}", MEMORY_ROOF_LINES[min(k, 1)])
               for k, (_, label) in enumerate(sorted(memory, reverse=True))]
     kinds = {e for rf in roofs.values() for _, _, e in rf}
