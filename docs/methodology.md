@@ -71,7 +71,17 @@ engines — AMX coverage at BF16.
 
 Closed loop: C workers each send their next request as soon as the previous one finishes; start times are
 staggered over one estimated request duration. Throughput is measured in the **steady window** in which exactly C
-requests are in flight; latency statistics use requests whose whole life lies in that window.
+requests are in flight; latency statistics use requests whose whole life lies in that window. At C = 1 the window
+is the makespan (first send to last completion; `summarize` in `scripts/benchmark/bench_client.py`). Processing
+adds an independent estimate from Little's law, C ÷ mean(E2E) × (ISL + OSL); notebook 01 (section 3a) compares
+the two per point and flags deviations above 5%. The steady-window estimate remains the primary metric. Total and
+output tokens/s are both window rates, but their ratio is not the constant (ISL + OSL)/OSL, because prompt tokens
+are counted when a request's first token falls inside the window; tables and ratios use total tokens/s.
+
+**Uncertainty.** The 3 repetitions of a point run back to back against one server instance, so their coefficient
+of variation is within-server repeatability. Each configuration × workload curve ran on a single node. The tuning
+campaign re-measured the 8B 512→512 points at C = 1 and 16 with the primary campaign's settings, mostly on other
+nodes; notebook 01 (section 6a) uses it as the cross-node estimate.
 
 The sweep rule was declared before any measurement and applied identically to every configuration: C = 1…64;
 stop after two consecutive doublings that each add < 5% throughput; extend to 128 and 256 only while the last

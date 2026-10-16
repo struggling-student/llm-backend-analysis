@@ -33,3 +33,12 @@ def test_littles_law_columns_follow_their_definition():
     mean = reps.groupby(["model", "arm_dir", "workload", "concurrency"])["steady_over_littles_law"].mean()
     got = pts.set_index(["model", "arm_dir", "workload", "concurrency"])["steady_over_littles_law_mean"]
     assert np.allclose(got.sort_index(), mean.reindex(got.index).sort_index(), rtol=1e-9)
+
+
+def test_every_tuned_configuration_has_a_settings_match_in_the_primary_campaign():
+    from llm_backend_analysis.analysis import tuning
+    reps = loaders.online_repetitions()
+    check = tuning.cross_node_check(loaders.tuning_runs(), reps)
+    tuned = set(loaders.tuning_runs()["configuration_id"])
+    assert set(check["configuration_id"]) == tuned
+    assert reps["settings"].map(len).gt(2).all()  # every repetition records its server settings

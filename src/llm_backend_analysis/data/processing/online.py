@@ -101,6 +101,7 @@ def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.
                    "client_cpu_frac": rep["client_resources"]["cpu_fraction_of_one_core"],
                    "client_loop_lag_max_ms": rep["timing"].get("loop_lag_max_ms"),
                    "prompt_manifest_sha256": rep["prompt_manifest_sha256"],
+                   "settings": json.dumps(meta.get("backend_settings", {}), sort_keys=True),
                    "working_set_gib_model": ws_gib, **base, **agg,
                    "idle_mem_total_gbs": idle_agg.get("mem_total_gbs"),
                    "idle_cpu_busy_compute": idle_agg.get("cpu_busy_compute_mean"),

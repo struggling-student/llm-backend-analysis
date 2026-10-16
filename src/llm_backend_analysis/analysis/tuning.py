@@ -39,3 +39,28 @@ def select_variants(runs: pd.DataFrame) -> pd.DataFrame:
                      if default in sel.index else float("nan"),
                      "variants_tried": ", ".join(sorted(sel.index))})
     return pd.DataFrame(rows)
+
+
+def cross_node_check(runs: pd.DataFrame, repetitions: pd.DataFrame) -> pd.DataFrame:
+    """Same configuration, workload, C and server settings measured in the tuning campaign and in the
+    primary campaign, usually on different nodes and days.
+
+    The tuning variant is matched to the primary campaign by identical server settings (not by name),
+    so a configuration whose tuned value was overridden is compared at the value the campaign ran.
+    One row per configuration and C: tuning value (one repetition), primary mean over its repetitions,
+    their relative difference, the primary within-server CV and whether both ran on the same node."""
+    rows = []
+    for (model, cid, workload, c), g in repetitions.groupby(["model", "configuration_id", "workload", "concurrency"],
+                                                            sort=False):
+        t = runs[(runs["model"] == model) & (runs["configuration_id"] == cid) & (runs["workload"] == workload)
+                 & (runs["concurrency"] == c) & (runs["settings"] == g["settings"].iloc[0]) & runs["total_tok_s"].notna()]
+        if t.empty:
+            continue
+        t = t.iloc[0]
+        main = g["total_tok_s"]
+        rows.append({"model": model, "configuration_id": cid, "workload": workload, "concurrency": int(c),
+                     "variant": t["variant"], "tuning_host": t["host"], "main_host": ",".join(sorted(g["host"].unique())),
+                     "same_node": set(g["host"]) == {t["host"]}, "tuning_total_tok_s": t["total_tok_s"],
+                     "main_total_tok_s": main.mean(), "main_cv": main.std(ddof=1) / main.mean(),
+                     "tuning_over_main": t["total_tok_s"] / main.mean() - 1})
+    return pd.DataFrame(rows)

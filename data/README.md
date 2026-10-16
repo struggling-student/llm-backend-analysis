@@ -42,7 +42,7 @@ canonical `configuration_id`, `backend`, `precision`, `quantization` where appli
 
 | File | One row per | Key columns |
 | --- | --- | --- |
-| `online_repetitions.csv` | repetition of an online point | `output_tok_s`, `total_tok_s` (steady window), latency `*_p50/_p95/_p99` per repetition, telemetry over the window (`mem_read_gbs`, `mem_write_gbs`, `mem_total_gbs`, `amx_busy_frac`, `cpu_busy_compute_mean`, `tokens_per_step`, `engine_steps_per_s`, …), STREAM baselines, `bw_util_vs_stream_max`, `littles_law_total_tok_s` (C ÷ mean E2E × (ISL+OSL), an independent throughput estimate) and `steady_over_littles_law`, validity flags |
+| `online_repetitions.csv` | repetition of an online point | `output_tok_s`, `total_tok_s` (steady window), latency `*_p50/_p95/_p99` per repetition, telemetry over the window (`mem_read_gbs`, `mem_write_gbs`, `mem_total_gbs`, `amx_busy_frac`, `cpu_busy_compute_mean`, `tokens_per_step`, `engine_steps_per_s`, …), STREAM baselines, `bw_util_vs_stream_max`, `settings` (the server's `backend_settings`, JSON), `littles_law_total_tok_s` (C ÷ mean E2E × (ISL+OSL), an independent throughput estimate) and `steady_over_littles_law`, validity flags |
 | `online_points.csv` | (campaign, model, arm, workload, C) | `<metric>_mean/_std/_min/_max/_ci95/_cv` over repetitions; `<latency>_pooled_p50/p95/p99` over all steady requests (`latency_n`, `p99_meaningful`); `littles_law_total_tok_s_mean`, `steady_over_littles_law_mean`; `n_reps`, `tokens_ok`, `manifest_consistent`, `failed_requests` |
 | `online_requests.parquet` | request | `ttft_s`, `tpot_s`, `e2e_s`, `steady`, token counts |
 | `online_sweeps.csv` | concurrency sweep | last point, its status and skip reason, the declared rule |

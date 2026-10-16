@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from llm_backend_analysis.analysis import comparisons, metrics
+import pandas as pd
+
+from llm_backend_analysis.analysis import comparisons, metrics, tuning
 
 
 def test_scaling_metrics(synthetic_points):
@@ -53,3 +55,18 @@ def test_latency_budget(synthetic_points):
     b = metrics.throughput_under_latency_budget(synthetic_points, 0.1).set_index("configuration_id")
     # tpot = 0.05 * (1 + C/8) <= 0.1  ->  C <= 8
     assert b.loc["vllm_bf16", "concurrency"] == 8
+
+
+def test_cross_node_check_matches_variants_by_settings():
+    runs = pd.DataFrame([
+        {"model": "m", "configuration_id": "vllm_int8", "workload": "balanced", "concurrency": 16, "variant": v,
+         "settings": f'{{"mnbt": {v[4:]}}}', "host": "n1", "total_tok_s": t}
+        for v, t in (("mnbt2048", 110.0), ("mnbt8192", 99.0))])
+    reps = pd.DataFrame([{"model": "m", "configuration_id": "vllm_int8", "workload": "balanced", "concurrency": 16,
+                          "settings": '{"mnbt": 8192}', "host": "n2", "total_tok_s": t} for t in (99.0, 101.0, 100.0)])
+    r = tuning.cross_node_check(runs, reps).iloc[0]
+    assert r["variant"] == "mnbt8192"  # the setting the campaign ran, not the faster tuning variant
+    assert r["tuning_over_main"] == pytest.approx(-0.01)
+    assert r["main_cv"] == pytest.approx(0.01)
+    assert not r["same_node"]
+    assert tuning.cross_node_check(runs, reps.assign(settings="{}")).empty
