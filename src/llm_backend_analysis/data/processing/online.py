@@ -52,6 +52,15 @@ def _working_set_gib(model: str, harness_precision: str, isl: int, osl: int, c: 
     return (registry.step_weight_bytes(model, harness_precision) + c * (isl + osl / 2) * kv) / 2**30
 
 
+def littles_law_total_tok_s(concurrency: float, e2e_mean_s: float, isl: int, osl: int) -> float:
+    """Closed-loop throughput implied by Little's law: C requests in flight, each carrying ISL + OSL tokens
+    over a mean end-to-end latency, give C / mean(E2E) x (ISL + OSL) tokens per second. An independent
+    estimate of the steady-window total tokens/s (it uses latencies, not window token counts)."""
+    if not e2e_mean_s or not np.isfinite(e2e_mean_s):
+        return np.nan
+    return concurrency / e2e_mean_s * (isl + osl)
+
+
 def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.DataFrame
                    ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (repetitions, requests)."""
@@ -103,6 +112,9 @@ def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.
             if agg.get("mem_total_gbs") and base.get("stream_pmu_total_gbs_at_ws"):
                 row["bw_util_vs_stream_at_ws"] = agg["mem_total_gbs"] / base["stream_pmu_total_gbs_at_ws"]
                 row["bw_util_vs_stream_max"] = agg["mem_total_gbs"] / base["stream_pmu_total_gbs_max"]
+            row["littles_law_total_tok_s"] = littles_law_total_tok_s(c, row["e2e_s_mean"], keys["isl"], keys["osl"])
+            if row["total_tok_s"] and np.isfinite(row["littles_law_total_tok_s"]):
+                row["steady_over_littles_law"] = row["total_tok_s"] / row["littles_law_total_tok_s"]
             if agg.get("mem_total_gbs") and row["output_tok_s"]:
                 row["bytes_per_output_token_mb"] = agg["mem_total_gbs"] * 1e3 / row["output_tok_s"]
             rep_rows.append(row)
@@ -156,7 +168,8 @@ def aggregate_points(reps: pd.DataFrame, reqs: pd.DataFrame) -> pd.DataFrame:
                   "stream_pmu_total_gbs_max"):
             if k in g:
                 row[k] = g[k].iloc[0]
-        for k in ("bw_util_vs_stream_at_ws", "bw_util_vs_stream_max", "bytes_per_output_token_mb"):
+        for k in ("bw_util_vs_stream_at_ws", "bw_util_vs_stream_max", "bytes_per_output_token_mb",
+                  "littles_law_total_tok_s", "steady_over_littles_law"):
             if k in g:
                 row[f"{k}_mean"] = g[k].mean()
         row["idle_cpu_busy_compute_max"] = g["idle_cpu_busy_compute"].max()
