@@ -61,3 +61,23 @@ def test_placement_table(tmp_path):
     t = membind.placement_table(tmp_path)
     assert t.iloc[0]["share_on_requested_node"] == pytest.approx(100 / 1100)
     assert not t.iloc[0]["valid"]
+
+
+def test_sensitivity_table_models_remote_traffic_from_reference_bytes_per_step():
+    rows = []
+    for node, (tok, steps, traffic) in {0: (100.0, 10.0, 200.0), 1: (20.0, 2.0, 0.5)}.items():
+        for p in (1, 2):
+            rows.append({"model": "m", "configuration_id": "vllm_bf16", "workload": "decode", "concurrency": 8,
+                         "variant": f"mem{node}_p{p}", "total_tok_s_mean": tok, "tpot_s_p50_mean": 0.1 * (1 + 4 * node),
+                         "ttft_s_p50_mean": 1.0, "engine_steps_per_s_mean": steps, "tokens_per_step_mean": 10.0,
+                         "mem_total_gbs_mean": traffic, "working_set_gib_model": 16.0, "cpu_busy_compute_mean_mean": 0.99})
+    stream = pd.DataFrame({"campaign": ["calibration"] * 2 + ["calibration-membind1"] * 2, "threads": 55,
+                           "working_set_gib": [8, 32] * 2, "stream_triad_gbs": [500.0, 400.0, 104.0, 100.0]})
+    t = membind.sensitivity_table(pd.DataFrame(rows), stream).iloc[0]
+    assert t["throughput_ratio"] == pytest.approx(0.2) and t["step_rate_ratio"] == pytest.approx(0.2)
+    assert t["bytes_per_step_gb"] == pytest.approx(20.0)            # 200 GB/s local at 10 steps/s
+    assert t["implied_remote_traffic_gbs"] == pytest.approx(40.0)    # not the 0.5 GB/s the local-only counters report
+    assert t["implied_remote_roof_share"] == pytest.approx(40.0 / t["remote_roof_gbs"])
+    assert t["bandwidth_only_ratio_bound"] == pytest.approx(t["remote_roof_gbs"] / 200.0)   # 0.5: bound above the observed 0.2
+    assert t["throughput_ratio"] < t["bandwidth_only_ratio_bound"]
+    assert 100 < t["remote_roof_gbs"] < 104 and 400 < t["reference_roof_gbs"] < 500

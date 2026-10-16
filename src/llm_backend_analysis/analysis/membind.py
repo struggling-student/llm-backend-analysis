@@ -13,6 +13,7 @@ throughput here (`implied_bandwidth_gbs`), never taken from `mem_*_gbs`.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -113,9 +114,53 @@ def placement_table(raw_online: Path, campaign: str = "membind") -> pd.DataFrame
     for f in sorted((raw_online / campaign).glob("*/*/*/*/numastat.txt")):
         model, arm_dir, workload, point = f.parts[-5], f.parts[-4], f.parts[-3], f.parts[-2]
         arm, _, variant = arm_dir.partition("__")
-        node, pass_no = parse_variant(variant)
+        if variant:
+            node, pass_no = parse_variant(variant)
+        else:   # untagged point (the shim check): the node is in the recorded numa policy
+            meta = json.loads((f.parent / "metadata.json").read_text())
+            node, pass_no = int(re.search(r"membind=(\d+)", meta["numa_policy"]).group(1)), 0
         share = numastat_share(f, node)
         rows.append({"model": model, "arm": arm, "workload": workload, "concurrency": int(point[1:]), "mem_node": node,
                      "pass_no": pass_no, "share_on_requested_node": share,
                      "valid": share is not None and share >= PLACEMENT_MIN})
     return pd.DataFrame(rows)
+
+
+def sensitivity_table(points: pd.DataFrame, stream: pd.DataFrame, reference: int = 0, remote: int = 1) -> pd.DataFrame:
+    """One row per cell: what remote memory does to the server, and how much of the remote bandwidth that needs.
+
+    Bytes per step come from the *reference* runs (local memory, where the PMU proxy is validated) and are assumed
+    unchanged with remote memory: the same tokens per step are processed (`tokens_per_step` columns show it) and the
+    weights and KV read per step do not depend on where they sit. The remote traffic is then modelled as
+    bytes-per-step × remote steps/s and compared with the remote STREAM roof at the cell's working set."""
+    p = with_node(points)
+    keys = CELL
+    agg = {"total_tok_s_mean": "mean", "tpot_s_p50_mean": "mean", "ttft_s_p50_mean": "mean", "engine_steps_per_s_mean": "mean",
+           "tokens_per_step_mean": "mean", "mem_total_gbs_mean": "mean", "working_set_gib_model": "mean",
+           "cpu_busy_compute_mean_mean": "mean"}
+    ref = p[p["mem_node"] == reference].groupby(keys, sort=False).agg(agg)
+    rem = p[p["mem_node"] == remote].groupby(keys, sort=False).agg(agg)
+    both = ref.index.intersection(rem.index)
+    ref, rem = ref.loc[both], rem.loc[both]
+    out = pd.DataFrame(index=both)
+    out["working_set_gib"] = ref["working_set_gib_model"]
+    out["reference_tok_s"], out["remote_tok_s"] = ref["total_tok_s_mean"], rem["total_tok_s_mean"]
+    out["throughput_ratio"] = rem["total_tok_s_mean"] / ref["total_tok_s_mean"]
+    out["tpot_ratio_remote_over_reference"] = rem["tpot_s_p50_mean"] / ref["tpot_s_p50_mean"]
+    out["ttft_ratio_remote_over_reference"] = rem["ttft_s_p50_mean"] / ref["ttft_s_p50_mean"]
+    out["step_rate_ratio"] = rem["engine_steps_per_s_mean"] / ref["engine_steps_per_s_mean"]
+    out["tokens_per_step_reference"], out["tokens_per_step_remote"] = ref["tokens_per_step_mean"], rem["tokens_per_step_mean"]
+    out["compute_core_busy_reference"], out["compute_core_busy_remote"] = (ref["cpu_busy_compute_mean_mean"],
+                                                                         rem["cpu_busy_compute_mean_mean"])
+    out["bytes_per_step_gb"] = ref["mem_total_gbs_mean"] / ref["engine_steps_per_s_mean"]
+    out["reference_traffic_gbs"] = ref["mem_total_gbs_mean"]
+    out["implied_remote_traffic_gbs"] = out["bytes_per_step_gb"] * rem["engine_steps_per_s_mean"]
+    out["reference_roof_gbs"] = [remote_roof_gbs(stream, w, campaign="calibration") for w in out["working_set_gib"]]
+    out["remote_roof_gbs"] = [remote_roof_gbs(stream, w) for w in out["working_set_gib"]]
+    out["roof_ratio"] = out["remote_roof_gbs"] / out["reference_roof_gbs"]
+    # Upper bound on the throughput ratio if only the remote bandwidth limited the server: it needs the reference
+    # traffic and the remote roof is lower, so it cannot do better than roof ÷ traffic.
+    out["bandwidth_only_ratio_bound"] = np.minimum(1.0, out["remote_roof_gbs"] / out["reference_traffic_gbs"])
+    out["reference_roof_share"] = out["reference_traffic_gbs"] / out["reference_roof_gbs"]
+    out["implied_remote_roof_share"] = out["implied_remote_traffic_gbs"] / out["remote_roof_gbs"]
+    return out.reset_index()

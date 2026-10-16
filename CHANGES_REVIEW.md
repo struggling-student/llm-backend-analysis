@@ -57,6 +57,14 @@ the review are unchanged (0 removed, 0 values changed); 14 were added.
 - **Figures (T1.8):** at most two compute roofs per roofline panel; "(mostly prefill)" in the 4096→1024 panel title.
 - **Harness (T2.1, nothing submitted):** memory-node override and the memory-node sensitivity driver; see `docs/cluster_runbook.md`.
 
+## Experiment A (memory-node sensitivity, 2026-10-17)
+
+- New notebook 11 and `analysis/membind.py`: vLLM BF16 keeps 0.19×–0.29× of its throughput with the server's memory on the other socket's node
+  (llama.cpp control 0.28× at C=1); at high concurrency the loss exceeds what remote bandwidth alone explains (hypothesis: latency).
+  nb09 gets claim 10, three status-table rows (measured / hypothesis / untested) and six key numbers; no existing number changed.
+- Remote traffic is modelled because the core PMU read counter counts local reads only (nb01 §4).
+- vLLM's CPU worker resets the memory policy, so the first attempt (`membind-v1-vllm-numa-override`) was not remote and is kept as superseded; the re-run uses an `LD_PRELOAD` shim.
+
 ## Validation
 
 `make data notebooks validate` and pytest: all checks pass (environment, raw data integrity, metadata, processed data up to date,

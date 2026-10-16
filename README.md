@@ -47,7 +47,7 @@ data/raw  ──make data──▶  data/processed  ──make notebooks──�
 │   │                         telemetry, environment)
 │   ├── metadata/             configurations.toml, campaigns.toml, raw_checksums.sha256
 │   └── processed/            CSV/Parquet tables built from raw data
-├── notebooks/backend_selection/   01–10: one analytical question per notebook
+├── notebooks/backend_selection/   01–11: one analytical question per notebook
 ├── results/
 │   ├── figures/backend_selection/ selected SVG + PNG exports and their manifest (figures.json)
 │   └── tables/backend_selection/  derived tables quoted by documentation (key_numbers.csv, …)
@@ -78,7 +78,7 @@ Static figure export uses Kaleido 0.2.1 (installed by `uv sync`, no browser need
 
 ```bash
 make data           # data/raw -> data/processed (deterministic)
-make notebooks      # execute notebooks 01-10 top to bottom; rewrites results/figures and results/tables
+make notebooks      # execute notebooks 01-11 top to bottom; rewrites results/figures and results/tables
 make validate       # raw-data checksums, metadata coverage, freshness, notebook hygiene, figure manifest, links + tests
 ```
 

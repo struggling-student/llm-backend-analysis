@@ -646,3 +646,36 @@ def parity_scatter(points: pd.DataFrame, *, x: str, y: str, x_title: str, y_titl
     fig.update_yaxes(title_text=y_title, range=[0, top])
     fig.update_layout(title_text=title_text(title, subtitle), height=height, width=780)
     return _finish(fig)
+
+
+def membind_figure(table: pd.DataFrame, *, title: str, subtitle: str | None = None) -> go.Figure:
+    """Memory-node sensitivity, one bar group per cell (`analysis.membind.sensitivity_table`).
+    Left: throughput with remote memory ÷ local (bars) against the ratio that remote bandwidth alone would allow
+    (diamonds, an upper bound). Right: share of the remote STREAM roof the server needs with remote memory
+    (modelled from the local bytes per step; bars) against its share of the local roof (open bars)."""
+    def cell_label(r) -> str:
+        cfg = registry.configuration_label(r.configuration_id).split(" · ")[0]
+        return f"{cfg} {registry.workload_label(r.workload, short=True)}<br>C = {r.concurrency}"
+    t = table.copy()
+    labels = [cell_label(r) for r in t.itertuples()]
+    colors = [theme.BACKEND_COLORS["vllm" if c.startswith("vllm") else "llama_cpp"] for c in t["configuration_id"]]
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["Throughput, remote ÷ local memory",
+                                                        "Share of the memory roof (STREAM, same working set)"],
+                        horizontal_spacing=0.1)
+    fig.add_trace(go.Bar(x=labels, y=t["throughput_ratio"], marker_color=colors, name="Observed ratio",
+                         text=[f"{v:.2f}×" for v in t["throughput_ratio"]], textposition="inside", insidetextanchor="middle",
+                         textfont=dict(color="white", size=13),
+                         hovertemplate="%{x}<br>observed: %{y:.3f}×<extra></extra>"), row=1, col=1)
+    fig.add_trace(go.Scatter(x=labels, y=t["bandwidth_only_ratio_bound"], mode="markers", name="Upper bound if only bandwidth limited",
+                             marker=dict(symbol="diamond", size=12, color=theme.TEXT_PRIMARY, line=dict(width=1.5)),
+                             hovertemplate="%{x}<br>bound: %{y:.3f}×<extra></extra>"), row=1, col=1)
+    fig.add_trace(go.Bar(x=labels, y=t["reference_roof_share"], marker=dict(color="rgba(0,0,0,0)", line=dict(color=colors, width=2)),
+                         name="Local memory: traffic ÷ local roof", hovertemplate="%{x}<br>local: %{y:.0%}<extra></extra>"), row=1, col=2)
+    fig.add_trace(go.Bar(x=labels, y=t["implied_remote_roof_share"], marker_color=colors, name="Remote memory: modelled traffic ÷ remote roof",
+                         text=[f"{v:.0%}" for v in t["implied_remote_roof_share"]], textposition="outside",
+                         hovertemplate="%{x}<br>remote (modelled): %{y:.0%}<extra></extra>"), row=1, col=2)
+    fig.update_yaxes(range=[0, 1.05], tickformat=".0%" , row=1, col=2)
+    fig.update_yaxes(range=[0, 1.05], title_text="remote ÷ local throughput", row=1, col=1)
+    fig.update_layout(title_text=title_text(title, subtitle), height=520, width=theme.WIDTH, barmode="group",
+                      showlegend=True, legend=dict(orientation="h", y=-0.28))
+    return _finish(fig)
