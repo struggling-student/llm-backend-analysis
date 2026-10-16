@@ -65,8 +65,8 @@ case "$what" in
     done ;;
   build-shim)
     mkdir -p "$BC_DATA/shim"
-    apptainer exec --cleanenv "$BC_IMAGES/vllm-cpu-v0.30.0.sif" gcc -shared -fPIC -O2 \
-      -o "$BC_DATA/shim/numa_noop.so" scripts/benchmark/numa_noop.c && ls -l "$BC_DATA/shim/numa_noop.so" ;;
+    apptainer exec --cleanenv --bind "$BC_DATA:$BC_DATA" --bind "$BC_ROOT:$BC_ROOT" "$BC_IMAGES/vllm-cpu-v0.30.0.sif" gcc -shared -fPIC -O2 \
+      -o "$BC_DATA/shim/numa_noop.so" "$BC_ROOT/scripts/benchmark/numa_noop.c" && ls -l "$BC_DATA/shim/numa_noop.so" ;;
   membind-shimcheck)
     echo "membind shimcheck: $(sub 00:45:00 mb-shimcheck scripts/benchmark/run_online.py --model llama31_8b --arm vllm-bf16 --workload decode --campaign membind-shimcheck --concurrency 1 --reps 1 --num-requests 2 --mem-node 1)" ;;
   membind-stream)
