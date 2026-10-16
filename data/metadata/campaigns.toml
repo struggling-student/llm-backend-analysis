@@ -3,14 +3,13 @@
 # role:
 #   primary     the measurements the backend-selection analysis is built on
 #   tuning      backend tuning phase (feeds configs/experiment.toml [tuned.*])
-#   sensitivity prepared or run to test how a result responds to a hardware condition (memory-node sensitivity);
+#   sensitivity run to test how a result responds to a hardware condition (memory-node sensitivity);
 #               never part of the primary analysis
 #   validation  checks of the method itself (instrument overhead, quality, smoke runs)
 #   superseded  an earlier attempt replaced by a later campaign; kept for provenance
 #   failed      an attempt that did not produce usable measurements
 #
-# prepared = true marks a campaign that is declared before its raw data exist (validation then does not demand data,
-# and fails once data exist while the flag is still set).
+# # and fails once data exist while the flag is still set). No campaign carries it at the moment.
 #
 # Processing reads every campaign (nothing is silently dropped) and stamps each row
 # with its campaign and role; the notebooks select campaigns explicitly by role.
@@ -60,18 +59,15 @@ reason = "With 2048-token prefill chunks the warm-up overestimated the longctx C
 
 [online.membind]
 role = "sensitivity"
-prepared = true   # declared before any data exists; remove this line when the raw data are synced
-description = "Memory-node sensitivity (review Experiment A; prepared, not run): server memory on node 0 vs remote node 1, same cores, A/B/A/B per cell inside one job (configs/experiment.toml [membind_sensitivity]). Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
+description = "Memory-node sensitivity (review Experiment A, jobs 5384351-5384353 for vLLM, 5384324 for llama.cpp): server memory on node 0 vs remote node 1, same cores, A/B/A/B per cell inside one job (configs/experiment.toml [membind_sensitivity]). Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
 
 [online.membind-v1-vllm-numa-override]
 role = "superseded"
-prepared = true   # declared before the raw data are synced; remove this line then
 description = "First attempt of the memory-node sensitivity runs, vLLM BF16 arms only (decode C=1, C=128, 4096->1024 C=32 partial; jobs 5384321-5384323)."
 reason = "vLLM's CPU worker resets the memory policy to the node of its first core, so numactl --membind=1 left 90-93% of the server's memory on node 0 (numastat check: 10% and 7% on node 1). Re-run as `membind` with the LD_PRELOAD shim (>= 99.99% on node 1 in `membind-shimcheck`). The llama.cpp control of the first attempt is valid (100% on node 1) and stays in `membind`."
 
 [online.membind-shimcheck]
 role = "validation"
-prepared = true   # declared before any data exists; remove this line when the raw data are synced
 description = "Check that the LD_PRELOAD shim (scripts/benchmark/numa_noop.c) keeps vLLM's memory on node 1: one short C=1 decode point, numastat share >= 90% on node 1."
 
 [offline.main]
