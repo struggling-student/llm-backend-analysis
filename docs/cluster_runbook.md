@@ -123,9 +123,17 @@ C=1 as a control. Each cell runs node 0 / node 1 / node 0 / node 1 inside one jo
 `<arm>__mem<node>_p<pass>`, 3 harness repetitions per point), so the ratio `node 1 ÷ node 0` is formed on one node and day.
 Every point checks with `numastat` that at least 90% of the server's memory sits on the requested node.
 
+**vLLM needs a shim.** vLLM's CPU worker (`init_cpu_memory_env`) resets the memory policy to the NUMA node of its first core, so
+`numactl --membind=1` alone left only 7–10% of its memory on node 1 (first attempt, kept as the superseded campaign
+`membind-v1-vllm-numa-override`; its throughput change is not a remote-memory effect). `scripts/benchmark/numa_noop.c` turns the
+two libnuma calls into no-ops; `run_online.py` loads it (`LD_PRELOAD`) only when `server_mem_node` differs from `server_cpu_node`.
+Build it once with `submit.sh build-shim`; `submit.sh membind-shimcheck` checked it (99.99% on node 1, TPOT 188 ms against 54 ms with
+local memory). llama.cpp keeps `numactl`'s policy and needs nothing.
+
 ```bash
 source configs/cresco8.env
 uv run python scripts/benchmark/membind_sensitivity.py --dry-run   # every command line, nothing started (any machine)
+scripts/cluster/submit.sh build-shim                              # once: compile the vLLM NUMA shim inside the image
 scripts/cluster/submit.sh membind-stream                          # remote STREAM roof (campaign stream/calibration-membind1)
 scripts/cluster/submit.sh membind                                 # one job per cell; or: submit.sh membind vllm-decode-c1
 ```
