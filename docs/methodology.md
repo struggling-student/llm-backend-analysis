@@ -97,6 +97,13 @@ vLLM INT8 was tuned the same way after the BF16 campaign, and its result was ove
 in `configs/experiment.toml` `[tuned.*]`; the grid and the rule are reproduced in notebook 01 and by
 `scripts/processing/summarize_tuning.py`.
 
+**Scope of the tuning.** The grid used 512-token prompts, so it could not show whether chunking a long prompt matters. The
+knobs that control it (llama.cpp `-b`/`-ub`, vLLM `max_num_batched_tokens`) were not varied on the prefill-heavy,
+long-prompt shapes (4096→128, 8192→256, 4096→1024) or at the highest concurrencies. The 4.9–8.1× backend gap on the 8B
+model is several times larger than the effect of any batching knob measured on the tuned shape, and the one knob that
+mattered (flash attention) is on; this makes a tuning artefact unlikely, but that is an argument, not a
+measurement. One tuning run on a prefill-heavy shape would close it; the backend selection does not depend on it.
+
 ## Telemetry
 
 CRESCO8 runs `kernel.perf_event_paranoid = 2` without root, `perf` or `pcm`, so every **uncore** PMU (DDR IMC,
