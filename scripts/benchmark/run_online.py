@@ -61,6 +61,9 @@ def server_command(cfg: dict[str, Any], model_key: str, arm_key: str, wl: dict[s
             "HF_HUB_OFFLINE": "1",
             "TRANSFORMERS_OFFLINE": "1",
         }
+        if topo["server_mem_node"] != topo["server_cpu_node"]:
+            # vLLM's CPU worker resets the memory policy to the cores' node; the shim keeps numactl's policy.
+            cenv["LD_PRELOAD"] = topo["numa_shim"]
         cmd = prefix + ["apptainer", "exec", "--cleanenv"]
         for k, v in cenv.items():
             cmd += ["--env", f"{k}={v}"]
@@ -78,7 +81,7 @@ def server_command(cfg: dict[str, Any], model_key: str, arm_key: str, wl: dict[s
                 "--seed", "0",
                 "--disable-uvicorn-access-log",
                 *settings.get("extra_args", [])]
-        info.update({"kv_cache_gib": kv_gib, "container_env": cenv})
+        info.update({"kv_cache_gib": kv_gib, "container_env": cenv, "numa_shim": "LD_PRELOAD" in cenv})
     else:
         ctx_slot = bclib.round_up(seq_len, 256)
         bin_dir = settings["bin_dir_amx"] if arm.get("build", "amx") == "amx" else settings["bin_dir_avx512"]
@@ -179,6 +182,8 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
             break
         time.sleep(1)
     cmd, env, sinfo = server_command(cfg, args.model, args.arm, wl, c, settings, port)
+    if sinfo.get("numa_shim") and not Path(topo["numa_shim"]).is_file():
+        raise FileNotFoundError(f"{topo['numa_shim']} is missing: build it first (scripts/cluster/submit.sh build-shim)")
     meta: dict[str, Any] = {
         "experiment": cfg["experiment"], "campaign": args.campaign, "kind": "online",
         "timestamp": bclib.now_iso(), **bclib.host_facts(),

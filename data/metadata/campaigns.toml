@@ -63,6 +63,11 @@ role = "sensitivity"
 prepared = true   # declared before any data exists; remove this line when the raw data are synced
 description = "Memory-node sensitivity (review Experiment A; prepared, not run): server memory on node 0 vs remote node 1, same cores, A/B/A/B per cell inside one job (configs/experiment.toml [membind_sensitivity]). Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
 
+[online.membind-shimcheck]
+role = "validation"
+prepared = true   # declared before any data exists; remove this line when the raw data are synced
+description = "Check that the LD_PRELOAD shim (scripts/benchmark/numa_noop.c) keeps vLLM's memory on node 1: one short C=1 decode point, numastat share >= 90% on node 1."
+
 [offline.main]
 role = "primary"
 description = "Experiment A: offline engine microbenchmarks (llama-bench, llama-batched-bench, vllm bench latency/throughput)."

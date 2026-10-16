@@ -10,6 +10,8 @@
 #   scripts/cluster/submit.sh int8-tuning                   # tuning for vllm-w8a8 (then set [tuned.vllm-w8a8])
 #   scripts/cluster/submit.sh int8-campaign                 # vllm-w8a8, 8B: 5 online workloads + offline
 #   scripts/cluster/submit.sh membind [cell ...]            # memory-node sensitivity: remote vs local server memory, one job per cell
+#   scripts/cluster/submit.sh build-shim                    # compile the vLLM NUMA shim inside the image (login node, seconds)
+#   scripts/cluster/submit.sh membind-shimcheck             # one short C=1 vLLM run with memory on node 1; check numastat after
 #   scripts/cluster/submit.sh membind-stream                # memory-node sensitivity: STREAM roof with remote memory (node 1)
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
 #
@@ -61,6 +63,12 @@ case "$what" in
     for c in "${CELLS[@]}"; do
       echo "membind $c: $(sub 12:00:00 "mb-$c" scripts/benchmark/membind_sensitivity.py --cell "$c")"
     done ;;
+  build-shim)
+    mkdir -p "$BC_DATA/shim"
+    apptainer exec --cleanenv "$BC_IMAGES/vllm-cpu-v0.30.0.sif" gcc -shared -fPIC -O2 \
+      -o "$BC_DATA/shim/numa_noop.so" scripts/benchmark/numa_noop.c && ls -l "$BC_DATA/shim/numa_noop.so" ;;
+  membind-shimcheck)
+    echo "membind shimcheck: $(sub 00:45:00 mb-shimcheck scripts/benchmark/run_online.py --model llama31_8b --arm vllm-bf16 --workload decode --campaign membind-shimcheck --concurrency 1 --reps 1 --num-requests 2 --mem-node 1)" ;;
   membind-stream)
     echo "membind stream: $(sub 02:00:00 stream-membind1 scripts/benchmark/stream_calibration.py --mem-node 1 --threads 55 --campaign calibration-membind1)" ;;
   job) t=$1 n=$2; shift 2; sub "$t" "$n" "$@" ;;

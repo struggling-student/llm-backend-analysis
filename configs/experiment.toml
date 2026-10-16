@@ -22,6 +22,8 @@ compute_cpus = "0-54"            # OpenMP compute threads, one per core
 compute_threads = 55
 frontend_cpu = 55                # left to the HTTP front end in both servers
 server_mem_node = 0              # numactl --membind
+server_cpu_node = 0              # NUMA node of the server cores (socket 0); vLLM binds its memory there itself
+numa_shim = "${BC_DATA}/shim/numa_noop.so"   # LD_PRELOAD shim, loaded when server_mem_node != server_cpu_node (see numa_noop.c)
 client_cpus = "100-111"          # socket 1
 client_mem_node = 1
 

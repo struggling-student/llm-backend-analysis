@@ -36,7 +36,14 @@ def test_mem_node_changes_only_membind(cfg, arm):
     local = command(cfg, "llama31_8b", arm, "decode", 1, mem_node=0)
     remote = command(cfg, "llama31_8b", arm, "decode", 1, mem_node=1)
     assert "--membind=0" in local and "--membind=1" in remote
-    assert [t for t in local if t != "--membind=0"] == [t for t in remote if t != "--membind=1"]
+    def strip_shim(toks):  # the NUMA shim (vLLM only) is the one other allowed difference
+        out = []
+        for i, t in enumerate(toks):
+            if t.startswith("LD_PRELOAD=") or (t == "--env" and toks[i + 1].startswith("LD_PRELOAD=")):
+                continue
+            out.append(t)
+        return out
+    assert [t for t in local if t != "--membind=0"] == [t for t in strip_shim(remote) if t != "--membind=1"]
 
 
 @pytest.mark.parametrize("arm,directory", [("vllm-bf16", "vllm-bf16"), ("llamacpp-bf16", "llamacpp-bf16")])
@@ -46,6 +53,15 @@ def test_existing_cells_reproducible(cfg, arm, directory):
     rebuilt = command(cfg, "llama31_8b", arm, "decode", 1)
     keep = lambda toks: [t for t in toks if "/" not in t]  # noqa: E731
     assert keep(rebuilt) == keep(recorded["server_command"])
+
+
+def test_vllm_gets_the_numa_shim_only_for_remote_memory(cfg):
+    local = command(cfg, "llama31_8b", "vllm-bf16", "decode", 1, mem_node=0)
+    remote = command(cfg, "llama31_8b", "vllm-bf16", "decode", 1, mem_node=1)
+    shim = f"LD_PRELOAD={cfg['topology']['numa_shim']}"
+    assert shim in remote and shim not in local
+    # llama.cpp does not reset the memory policy, so it never needs the shim
+    assert not any(t.startswith("LD_PRELOAD") for t in command(cfg, "llama31_8b", "llamacpp-bf16", "decode", 1, mem_node=1))
 
 
 def test_plan_is_abab_within_each_cell(cfg):
