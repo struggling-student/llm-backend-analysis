@@ -135,7 +135,8 @@ def workloads() -> pd.DataFrame:
     rows = []
     for i, (key, w) in enumerate(experiment_config()["workloads"].items()):
         rows.append({"workload": key, "isl": w["isl"], "osl": w["osl"], "order": i,
-                     "workload_label": w["label"].replace("->", "→"), "shape": f"{w['isl']}→{w['osl']}"})
+                     "workload_label": w["label"].replace("->", "→"), "shape": f"{w['isl']}→{w['osl']}",
+                     "panel_note": w.get("panel_note", "")})
     return pd.DataFrame(rows)
 
 

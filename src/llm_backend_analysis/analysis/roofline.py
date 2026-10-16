@@ -48,12 +48,13 @@ KERNEL_CEILING = {
     "llama_cpp_int8": "amx_int8_gemm",  # AMX INT8 tiles for >= 2 rows (AVX-512 VNNI at 1 row)
     "vllm_int8": "amx_int8_gemm",       # vLLM int8_scaled_mm_with_quant on AMX INT8 tiles
 }
-# Further roofs drawn next to a configuration's own kernel ceiling, for context.
+# One further roof drawn next to a configuration's own kernel ceiling, for context: at most two compute roofs per
+# panel. The AMX tile peaks (another node, 56 threads) stay in the roofs table but are not drawn.
 CONTEXT_CEILINGS = {
-    "vllm_bf16": ["vllm_bf16_kernels", "amx_bf16_peak"],
-    "llama_cpp_bf16": ["amx_bf16_gemm", "amx_bf16_peak"],   # what an AMX BF16 kernel would allow
-    "llama_cpp_int8": ["amx_int8_peak"],
-    "vllm_int8": ["vllm_int8_kernels", "amx_int8_peak"],
+    "vllm_bf16": ["vllm_bf16_kernels"],
+    "llama_cpp_bf16": ["amx_bf16_gemm"],   # what an AMX BF16 kernel would allow
+    "llama_cpp_int8": [],
+    "vllm_int8": ["vllm_int8_kernels"],
 }
 # Roofs that stand in for a path whose own peak was not measured (shown with this caveat).
 PROXY_CEILINGS = {

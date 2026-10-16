@@ -83,8 +83,10 @@ def _facet_values(df: pd.DataFrame, facet: str) -> list:
 def _facet_title(facet: str, value, compact: bool = True) -> str:
     if facet == "workload":
         label = registry.workload_label(value)
+        note = registry.workloads().set_index("workload").loc[value, "panel_note"]
         head, _, shape = label.rpartition(" ")
-        return f"{head}<br>{shape}" if compact and head else label
+        shape = f"{shape} ({note})" if note else shape
+        return f"{head}<br>{shape}" if compact and head else (f"{label} ({note})" if note else label)
     if facet == "model":
         return registry.model_label(value)
     if facet == "configuration_id":
