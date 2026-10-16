@@ -11,7 +11,7 @@
   },
   "backend_ratio_vs_concurrency": {
     "source_notebook": "notebooks/backend_selection/04_concurrency_scaling.ipynb",
-    "caption": "vLLM BF16 ÷ llama.cpp BF16 throughput at equal C per workload, 8B and 1B.",
+    "caption": "vLLM BF16 ÷ llama.cpp BF16 throughput at equal C per workload, 8B and 1B. Error bars: repetition spread of one server instance per configuration.",
     "files": [
       "backend_ratio_vs_concurrency.svg",
       "backend_ratio_vs_concurrency.png"
@@ -21,7 +21,7 @@
   },
   "backend_ratio_vs_concurrency_int8": {
     "source_notebook": "notebooks/backend_selection/08_precision_int8.ipynb",
-    "caption": "vLLM W8A8 ÷ llama.cpp Q8_0 throughput at equal C per workload.",
+    "caption": "vLLM W8A8 ÷ llama.cpp Q8_0 throughput at equal C per workload. Error bars: repetition spread of one server instance per configuration.",
     "files": [
       "backend_ratio_vs_concurrency_int8.svg",
       "backend_ratio_vs_concurrency_int8.png"
@@ -71,20 +71,10 @@
   },
   "offline_decode_throughput": {
     "source_notebook": "notebooks/backend_selection/02_offline_engine_benchmarks.ipynb",
-    "caption": "Offline decode tokens/s at batch 1, 8 and 32 for each engine (engine tools, scopes differ).",
+    "caption": "Offline decode tokens/s at batch 1, 8 and 32 for each engine (engine tools, scopes differ). Error bars: ±1 SD over the repetitions of one run on one node.",
     "files": [
       "offline_decode_throughput.svg",
       "offline_decode_throughput.png"
-    ],
-    "width": null,
-    "height": 500
-  },
-  "peak_throughput_by_workload": {
-    "source_notebook": "notebooks/backend_selection/09_backend_selection_summary.ipynb",
-    "caption": "Best measured total tokens/s of each configuration per workload (8B), each at its own best concurrency.",
-    "files": [
-      "peak_throughput_by_workload.svg",
-      "peak_throughput_by_workload.png"
     ],
     "width": null,
     "height": 500
@@ -159,9 +149,19 @@
     "width": null,
     "height": 500
   },
+  "throughput_and_backend_ratio": {
+    "source_notebook": "notebooks/backend_selection/09_backend_selection_summary.ipynb",
+    "caption": "Total tokens/s vs concurrency per workload for the four configurations (8B), and vLLM ÷ llama.cpp at equal C for the BF16 and the INT8 pair. Error bars: ±1 SD over the 3 repetitions of one server instance (within-server repeatability, not node-to-node variation).",
+    "files": [
+      "throughput_and_backend_ratio.svg",
+      "throughput_and_backend_ratio.png"
+    ],
+    "width": 1100,
+    "height": 760
+  },
   "throughput_and_memory_traffic": {
     "source_notebook": "notebooks/backend_selection/07_memory_traffic.ipynb",
-    "caption": "Output tokens/s (top) and server memory traffic (bottom) vs concurrency, with the STREAM ceiling (8B).",
+    "caption": "Output tokens/s (top) and server memory traffic (bottom) vs concurrency, with the STREAM ceiling (8B). Error bars: ±1 SD over the 3 repetitions of one server instance.",
     "files": [
       "throughput_and_memory_traffic.svg",
       "throughput_and_memory_traffic.png"
@@ -171,12 +171,22 @@
   },
   "throughput_vs_concurrency": {
     "source_notebook": "notebooks/backend_selection/04_concurrency_scaling.ipynb",
-    "caption": "Aggregate output tokens/s vs concurrent requests per workload (8B); vLLM keeps scaling, llama.cpp flattens early.",
+    "caption": "Aggregate output tokens/s vs concurrent requests per workload (8B); vLLM keeps scaling, llama.cpp flattens early. Error bars: ±1 SD over the 3 repetitions of one server instance.",
     "files": [
       "throughput_vs_concurrency.svg",
       "throughput_vs_concurrency.png"
     ],
     "width": 1100,
     "height": 540
+  },
+  "traffic_and_bytes_per_token": {
+    "source_notebook": "notebooks/backend_selection/09_backend_selection_summary.ipynb",
+    "caption": "Server memory traffic (top, with the STREAM ceiling) and memory bytes per output token (bottom) vs concurrency, 8B. Error bars: ±1 SD over the 3 repetitions of one server instance.",
+    "files": [
+      "traffic_and_bytes_per_token.svg",
+      "traffic_and_bytes_per_token.png"
+    ],
+    "width": 1100,
+    "height": 870
   }
 }

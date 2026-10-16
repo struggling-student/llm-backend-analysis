@@ -78,7 +78,7 @@ Static figure export uses Kaleido 0.2.1 (installed by `uv sync`, no browser need
 
 ```bash
 make data           # data/raw -> data/processed (deterministic)
-make notebooks      # execute notebooks 01-09 top to bottom; rewrites results/figures and results/tables
+make notebooks      # execute notebooks 01-10 top to bottom; rewrites results/figures and results/tables
 make validate       # raw-data checksums, metadata coverage, freshness, notebook hygiene, figure manifest, links + tests
 ```
 

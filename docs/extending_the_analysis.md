@@ -45,7 +45,7 @@ have data, so the INT8 pair appears as soon as `vllm_int8` has measurements.
 - [x] `int8-campaign` synced, `make checksums`
 - [x] `vllm_int8.status = "measured"` in `configurations.toml`
 - [x] `make data notebooks validate`
-- [x] notebook 08 section 3 shows the INT8 pair; notebook 09 claim "INT8 backend pair measured" holds
+- [x] notebook 08 section 3 shows the INT8 pair; notebook 09 claims 2–5 (the INT8 pair) are evaluated on the new data
 - [x] interpretations flagged "✗ revisit" in any claims table reviewed and updated
 - [x] Notion pages updated from `results/tables/backend_selection/key_numbers.csv` and the regenerated figures
 
