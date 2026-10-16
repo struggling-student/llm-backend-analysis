@@ -332,3 +332,32 @@ def engine_ceilings(offline: pd.DataFrame) -> pd.DataFrame:
     med["op_rate_tops"] = med["tok_s"] * med["ops_per_prompt_token"] / 1e12
     best = med.loc[med.groupby(["model", "configuration_id"])["op_rate_tops"].idxmax()]
     return best.reset_index(drop=True)
+
+
+AMX_BUSY_MIN = 0.02  # points below this AMX busy fraction are too idle for a busy ÷ modelled ratio
+
+
+def amx_efficiency(points: pd.DataFrame, compute: pd.DataFrame, offline: pd.DataFrame) -> pd.DataFrame:
+    """How effectively each AMX configuration uses its AMX path, from three independent angles.
+
+    Per configuration whose weight GEMMs can run on AMX tiles: the range of the measured AMX busy
+    fraction over its online points; its best offline prefill rate ÷ the GEMM roof of its precision
+    (the engine's kernels without a server); and the median of measured AMX busy ÷ modelled AMX share
+    over points with AMX busy >= AMX_BUSY_MIN (1 = busy cycles match useful tile arithmetic, > 1 = the
+    unit is busy longer than the arithmetic needs). `points` must carry add_roofline_metrics."""
+    amx = amx_cross_check(points)
+    eng = engine_ceilings(offline).set_index("configuration_id")["op_rate_tops"]
+    rows = []
+    for cid, g in amx.groupby("configuration_id", sort=False):
+        roof = KERNEL_CEILING[cid]
+        if not roof.startswith("amx"):
+            continue
+        busy = g[g["amx_busy_frac_mean"] >= AMX_BUSY_MIN]
+        ratio = busy["amx_busy_frac_mean"] / busy["modelled_amx_share"]
+        rows.append({"configuration_id": cid, "amx_busy_min": g["amx_busy_frac_mean"].min(),
+                     "amx_busy_max": g["amx_busy_frac_mean"].max(), "compute_roof": roof,
+                     "offline_best_tops": eng.get(cid, np.nan),
+                     "offline_share_of_roof": eng.get(cid, np.nan) / compute.loc[roof, "tops"],
+                     "online_best_share_of_roof": g["op_rate_tops"].max() / compute.loc[roof, "tops"],
+                     "busy_over_modelled_median": ratio.median(), "busy_over_modelled_points": len(ratio)})
+    return pd.DataFrame(rows).set_index("configuration_id")

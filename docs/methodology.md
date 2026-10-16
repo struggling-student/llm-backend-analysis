@@ -40,7 +40,8 @@ microbenchmarks (Experiment A) are kept as a controlled reference and reported w
 `vllm_bf16` vs `llama_cpp_bf16` is the **precision-matched pair** and the basis of every backend ratio.
 `llama_cpp_int8` is llama.cpp's fastest configuration; it is shown next to the others and compared with vLLM BF16
 only with an explicit precision caveat. `vllm_int8` vs `llama_cpp_int8` is the second precision-matched pair
-(both with AMX-INT8 weight GEMMs; 8B only). Its checkpoint was built with `scripts/benchmark/quantize_w8a8.py` (data-free RTN,
+(matched in bytes per step and precision class; both engines have an AMX-INT8 weight-GEMM path, but use it with very
+different efficiency, notebook 08 section 3; 8B only). Its checkpoint was built with `scripts/benchmark/quantize_w8a8.py` (data-free RTN,
 per-channel weights, dynamic per-token activations; versions pinned in
 [`configs/requirements/llmcompressor.txt`](../configs/requirements/llmcompressor.txt)) and passed a
 quality/AMX sanity check (`data/raw/quality/`, notebook 08).

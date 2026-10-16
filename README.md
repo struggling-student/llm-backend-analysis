@@ -12,7 +12,9 @@ run on.
 > **Current answer.** **vLLM**, on both precision-matched comparisons: BF16, and INT8 (vLLM W8A8 vs llama.cpp
 > Q8_0, 8B). At BF16 llama.cpp is the better single-request decoder but stops scaling after a few doublings of
 > concurrency; vLLM keeps scaling and delivers several times more throughput under load. At INT8 vLLM leads at
-> every concurrency, including a single request. Concurrency does *not* by itself raise total memory traffic for
+> every concurrency, including a single request. The INT8 pair matches bytes per step and precision class, so the
+> gap is not only llama.cpp's missing BF16 AMX kernel; it does not equalize kernel efficiency — llama.cpp's Q8_0
+> kernels use their AMX-INT8 path far less effectively than vLLM's. Concurrency does *not* by itself raise total memory traffic for
 > either backend. Evidence, numbers and caveats:
 > [`notebooks/backend_selection/09_backend_selection_summary.ipynb`](notebooks/backend_selection/09_backend_selection_summary.ipynb).
 > Where each backend sits against the socket's memory and compute roofs, and how concurrency and context length move

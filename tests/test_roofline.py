@@ -69,3 +69,15 @@ def test_regime_follows_the_ridge():
     out = roofline.add_roofline_metrics(pts, compute)
     assert list(out["regime"]) == ["memory-bound side", "compute-bound side"]
     assert np.allclose(out["roof_efficiency"], np.maximum(out["bw_utilization"], out["compute_utilization"]))
+
+
+def test_amx_efficiency_covers_only_amx_configurations():
+    from llm_backend_analysis.analysis import memory
+    from llm_backend_analysis.data import loaders
+    model = registry.primary_model()
+    compute = roofline.compute_ceilings(loaders.hardware_ceilings())
+    pts = roofline.add_roofline_metrics(memory.add_traffic_model(loaders.online_points(model=model)), compute)
+    eff = roofline.amx_efficiency(pts, compute, loaders.offline_samples(model=model))
+    assert "llama_cpp_bf16" not in eff.index  # no AMX path: AVX-512 roof
+    assert (eff["amx_busy_min"] <= eff["amx_busy_max"]).all()
+    assert (eff["offline_share_of_roof"] > 0).all() and (eff["busy_over_modelled_points"] > 0).all()
