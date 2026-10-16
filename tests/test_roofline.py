@@ -81,3 +81,10 @@ def test_amx_efficiency_covers_only_amx_configurations():
     assert "llama_cpp_bf16" not in eff.index  # no AMX path: AVX-512 roof
     assert (eff["amx_busy_min"] <= eff["amx_busy_max"]).all()
     assert (eff["offline_share_of_roof"] > 0).all() and (eff["busy_over_modelled_points"] > 0).all()
+
+
+def test_phase_mix_reports_prefill_share_and_batch():
+    pts = pd.DataFrame([{"configuration_id": "vllm_bf16", "workload": "kvdecode", "concurrency": c,
+                         "prefill_op_share": 0.78, "tokens_per_step_mean": t} for c, t in ((1, 5.0), (64, 255.0))])
+    mix = roofline.phase_mix(pts).loc["vllm_bf16"]
+    assert mix["c_max"] == 64 and mix["tokens_per_step_at_c_max"] == 255.0 and mix["prefill_op_share"] == 0.78

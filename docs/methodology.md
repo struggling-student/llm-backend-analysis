@@ -143,7 +143,11 @@ the *measured* memory traffic. The model is checked against the measured AMX bus
   (`torch._int_mm` is excluded: oneDNN runs it through its legacy gemm API and names no AMX implementation). A
   second, engine-level ceiling for vLLM weights its projection kernels' rates by each projection's share of the
   operations. Each configuration is bounded by the units its weight GEMMs run on (AMX BF16, AVX-512 for llama.cpp
-  BF16, AMX INT8).
+  BF16, AMX INT8). The llama.cpp BF16 roof is an unmeasured proxy: its BF16 path uses AVX-512 BF16 dot products
+  (VDPBF16PS), whose peak was not measured, and the AVX-512 FP32 FMA peak stands in for it.
+- **Reading the regimes:** "memory-bound side" / "compute-bound side" say whether a point's intensity is below or
+  above the ridge, not that it reaches a roof. vLLM at high concurrency is no longer bandwidth-bound but stays
+  below both roofs; claims about what limits it there (kernel shapes, tile feeding) are labelled as hypotheses.
 
 ## Deviations from the plan and incidents
 

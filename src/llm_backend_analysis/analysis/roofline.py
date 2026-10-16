@@ -55,6 +55,11 @@ CONTEXT_CEILINGS = {
     "llama_cpp_int8": ["amx_int8_peak"],
     "vllm_int8": ["vllm_int8_kernels", "amx_int8_peak"],
 }
+# Roofs that stand in for a path whose own peak was not measured (shown with this caveat).
+PROXY_CEILINGS = {
+    "llama_cpp_bf16": "unmeasured proxy: llama.cpp's BF16 path runs AVX-512 BF16 dot products (VDPBF16PS), whose "
+                      "peak was not measured; the AVX-512 FP32 FMA peak stands in for it",
+}
 # vLLM 0.30's kernel for the Llama projections, per precision (gemm_ceilings.py kernel names).
 VLLM_PROJECTION_KERNELS = {"vllm_bf16_kernels": ("vllm_onednn_bf16", "vLLM BF16 projection kernels"),
                            "vllm_int8_kernels": ("vllm_sgl_int8", "vLLM INT8 projection kernels")}
@@ -361,3 +366,13 @@ def amx_efficiency(points: pd.DataFrame, compute: pd.DataFrame, offline: pd.Data
                      "online_best_share_of_roof": g["op_rate_tops"].max() / compute.loc[roof, "tops"],
                      "busy_over_modelled_median": ratio.median(), "busy_over_modelled_points": len(ratio)})
     return pd.DataFrame(rows).set_index("configuration_id")
+
+
+def phase_mix(points: pd.DataFrame, workload: str = "kvdecode") -> pd.DataFrame:
+    """Per configuration, how much of a workload is prefill: the modelled prefill share of its operations
+    and the tokens per forward step at its highest C (prefill chunks + decode tokens; a pure decode step of
+    C sequences would carry C tokens). `points` must carry add_roofline_metrics."""
+    d = points[points["workload"] == workload]
+    hi = d.loc[d.groupby("configuration_id")["concurrency"].idxmax()].set_index("configuration_id")
+    return pd.DataFrame({"prefill_op_share": hi["prefill_op_share"], "c_max": hi["concurrency"].astype(int),
+                         "tokens_per_step_at_c_max": hi.get("tokens_per_step_mean")})
