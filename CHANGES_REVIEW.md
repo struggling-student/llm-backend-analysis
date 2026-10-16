@@ -45,10 +45,22 @@ the review are unchanged (0 removed, 0 values changed); 14 were added.
 - **Roofline figure:** only C=1 and the highest C are labelled, placed by a collision-avoiding routine with leader lines.
 - **Captions and subtitles** of nb02, 04, 05, 07, 08, 09 figures say the error bars are ±1 SD over the repetitions of **one server instance**.
 
+## Second pass (Phase 1 of the review tracker)
+
+- **Tuning scope (T1.3):** nb01 §6 and `docs/methodology.md` state that the tuning used 512-token prompts and never varied `-b`/`-ub` or
+  `max_num_batched_tokens` on the prefill-heavy shapes; the gap is argued, not shown, to be larger than any batching-knob effect (≤ 2.3%).
+- **Estimator sensitivity (T1.7):** nb04 §5 marks each percent-level statement robust or sensitive under Little's law. The nb04 sentence
+  that llama.cpp's gains "fall to about zero at the end of its sweeps" is now limited to the short-prompt shapes; on 8192→256 the last
+  doubling is 1–2% (window) vs 8–12% (Little's law).
+- **Repeated conclusion (T1.5):** the scaling result is stated in full in nb04 only.
+- **1B cross-check (T1.6):** one sentence in nb09, key `ratio_at_highest_common_c_1b`.
+- **Figures (T1.8):** at most two compute roofs per roofline panel; "(mostly prefill)" in the 4096→1024 panel title.
+- **Harness (T2.1, nothing submitted):** memory-node override and the memory-node sensitivity driver; see `docs/cluster_runbook.md`.
+
 ## Validation
 
 `make data notebooks validate` and pytest: all checks pass (environment, raw data integrity, metadata, processed data up to date,
-schema, 10 notebooks executed and portable, figure manifest, Markdown links; 39 tests). No claims-table row fails in any notebook.
+schema, 10 notebooks executed and portable, figure manifest, Markdown links; 46 tests after the second pass). No claims-table row fails in any notebook.
 
 ## Notes for the reader
 

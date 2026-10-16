@@ -1,7 +1,7 @@
 # Independent review: vLLM vs llama.cpp backend selection on Xeon Max — tracker
 
 Review date: 2026-10-16. Repository state when the review was written: `fbbcb67`. State this tracker was checked against:
-`3ef844e` (local `main`, after the merge of `review-fixes-2026-10-16`; nothing pushed).
+`455664c` (local `main`), plus the uncommitted Phase 1 / T2.1 work listed in the Done log (2026-10-16, second pass); nothing pushed.
 
 This file holds (1) the full content of the review with a status on every finding, (2) the open work organised in phases,
 and (3) the **Done log**. When a task is finished, move its row from its phase (section 5) into the Done log (section 6) and update
@@ -55,7 +55,7 @@ ten notebooks, not nine (`10_roofline` feeds notebook 09).
 | --- | --- | --- | --- |
 | P1 | Notebook 01 said every server working set is below 47 GiB; data give 1.2–79 GiB with 2 points above 64 GiB (vLLM BF16 and INT8, 8192→256, C=64); methodology said "one point". | **DONE** | `65d0e5f`; nb01 §4, [methodology](methodology.md) |
 | P2 | INT8 pair described as an AMX control; llama.cpp Q8_0 AMX busy is 0.1–4% online, best offline prefill ≈ 10% of the AMX INT8 GEMM roof, AMX busy ÷ modelled arithmetic 2.06×. Pair controls bytes per step and precision class, not AMX efficiency. | **DONE** | `412daae`; nb08 §3, nb02, nb06, nb09, README, methodology |
-| P3 | `steady_total_tok_s` estimator: nb04 claimed total/output differ by a constant (observed 0.71–1.12×); prompt tokens counted in a lump at first-token time inside a short window; C=1 uses a different window than C>1. Little's-law cross-check: decode-heavy within ±5%, prompt-heavy C=2–8 up to +15%, high-C 3–8% low. | **PARTIAL** | `ae3dca2`: check added (54 of 189 points differ > 5%), constant claim removed, primary estimator kept, backend ratios shown insensitive. **Remaining:** show that the plateau/knee/crossover statements that rest on a few percent (+2%/+5% doublings, knee, vLLM INT8 8192→256 drop at C=64, crossover C) survive the alternative estimator → task T1.7. |
+| P3 | `steady_total_tok_s` estimator: nb04 claimed total/output differ by a constant (observed 0.71–1.12×); prompt tokens counted in a lump at first-token time inside a short window; C=1 uses a different window than C>1. Little's-law cross-check: decode-heavy within ±5%, prompt-heavy C=2–8 up to +15%, high-C 3–8% low. | **DONE** | `ae3dca2` (check, constant claim removed); sensitivity of the percent-level statements: nb04 §5 (14 statements, 9 robust, 5 sensitive; ratios of several × robust, C-axis positions move by up to one doubling) |
 | P4 | 0.17% median CV presented as measurement uncertainty; it is within-server repeatability on one node; every curve ran on one node. | **DONE** | `806f103`; nb01 §6a: cross-node 0.4–1.7% at C=16, 1.2–8.1% at C=1 |
 
 #### Unsupported or overstated claims
@@ -74,7 +74,7 @@ ten notebooks, not nine (`10_roofline` feeds notebook 09).
 | ID | Item | Status |
 | --- | --- | --- |
 | F1 | Legitimate, unavoidable differences (AMX coverage at BF16, GGUF vs safetensors, F16/BF16 KV cache, thread binding mechanism, front-end process structure) are disclosed in notebook 01. | OK, no action |
-| F2 | Tuning scope: one workload (512→512), C=1 and 16, one repetition, 2–3 knobs. vLLM `max_num_batched_tokens` and llama.cpp `-b/-ub` matter most for prefill-heavy shapes that were never tuned. A 5× gap is unlikely to come from untuned knobs, but this should be stated. | **PARTIAL** — nb01 limitation states one workload / one repetition (DONE); it does not name the untuned prefill-heavy shapes or say the gap is unlikely to be a tuning artefact → T1.3 |
+| F2 | Tuning scope: one workload (512→512), C=1 and 16, one repetition, 2–3 knobs. vLLM `max_num_batched_tokens` and llama.cpp `-b/-ub` matter most for prefill-heavy shapes that were never tuned. A 5× gap is unlikely to come from untuned knobs, but this should be stated. | **DONE** — nb01 §6 (scope of the tuning, computed knob effects ≤ 2.3% vs flash attention +17–23% vs gap 4.9–8.1×), nb01 Limitations, [methodology](methodology.md). Stated as an argument, not a measurement; one prefill-heavy tuning run would close it |
 | F3 | Adaptive sweep: rule declared in advance and applied identically; early stops on llama.cpp long-prompt shapes reflect a real plateau. | OK, no action |
 
 ---
@@ -102,18 +102,18 @@ done and useful (matches bytes per step; vLLM wins at every C) — keep it, corr
 | U1 | Notebook 09 overloaded (50 keys, 18 evidence rows, 16 claims). Target: ~8 claims, ~12–15 numbers, 2–3 figures. | **DONE** (`625468d`: nine claims, 16 of 69 keys displayed, three figures; full CSV still exported for Notion) |
 | U2 | Notebook 10 heavy (26 cells, 7 exported figures, two roof families). Keep roofs table, placement figure, intensity limit; move the rest to an appendix. | **DONE** (`e989c4c`: sections 1–6 carry the argument, Appendix A–D) |
 | U3 | Cross-precision comparison (vLLM BF16 vs llama.cpp INT8) superseded by the INT8 pair; keep in nb08, drop from the summary. | **DONE** (`625468d`) |
-| U4 | Repeated conclusion "vLLM scales, llama.cpp plateaus" restated in notebooks 04, 05, 06, 08, 09, 10; each should state it once. | **OPEN** → T1.5 (only nb09/nb10 were restructured) |
-| U5 | 1B cross-check: one sentence in the summary is enough. | **OPEN** → T1.6 (verify; nb09 currently mentions the 1B model only in a code comment, so the cross-check is not carried into the summary at all) |
+| U4 | Repeated conclusion "vLLM scales, llama.cpp plateaus" restated in notebooks 04, 05, 06, 08, 09, 10; each should state it once. | **DONE** — stated in full in nb04 Conclusions (which says so); nb06, nb08, nb09, nb10 point to nb04. nb05 never restated it (latency); the mechanism and roofline conclusions stay in their notebooks |
+| U5 | 1B cross-check: one sentence in the summary is enough. | **DONE** — one computed sentence under the claims table in nb09; key `ratio_at_highest_common_c_1b` (6.5×–7.0×) |
 
 ### 4.2 Visualisation review
 
 | ID | Finding | Status |
 | --- | --- | --- |
 | G1 | nb09's only figure was the peak bar chart (hides curve shape and crossover; ordering did not group precision pairs; total vs output tok/s inconsistent). Replace with throughput vs C + backend-ratio panel for both pairs, plus traffic and bytes per token vs C. | **DONE** (`a0654ec`, `625468d`: `throughput_and_backend_ratio`, `traffic_and_bytes_per_token`; `peak_throughput_by_workload` retired) |
-| G2 | `roofline_by_configuration`: overlapping C labels, up to four roofs per panel. Label only C=1 and highest C. | **DONE** (`a0654ec`); roof count per panel not re-verified → covered by T1.8 |
+| G2 | `roofline_by_configuration`: overlapping C labels, up to four roofs per panel. Label only C=1 and highest C. | **DONE** (`a0654ec`); roofs per panel now ≤ 2 compute roofs (own kernel roof + one reference; the tile peaks stay in the roofs table) + 2 memory roofs |
 | G3 | `throughput_and_memory_traffic`: add bytes per output token and the STREAM roof at each point's working set. | **DONE** via the new `traffic_and_bytes_per_token` figure |
 | G4 | Captions: error bars are ±1 SD within one server instance. | **DONE** (`fdb01db`) |
-| G5 | "Long-KV decode" panel title should carry the note "78% of operations are prefill". | **PARTIAL** — caveat is in the text (P8); the panel title/subtitle in the figures was not confirmed → T1.8 |
+| G5 | "Long-KV decode" panel title should carry the note "78% of operations are prefill". | **DONE** — every workload-faceted figure titles the panel "4096→1024 (mostly prefill)" (`panel_note` in `configs/experiment.toml`); the 78% itself is computed in nb10 §4 and key `kvdecode_prefill_op_share` |
 | G6 | Every summary figure follows question → evidence → finding → defensible interpretation, hypotheses labelled. | **DONE** for nb09; keep as a rule for new figures |
 
 ### 4.3 Objections a professor is likely to raise
@@ -140,19 +140,13 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 | --- | --- | --- | --- | --- | --- |
 | T1.1 | **Sync the three Notion pages and the roofline page to the post-review analysis** (`3ef844e`). Last sync was 2026-10-11 (`fbbcb67`), so Notion still carries the removed "memory busier → favours vLLM", "compute-bound" and "both on AMX-INT8" wording. Follow [`notion.md`](notion.md) "Updating after new results"; record the sync there. Delete the stale image blocks by hand (8 EN, 1 IT, 1 TL;DR; the Notion API cannot replace images). | P2, P5, P6, P7 downstream | **High** | Every value on the pages equals the current `key_numbers.csv`; none of the removed claims appears; "Last synchronization" has a new line; old images removed | OPEN |
 | T1.2 | **Decide BF16 vs INT8 as the thesis primary configuration** and write the decision plus its three reasons in nb09 (Decision section). | O7 | **High** | One sentence stating the choice and the reasons in nb09 and README; no longer "a separate choice" | DECISION |
-| T1.3 | **Complete the tuning-scope limitation:** name the untuned prefill-heavy shapes (`max_num_batched_tokens`, `-b/-ub`), say the 4.9–8.1× gap is unlikely to be a tuning artefact and why (e.g. vLLM spread 0.7%/0.3% across the grid; llama.cpp best variants chosen), in nb01 and methodology. | F2 | Medium | Limitation text present in nb01 §6 and [methodology](methodology.md) | OPEN |
 | T1.4 | **Decide what to do with the C=1 cross-node spread** (up to 8.1%, llama.cpp BF16). It is comparable to the 512→512 BF16 single-request margin (0.89×). Either keep the existing flag in nb09 or drop "llama.cpp leads single-request throughput at BF16" to "comparable/slightly ahead, within node spread". Does not affect the decision. | P4 follow-up | Low | Wording matches the measured spread in nb03 and nb09 | OPEN |
-| T1.5 | **Consolidate the repeated "vLLM scales, llama.cpp plateaus" conclusion**: state it fully once (nb04), reference it from nb05, 06, 08, 09, 10. | U4 | Medium | The conclusion text appears once; other notebooks link to nb04 | OPEN |
-| T1.6 | **Add one sentence to nb09 for the 1B cross-check** with computed values (same ranking on 1B, BF16 pair), or confirm and document that it is deliberately left out. | U5 | Low | Sentence present with numbers from `key_numbers.csv`, or a recorded reason | OPEN |
-| T1.7 | **Estimator sensitivity of the percent-level statements:** recompute plateau/knee/crossover statements (+2%/+5% doublings, vLLM INT8 8192→256 drop at C=64, first C with ratio ≥ 1) with the Little's-law estimator and state which are estimator-sensitive. Primary estimator unchanged. | P3 | Medium | A table in nb01 §3a (or nb04) marks each statement as robust/sensitive; sensitive ones are worded as "within estimator spread" | OPEN |
-| T1.8 | **Figure polish check:** confirm `roofline_by_configuration` shows at most the bounding roof plus the measured GEMM roof per panel; add "78% of operations are prefill" to the 4096→1024 panel subtitle in the figures that show it. Re-export; check `git diff --stat results/figures`. | G2, G5 | Low | Subtitles/panels as described; manifest regenerated | OPEN |
 | T1.9 | **Repository housekeeping:** decide when to push `main` (29 commits ahead of `origin/main`, nothing pushed), remove the merged branch/worktree `review-fixes-2026-10-16` and the failed child session branch `claude/jovial-blackburn-3b9142` once confirmed redundant, and commit or discard the unrelated local change in `configs/cresco8.env` (cluster paths moved to `store_0/projects/…`; the cluster checkout and `cluster_runbook.md` must match). | — | Low | `git status` clean; branches pruned; push decision recorded | DECISION |
 
 ### Phase 2 — Thesis motivation: does vLLM respond to memory bandwidth? (needs cluster authorisation)
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T2.1 | **Prepare Experiment A** (no submission): extend the harness to take a memory-node override (`--set` / config key for `server_mem_node`), define the cell list (vLLM BF16 decode C=1, decode C=128, 4096→1024 C=32; llama.cpp BF16 decode C=1 control), add a remote-memory STREAM calibration under the same PMU counters, register a new campaign in `data/metadata/campaigns.toml`. | O2, P7 | **High (thesis)** | Dry-run of the command lines for each cell; campaign role declared; existing cells still reproducible; nothing submitted | OPEN |
 | T2.2 | **Run Experiment A** (explicit authorisation required: Slurm submission). | O2, P7 | **High (thesis)** | Per-cell throughput ratio `membind=1 ÷ membind=0` with repetitions; remote STREAM roof measured; raw data synced and checksummed | NEEDS CLUSTER |
 | T2.3 | **Analyse and report Experiment A** as a short notebook section (or notebook 11) and one nb09 status-table row moved from "untested" to "measured". State the confound (remote memory changes latency as well as bandwidth). | O2, P7 | High (thesis) | Result tied to a specific regime; limitation stated; nb09 row updated; key numbers exported | OPEN (after T2.2) |
 
@@ -180,6 +174,12 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Date | Item | Result | Commit / evidence |
 | --- | --- | --- | --- |
+| 2026-10-16 | T2.1 — Experiment A prepared (nothing submitted) | `run_online.py --mem-node` and `--print-commands`; `stream_calibration.py --mem-node`; driver `membind_sensitivity.py` (cells, A/B/A/B inside one job, numastat ≥ 90% check); `[membind_sensitivity]` in `experiment.toml`; campaigns `online/membind` and `stream/calibration-membind1` declared with `prepared = true`; `submit.sh membind` / `membind-stream`; runbook section; 7 new tests (46 pass) incl. recorded commands of the primary campaign still reproduced | uncommitted; [runbook](cluster_runbook.md) |
+| 2026-10-16 | T1.8 — figure polish | Roofs per panel ≤ 2 compute roofs; "(mostly prefill)" in the 4096→1024 panel title of every workload-faceted figure; 10 figures re-exported, manifest consistent | uncommitted; `CONTEXT_CEILINGS`, `panel_note` |
+| 2026-10-16 | T1.7 — estimator sensitivity | nb04 §5: 14 statements recomputed with Little's law; 9 robust (ratios ≥ 4×, BF16 crossover C, BF16 monotonicity, "scales further", peak C ordering), 5 sensitive (knee C 5/20 curves, peak C 4/20, plateau rule 3/20, sign of last doubling 3/20, INT8 monotonicity). Claim text in nb04 §2 and Limitations adjusted; pointer from nb01 §3a | uncommitted |
+| 2026-10-16 | T1.6 — 1B cross-check sentence | nb09: same ranking, vLLM 6.5×–7.0× at the highest common C; new key `ratio_at_highest_common_c_1b` (one key added, none changed) | uncommitted |
+| 2026-10-16 | T1.5 — repeated conclusion | Scaling result stated in full only in nb04 Conclusions; nb06, 08, 09, 10 refer to it | uncommitted |
+| 2026-10-16 | T1.3 — tuning-scope limitation | nb01 §6 "scope of the tuning" with computed numbers, nb01 Limitations, [methodology](methodology.md) "Scope of the tuning" | uncommitted |
 | 2026-10-16 | Write-up of the review fixes | Per-claim before/after record | `3ef844e`; [`CHANGES_REVIEW.md`](../CHANGES_REVIEW.md) |
 | 2026-10-16 | U1, G1, G3, P6, O3 — nb09 rebuilt | Claims → labelled interpretation → measured/inferred/hypothesis table; peak bar chart replaced; cross-precision row dropped; traffic framed as bytes per output token | `625468d` |
 | 2026-10-16 | G4 — captions | Error bars stated as within-server repeatability of one instance | `fdb01db` |
@@ -200,7 +200,6 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 | --- | --- | --- | --- |
 | **High** | T1.1 Notion sync | 1 | nothing |
 | **High** | T1.2 BF16 vs INT8 primary | 1 | your decision |
-| **High (thesis)** | T2.1 → T2.2 → T2.3 Experiment A | 2 | cluster authorisation for T2.2 |
-| Medium | T1.3 tuning-scope limitation, T1.5 consolidate repeated conclusion, T1.7 estimator sensitivity | 1 | nothing |
+| **High (thesis)** | T2.2 → T2.3 Experiment A (T2.1 done) | 2 | cluster authorisation for T2.2 |
 | Medium | T3.1 AMX ablation (optional), T4.1 access request, T4.2/T4.3 HBM/DDR split | 3, 4 | cluster authorisation / administrators |
-| Low | T1.4, T1.6, T1.8, T1.9, T3.2, T3.3 | 1, 3 | nothing / your decision |
+| Low | T1.4, T1.9, T3.2, T3.3 | 1, 3 | your decision |
