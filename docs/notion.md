@@ -9,9 +9,9 @@ tables exported next to it, and embeds only figures from
 | Page (language) | Role | Quotes | Figures |
 | --- | --- | --- | --- |
 | *Backend selection: vLLM vs llama.cpp on Xeon Max with AMX* (EN) | detailed technical report: objective, setup, fairness, baseline, single request, scaling, serving, offline, AMX, BF16/INT8, memory traffic, limitations, interpretation, decision, INT8 plan | `key_numbers.csv`, `curve_summary.csv`, `backend_ratio_bf16.csv`, `backend_ratio_int8.csv`, `evidence_summary.csv`, the 8B offline table of notebook 02, the traffic table of notebook 07 | all twelve exports |
-| *Perché vLLM — sintesi della selezione del backend* (IT) | concise reasoning: obiettivo, confronto, evidenze, concorrenza e memoria, ruolo di llama.cpp, limitazioni, decisione | `key_numbers.csv`, `evidence_summary.csv` | `backend_ratio_vs_concurrency`, `throughput_and_memory_traffic` |
-| *MSc Thesis — HBM-Aware LLM Inference*, section "TL;DR — Perché vLLM" (IT) | short summary for the supervisors | `key_numbers.csv` | `throughput_vs_concurrency` |
-| *Roofline analysis: vLLM vs llama.cpp on Xeon Max (HBM cache mode)* (EN) | roofline of the two backends: roofs of the socket (STREAM, measured AMX GEMMs, vLLM projection kernels), placement of every 8B point, movement with concurrency and context length, operation-model check, implications | `key_numbers.csv` (`roof_*`, `roofline_*`), `roofline_points.csv`, `roofline_compute_ceilings.csv` | the six exports of notebook 10 |
+| *Perché vLLM — sintesi della selezione del backend* (IT; **in the trash as of 2026-10-16**) | concise reasoning: obiettivo, confronto, evidenze, concorrenza e memoria, ruolo di llama.cpp, limitazioni, decisione | `key_numbers.csv`, `evidence_summary.csv` | `backend_ratio_vs_concurrency`, `throughput_and_memory_traffic` |
+| *MSc Thesis — HBM-Aware LLM Inference*, section "TL;DR — Perché vLLM" (IT; **no longer present**, the page is blank) | short summary for the supervisors | `key_numbers.csv` | `throughput_vs_concurrency` |
+| *Roofline analysis: vLLM vs llama.cpp on Xeon Max (HBM cache mode)* (EN; listed under "Deprecated" since 2026-10-16) | roofline of the two backends: roofs of the socket (STREAM, measured AMX GEMMs, vLLM projection kernels), placement of every 8B point, movement with concurrency and context length, operation-model check, implications | `key_numbers.csv` (`roof_*`, `roofline_*`), `roofline_points.csv`, `roofline_compute_ceilings.csv` | the six exports of notebook 10 |
 
 Hierarchy: repository raw data → processing → notebooks → detailed page → Italian summary → thesis TL;DR. Each
 level only summarizes the one below it. The roofline page sits next to the detailed page (same level); the other
@@ -32,6 +32,31 @@ ablation and of the attention/GEMM decomposition and is labelled as archived sup
 - 2026-10-11, analysis at commit `559197b`: new roofline page (notebook 10; six figures; the 8B regime table
   generated from `roofline_points.csv`), a roofline section (§17) and TL;DR bullet on the detailed page, a roofline
   section on the Italian summary and a roofline bullet on the thesis TL;DR.
+
+- 2026-10-16, analysis at commit `4c5f3ff` (after the independent review of 2026-10-16, tracker task T1.1):
+  - **Pages found.** Detailed page and roofline page exist (the roofline page now sits under "Deprecated" on the Thesis page).
+    The Italian summary ("Perché vLLM") is in the trash and the thesis TL;DR no longer exists (the "MSc Thesis" page is blank), so
+    neither was updated. The Italian page "Analisi dei backend LLM — documentazione completa dei notebook" (not one of the four) was
+    not touched; it still quotes the 0.17% CV as a quality figure.
+  - **Detailed page, text** (no number changed): TL;DR memory bullet and §12 reworded to bytes per output token (descriptive, not a
+    criterion); roofline TL;DR and §17 ("below both roofs, limiting factor not identified", BF16 roof is a proxy); §9 mechanism
+    split into inferred / hypothesis / INT8-pair caveat (AMX efficiency differs: 0.1%–4.0% busy, 10% of the INT8 roof, 2.06×);
+    §3 validity (CV is within one server; cross-node 0.4%–1.7% / 1.2%–8.1%; Little's law, 54 of 189 points beyond 5%); §5 C=1 lead
+    "comparable to slightly ahead"; §6 estimator-sensitive plateau positions; §13 limitations (tuning scope, uncertainty, HBM
+    sensitivity not yet shown); §15 table rows (bytes per output token, measurement quality) and the compute-bound control wording;
+    §11 figure list; review banner; analysis commit.
+  - **Roofline page, text:** TL;DR (hypothesis for vLLM's gap, proxy roof), §4 and §5 wording (the rise of the memory-roof share
+    at long context comes from the roof falling), §6 (inferred cause), §7 implications (vLLM is the only engine that reaches those
+    regimes; response to the memory system not yet shown), §8 limitations, review banner.
+  - **Figures inserted below their predecessors** (the Notion API did not replace image blocks): detailed page 8 (new
+    `throughput_and_backend_ratio` and `traffic_and_bytes_per_token`; re-exported `throughput_vs_concurrency`,
+    `latency_throughput_tradeoff`, `offline_decode_throughput`, `step_cost_vs_batch`, `throughput_and_memory_traffic`,
+    `memory_traffic_components`); roofline page 4 (`roofline_by_configuration`, `roofline_by_workload`,
+    `ridge_ratio_vs_concurrency`, `roofline_utilization`).
+  - **Old images to delete by hand:** detailed page 15 (both `peak_throughput_by_workload`; the first `single_request_latency`;
+    the first two `throughput_vs_concurrency`; the first two each of `latency_throughput_tradeoff`, `offline_decode_throughput`,
+    `step_cost_vs_batch`, `throughput_and_memory_traffic`; the first `llama_cpp_int8_over_bf16`; the first `memory_traffic_components`);
+    roofline page 4 (the first of each re-exported figure). The images still pending from 2026-10-11 are included in the count.
 
 ## Updating after new results
 
