@@ -1,7 +1,7 @@
 # Independent review: vLLM vs llama.cpp backend selection on Xeon Max — tracker
 
 Review date: 2026-10-16. Repository state when the review was written: `fbbcb67`. State this tracker was checked against:
-`455664c` (local `main`), plus the uncommitted Phase 1 / T2.1 work listed in the Done log (2026-10-16, second pass); nothing pushed.
+`07948ef` (`origin/main` after the push of 2026-10-17); later edits of this file are local until the next push.
 
 This file holds (1) the full content of the review with a status on every finding, (2) the open work organised in phases,
 and (3) the **Done log**. When a task is finished, move its row from its phase (section 5) into the Done log (section 6) and update
@@ -168,7 +168,7 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Date | Item | Result | Commit / evidence |
 | --- | --- | --- | --- |
-| 2026-10-17 | T1.9 — housekeeping (partly) | `configs/cresco8.env` committed (identical to the cluster checkout's file; paths verified to exist) and the runbook layout table matches it. The branches `review-fixes-2026-10-16` (3ef844e) and `claude/jovial-blackburn-3b9142` (fbbcb67) and the clean detached worktree `.claude/worktrees/jovial-blackburn-3b9142` (3ef844e) were removed (all ancestors of `main`). **Still open:** pushing `main` (46 commits ahead of `origin/main`, nothing pushed) is your decision | uncommitted |
+| 2026-10-17 | T1.9 — housekeeping (partly) | `configs/cresco8.env` committed (identical to the cluster checkout's file; paths verified to exist) and the runbook layout table matches it. The branches `review-fixes-2026-10-16` (3ef844e) and `claude/jovial-blackburn-3b9142` (fbbcb67) and the clean detached worktree `.claude/worktrees/jovial-blackburn-3b9142` (3ef844e) were removed (all ancestors of `main`). `main` was pushed to `origin` by you on 2026-10-17 (`926b450..07948ef`, 47 commits) | uncommitted |
 | 2026-10-17 | T1.4 — C=1 spread and the llama.cpp lead | Reworded to "comparable to slightly ahead" in nb03 (computed sentence: lead 12%–17% on 8B against a cross-node spread of up to 8.1%, 1.5×–2.1× larger), nb09 (claim 1 now also checks that the lead exceeds the spread; new key `c1_llamacpp_lead_short_prompts_8b`; interpretation, status table, Decision) and the README. **Not** worded as "within the spread": the data say the lead exceeds it, by a small factor (the spread is measured on 8B 512→512 only, one repetition) | uncommitted |
 | 2026-10-17 | T1.2 — BF16 vs INT8 decision | vLLM BF16 primary, vLLM INT8 (W8A8) secondary; three reasons in nb09 Decision and the README (twice the bytes per step and the memory experiments are BF16; W8A8 reproduces 5 of 16 BF16 continuations vs 11 for Q8_0; the BF16 pair covers both models and the roofline and memory-node analyses) | uncommitted |
 | 2026-10-17 | T2.3 — Experiment A analysed (notebook 11) | vLLM BF16 keeps **0.19×–0.29×** of its throughput with the server's memory on the other socket's node (decode C=1 0.29, decode C=128 0.19, 4096→1024 C=32 0.24; llama.cpp control 0.28 at C=1); remote STREAM 96–104 GB/s (about one fifth of local). At C=1 the loss follows the bandwidth (vLLM needs 76%, llama.cpp 93% of the remote roof); at high C the modelled remote traffic is 29–48% of the roof and the ratio is below the 0.53–0.67 that bandwidth alone would allow, so the extra loss is attributed to latency (hypothesis). Remote traffic is modelled (PMU is local-only). Closes the review's "HBM relevance" gap for this regime set; does not separate HBM from DDR. nb09 claim 10, status-table rows split into measured / hypothesis / untested; 6 key numbers; figure `membind_ratio_and_traffic` | uncommitted; [nb11](../notebooks/backend_selection/11_memory_node_sensitivity.ipynb) |
@@ -200,4 +200,4 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 | Priority | Task | Phase | Blocked on |
 | --- | --- | --- | --- |
 | Medium | T3.1 AMX ablation (optional), T4.1 access request, T4.2/T4.3 HBM/DDR split | 3, 4 | cluster authorisation / administrators |
-| Low | T1.9 (push `main`), T3.2, T3.3 | 1, 3 | your decision |
+| Low | T3.2, T3.3 | 3 | your decision |
