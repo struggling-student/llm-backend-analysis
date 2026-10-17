@@ -1,0 +1,72 @@
+{
+  "campaign": "amx-ablation-verify",
+  "onednn_verbose": "profile_create",
+  "levels": {
+    "amx": {
+      "c1": {
+        "status": "ok",
+        "amx_busy_frac": 0.004894754783471016,
+        "no_amx_shim_active": false,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx10_1_512_amx": 14
+        },
+        "onednn_amx_primitives": 14
+      },
+      "c8": {
+        "status": "ok",
+        "amx_busy_frac": 0.019579620415683896,
+        "no_amx_shim_active": false,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx10_1_512_amx": 81
+        },
+        "onednn_amx_primitives": 81
+      }
+    },
+    "noamx_gemm": {
+      "c1": {
+        "status": "ok",
+        "amx_busy_frac": 6.757019989377577e-05,
+        "no_amx_shim_active": false,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx512_core_bf16": 14
+        },
+        "onednn_amx_primitives": 0
+      },
+      "c8": {
+        "status": "ok",
+        "amx_busy_frac": 0.00020584133631832688,
+        "no_amx_shim_active": false,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx512_core_bf16": 77
+        },
+        "onednn_amx_primitives": 0
+      }
+    },
+    "noamx_all": {
+      "c1": {
+        "status": "ok",
+        "amx_busy_frac": 0.0,
+        "no_amx_shim_active": true,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx512_core_bf16": 14
+        },
+        "onednn_amx_primitives": 0
+      },
+      "c8": {
+        "status": "ok",
+        "amx_busy_frac": 0.0,
+        "no_amx_shim_active": true,
+        "onednn_primitives": {
+          "reorder jit:uni": 130,
+          "matmul brg_matmul:avx512_core_bf16": 73
+        },
+        "onednn_amx_primitives": 0
+      }
+    }
+  }
+}
