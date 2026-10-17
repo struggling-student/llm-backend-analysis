@@ -9,7 +9,7 @@ The benchmark harness runs on the cluster through Slurm; analysis runs locally. 
 | --- | --- |
 | Code checkout | `~/dev/llm-backend-analysis` (AFS home; a clone of this repository) |
 | Paths used by the harness | [`configs/cresco8.env`](../configs/cresco8.env) (paths only — no hosts or credentials) |
-| Outputs (`$BC_DATA`) | `raw_results/`, `telemetry/`, `environment/`, `node_checks/`, `models/`, `slurm-logs/` on scratch |
+| Outputs (`$BC_DATA`) | `raw_results/`, `telemetry/`, `environment/`, `node_checks/`, `models/`, `slurm-logs/`, `shim/` under `store_0/usr/<user>/projects/backend-comparison` (persistent, project quota). Models, images and builds live under `store_0/usr/<user>/{models,runtimes}`; only regenerable caches (Apptainer) are on scratch, which is subject to the retention policy |
 
 The harness (`scripts/benchmark/`) uses only the Python standard library and the interpreter `$BC_PYTHON`
 defined in `cresco8.env`; it never imports the local analysis package.
