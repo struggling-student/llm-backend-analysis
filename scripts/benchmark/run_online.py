@@ -63,7 +63,7 @@ def server_command(cfg: dict[str, Any], model_key: str, arm_key: str, wl: dict[s
         }
         if topo["server_mem_node"] != topo["server_cpu_node"]:
             # vLLM's CPU worker resets the memory policy to the cores' node; the shim keeps numactl's policy.
-            cenv["LD_PRELOAD"] = topo["numa_shim"]
+            cenv["LD_PRELOAD"] = ":".join([topo["numa_shim"], settings["image_ld_preload"]])  # --env replaces the image default
         cmd = prefix + ["apptainer", "exec", "--cleanenv"]
         for k, v in cenv.items():
             cmd += ["--env", f"{k}={v}"]

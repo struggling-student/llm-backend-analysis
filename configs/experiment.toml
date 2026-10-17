@@ -212,6 +212,9 @@ max_num_seqs = 256
 max_num_batched_tokens = 4096
 kv_space_headroom = 1.15         # KV pool = C * max_model_len * kv_bytes * headroom
 extra_args = []
+# The image presets LD_PRELOAD (tcmalloc and Intel OpenMP, which vLLM wants for performance). `apptainer --env
+# LD_PRELOAD=...` REPLACES it, so anything we preload must be prepended to this value, never set alone.
+image_ld_preload = "/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4:/opt/venv/lib/libiomp5.so"
 
 [backend.llamacpp]
 bin_dir_amx = "${BC_LLAMACPP}/build-amx/bin"   # amx/bin holds byte-identical copies of 3 of these tools
@@ -266,7 +269,7 @@ uncore = "auto"                  # used only if the kernel allows system-wide un
 # harness (3 per point) are kept. Driver: scripts/benchmark/membind_sensitivity.py.
 # ---------------------------------------------------------------------------
 [membind_sensitivity]
-campaign = "membind"
+campaign = "membind-v2"
 reference_node = 0
 remote_node = 1
 passes = 2

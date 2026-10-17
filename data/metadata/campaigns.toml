@@ -58,8 +58,14 @@ description = "First vLLM W8A8 campaign (8B, 5 workloads), max_num_batched_token
 reason = "With 2048-token prefill chunks the warm-up overestimated the longctx C=16 request duration (238 s vs ~40 s); the stagger left no steady window and the sweep stopped. Re-run as `main` with 8192, as for vllm-bf16 (configs/experiment.toml [tuned.vllm-w8a8])."
 
 [online.membind]
-role = "sensitivity"
+role = "superseded"
+reason = "The vLLM arms ran remote-memory points with LD_PRELOAD replaced by the NUMA shim alone, so the image's own preload (tcmalloc, Intel OpenMP) was missing (vLLM warns `libiomp is not found in LD_PRELOAD`); their remote ÷ local ratios are confounded by that, not only by the memory node. Re-run in full as `membind-v2` with the image preload kept. The llama.cpp control of this campaign is valid and unaffected."
 description = "Memory-node sensitivity (review Experiment A, jobs 5384351-5384353 for vLLM, 5384324 for llama.cpp): server memory on node 0 vs remote node 1, same cores, A/B/A/B per cell inside one job (configs/experiment.toml [membind_sensitivity]). Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
+
+[online.membind-v2]
+role = "sensitivity"
+prepared = true   # declared before the raw data exist; remove this line when they are synced
+description = "Memory-node sensitivity (review Experiment A), corrected re-run of all four cells: shim plus the image's own LD_PRELOAD kept, placement and preload checks per point. Arm directories <arm>__mem<node>_p<pass>. Not part of the primary analysis."
 
 [online.membind-v1-vllm-numa-override]
 role = "superseded"

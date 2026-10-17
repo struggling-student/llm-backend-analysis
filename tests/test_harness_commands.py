@@ -59,7 +59,10 @@ def test_vllm_gets_the_numa_shim_only_for_remote_memory(cfg):
     local = command(cfg, "llama31_8b", "vllm-bf16", "decode", 1, mem_node=0)
     remote = command(cfg, "llama31_8b", "vllm-bf16", "decode", 1, mem_node=1)
     shim = f"LD_PRELOAD={cfg['topology']['numa_shim']}"
-    assert shim in remote and shim not in local
+    assert shim in "".join(remote) and shim not in "".join(local)
+    # the image's own preload (tcmalloc, Intel OpenMP) must survive: `--env LD_PRELOAD` replaces it
+    ld = next(t for t in remote if t.startswith("LD_PRELOAD="))
+    assert ld.endswith(cfg["backend"]["vllm"]["image_ld_preload"]) and "libiomp5" in ld and "libtcmalloc" in ld
     # llama.cpp does not reset the memory policy, so it never needs the shim
     assert not any(t.startswith("LD_PRELOAD") for t in command(cfg, "llama31_8b", "llamacpp-bf16", "decode", 1, mem_node=1))
 
@@ -67,7 +70,7 @@ def test_vllm_gets_the_numa_shim_only_for_remote_memory(cfg):
 def test_plan_is_abab_within_each_cell(cfg):
     runs = membind_sensitivity.plan(cfg, ["vllm-decode-c1"], None)
     assert [(r["node"], r["pass"]) for r in runs] == [(0, 1), (1, 1), (0, 2), (1, 2)]
-    assert all(r["campaign"] == "membind" and "--mem-node" in r["cmd"] for r in runs)
+    assert all(r["campaign"] == "membind-v2" and "--mem-node" in r["cmd"] for r in runs)
     assert {r["tag"] for r in runs} == {"mem0_p1", "mem1_p1", "mem0_p2", "mem1_p2"}
 
 

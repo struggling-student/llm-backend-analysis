@@ -93,6 +93,10 @@ def main() -> int:
         point = base / c["model"] / f"{c['arm']}__{r['tag']}" / c["workload"] / f"c{c['concurrency']:03d}"
         meta = json.loads((point / "metadata.json").read_text()) if (point / "metadata.json").exists() else {}
         share = numastat_share(point / "numastat.txt", r["node"])
+        log = point / "server.log"
+        if log.exists() and "libiomp is not found in LD_PRELOAD" in log.read_text(errors="replace"):
+            bclib.log("  PROBLEM: vLLM reports that libiomp is not preloaded (the preload of the image was replaced)")
+            problems += 1
         bclib.log(f"  status {meta.get('status')}, server memory on node {r['node']}: "
                   f"{'n/a' if share is None else f'{share:.0%}'}")
         if not str(meta.get("status", "")).startswith("ok") or (share is not None and share < LOCAL_SHARE_MIN):
