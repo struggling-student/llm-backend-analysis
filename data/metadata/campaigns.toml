@@ -78,7 +78,6 @@ description = "Check that the LD_PRELOAD shim (scripts/benchmark/numa_noop.c) ke
 
 [online.amx-ablation]
 role = "sensitivity"
-prepared = true   # declared before the raw data exist; remove this line when they are synced
 description = "T3.1: vLLM BF16 concurrency sweeps (balanced 512->512, decode 128->512, C = 1..64) with AMX allowed (`amx`), oneDNN capped at AVX512_CORE_BF16 (`noamx_gemm`) and every AMX path off (`noamx_all`); arm directories vllm-bf16__<level>. configs/experiment.toml [amx_ablation]. Not part of the primary analysis."
 
 [online.amx-ablation-verify]
