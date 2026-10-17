@@ -679,3 +679,25 @@ def membind_figure(table: pd.DataFrame, *, title: str, subtitle: str | None = No
     fig.update_layout(title_text=title_text(title, subtitle), height=520, width=theme.WIDTH, barmode="group",
                       showlegend=True, legend=dict(orientation="h", y=-0.28))
     return _finish(fig)
+
+
+def build_comparison_figure(df: pd.DataFrame, *, title: str, subtitle: str | None = None, height: int = 460) -> go.Figure:
+    """llama.cpp prompt processing with the AMX build (solid) and the AVX-512 build (hatched) per prompt length;
+    the ratio AMX ÷ AVX-512 is written above each pair. `df` is analysis.amx.build_comparison."""
+    color = theme.BACKEND_COLORS["llama_cpp"]
+    labels = [f"{int(r.isl)} tokens" for r in df.itertuples()]
+    fig = go.Figure()
+    for col, name, hatch in (("avx512_tok_s", "AVX-512 build (no AMX)", True), ("amx_tok_s", "AMX build", False)):
+        fig.add_trace(go.Bar(
+            x=labels, y=df[col], name=name, marker_color=color, marker_line=dict(color=theme.PAPER, width=1.5),
+            marker_pattern=dict(shape="/" if hatch else "", fgcolor=theme.PAPER, solidity=0.3),
+            text=[f"{v:.0f}" for v in df[col]], textposition="inside", insidetextanchor="end",
+            textfont=dict(size=11, color=theme.PAPER if not hatch else theme.TEXT_PRIMARY),
+            hovertemplate=f"<b>{name}</b><br>%{{x}}: %{{y:.1f}} tok/s<extra></extra>"))
+    top = df[["amx_tok_s", "avx512_tok_s"]].max(axis=1)
+    for lab, y, r in zip(labels, top, df["ratio"]):
+        fig.add_annotation(x=lab, y=y, text=f"<b>{r:.2f}×</b>", showarrow=False, yshift=14, font=dict(size=13, color=theme.TEXT_PRIMARY))
+    fig.update_layout(barmode="group", bargap=0.3, bargroupgap=0.06, title_text=title_text(title, subtitle), height=height)
+    fig.update_yaxes(title_text="Prompt processing (tokens/s)", rangemode="tozero")
+    fig.update_xaxes(title_text="Prompt length")
+    return fig
