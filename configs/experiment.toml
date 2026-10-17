@@ -301,3 +301,45 @@ model = "llama31_8b"
 arm = "llamacpp-bf16"
 workload = "decode"
 concurrency = 1
+
+# ---------------------------------------------------------------------------
+# AMX ablations (review tasks T3.1, T3.2; driver scripts/benchmark/amx_ablation.py).
+# T3.1: is AMX the reason vLLM scales? vLLM BF16 with AMX allowed, with oneDNN capped below AMX, and with every AMX
+#       path off (oneDNN capped + torch reporting no AMX, which moves vLLM's own attention and small-weight kernels
+#       to AVX-512). Each level is a full concurrency sweep, so the curves with and without AMX can be compared.
+# T3.2: is llama.cpp's AMX path effective? llama-bench prompt processing of Q8_0 with the AMX build and with the
+#       AVX-512 build (configured identically with GGML_AMX_* off), A/B/A/B inside one job.
+# ---------------------------------------------------------------------------
+[amx_ablation]
+shim_dir = "${BC_DATA}/shim/no_amx"      # holds sitecustomize.py (copied there by `submit.sh build-shim`)
+
+[amx_ablation.vllm]
+campaign = "amx-ablation"
+model = "llama31_8b"
+arm = "vllm-bf16"
+workloads = ["balanced", "decode"]
+concurrency = [1, 2, 4, 8, 16, 32, 64]
+
+[amx_ablation.vllm.levels.amx]            # reference, same nodes and days as the other levels
+container_env = {}
+
+[amx_ablation.vllm.levels.noamx_gemm]     # the review's setting: oneDNN GEMMs capped below AMX
+container_env = { ONEDNN_MAX_CPU_ISA = "AVX512_CORE_BF16" }
+
+[amx_ablation.vllm.levels.noamx_all]      # plus vLLM's own AMX kernels off (torch reports no AMX)
+container_env = { ONEDNN_MAX_CPU_ISA = "AVX512_CORE_BF16", BC_FORCE_NO_AMX = "1", PYTHONPATH = "${BC_DATA}/shim/no_amx" }
+
+[amx_ablation.vllm.verify]                # short points that prove what each level runs (AMX_BUSY, oneDNN dispatch)
+campaign = "amx-ablation-verify"
+workload = "balanced"
+concurrency = [1, 8]
+onednn_verbose = "profile_create"         # one line per created primitive, with the implementation (e.g. brg:avx10_1_512_amx)
+
+[amx_ablation.llamacpp]
+campaign = "amx-build"
+model = "llama31_8b"
+arm = "llamacpp-q8_0"
+workloads = ["decode", "balanced", "prefill", "longctx"]
+builds = ["amx", "avx512"]
+passes = 2
+tests = "pp"                              # llama-bench prompt processing only

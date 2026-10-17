@@ -67,7 +67,7 @@ def metadata():
     problems += [f"declared campaign {k}/{c} has no data" for k, c in sorted(declared - on_disk - prepared)]
     problems += [f"campaign {k}/{c} has data but is still marked `prepared = true`" for k, c in sorted(prepared & on_disk)]
     arms = {registry.split_arm_dir(d.name)[0] for d in (paths.RAW / "online").glob("*/*/*") if d.is_dir()}
-    arms |= {d.name for d in (paths.RAW / "offline").glob("*/*/*") if d.is_dir()}
+    arms |= {registry.split_arm_dir(d.name)[0] for d in (paths.RAW / "offline").glob("*/*/*") if d.is_dir()}
     known = {c.arm for c in registry.configurations().values()}
     problems += [f"arm {a} has no configuration" for a in sorted(arms - known)]
     problems += [f"harness arm {a} missing from configurations.toml"

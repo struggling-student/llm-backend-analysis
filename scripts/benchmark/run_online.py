@@ -61,6 +61,7 @@ def server_command(cfg: dict[str, Any], model_key: str, arm_key: str, wl: dict[s
             "HF_HUB_OFFLINE": "1",
             "TRANSFORMERS_OFFLINE": "1",
         }
+        cenv.update({k: str(v) for k, v in settings.get("container_env", {}).items()})  # ablations (scripts/benchmark/amx_ablation.py)
         if topo["server_mem_node"] != topo["server_cpu_node"]:
             # vLLM's CPU worker resets the memory policy to the cores' node; the shim keeps numactl's policy.
             cenv["LD_PRELOAD"] = ":".join([topo["numa_shim"], settings["image_ld_preload"]])  # --env replaces the image default

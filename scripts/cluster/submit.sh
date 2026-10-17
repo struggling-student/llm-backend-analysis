@@ -11,6 +11,9 @@
 #   scripts/cluster/submit.sh int8-campaign                 # vllm-w8a8, 8B: 5 online workloads + offline
 #   scripts/cluster/submit.sh membind [cell ...]            # memory-node sensitivity: remote vs local server memory, one job per cell
 #   scripts/cluster/submit.sh build-shim                    # compile the vLLM NUMA shim inside the image (login node, seconds)
+#   scripts/cluster/submit.sh amx-verify                    # T3.1: AMX_BUSY and oneDNN implementations per ablation level (short)
+#   scripts/cluster/submit.sh amx-vllm [level ...]          # T3.1: vLLM BF16 AMX ablation sweeps, one job per (level, workload)
+#   scripts/cluster/submit.sh amx-llamacpp                  # T3.2: llama.cpp Q8_0 prompt processing, AMX vs AVX-512 build
 #   scripts/cluster/submit.sh membind-shimcheck             # one short C=1 vLLM run with memory on node 1; check numastat after
 #   scripts/cluster/submit.sh membind-stream                # memory-node sensitivity: STREAM roof with remote memory (node 1)
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
@@ -64,9 +67,16 @@ case "$what" in
       echo "membind $c: $(sub 12:00:00 "mb-$c" scripts/benchmark/membind_sensitivity.py --cell "$c")"
     done ;;
   build-shim)
-    mkdir -p "$BC_DATA/shim"
+    mkdir -p "$BC_DATA/shim/no_amx" && cp "$BC_ROOT/scripts/benchmark/no_amx/sitecustomize.py" "$BC_DATA/shim/no_amx/"
     apptainer exec --cleanenv --bind "$BC_DATA:$BC_DATA" --bind "$BC_ROOT:$BC_ROOT" "$BC_IMAGES/vllm-cpu-v0.30.0.sif" gcc -shared -fPIC -O2 \
       -o "$BC_DATA/shim/numa_noop.so" "$BC_ROOT/scripts/benchmark/numa_noop.c" && ls -l "$BC_DATA/shim/numa_noop.so" ;;
+  amx-verify)   echo "amx verify: $(sub 03:00:00 amx-verify scripts/benchmark/amx_ablation.py verify)" ;;
+  amx-vllm)     # levels default to all; one job per (level, workload) so the sweeps run side by side
+    LEVELS=("$@"); [[ ${#LEVELS[@]} -gt 0 ]] || LEVELS=(amx noamx_gemm noamx_all)
+    for w in balanced decode; do for lv in "${LEVELS[@]}"; do
+      echo "amx vllm $lv $w: $(sub 24:00:00 "amx-$lv-$w" scripts/benchmark/amx_ablation.py vllm --level "$lv" --workload "$w")"
+    done; done ;;
+  amx-llamacpp) echo "amx llamacpp: $(sub 03:00:00 amx-llamacpp scripts/benchmark/amx_ablation.py llamacpp)" ;;
   membind-shimcheck)
     echo "membind shimcheck: $(sub 00:45:00 mb-shimcheck scripts/benchmark/run_online.py --model llama31_8b --arm vllm-bf16 --workload decode --campaign membind-shimcheck --concurrency 1 --reps 1 --num-requests 2 --mem-node 1)" ;;
   membind-stream)

@@ -32,7 +32,8 @@ def process_offline() -> pd.DataFrame:
         campaign = f.parts[-5]
         isl, osl = int(d["isl"]), int(d["osl"])
         keys = {"campaign": campaign, "campaign_role": registry.campaign_role("offline", campaign), "model": d["model"],
-                **registry.configuration_columns(d["arm"]), "arm": d["arm"], "workload": d["workload"],
+                **registry.configuration_columns(d["arm"]), "arm": d["arm"], "variant": registry.split_arm_dir(f.parts[-3])[1],
+                "build": d.get("build") or "", "workload": d["workload"],
                 "isl": isl, "osl": osl, "host": d["hostname"].split(".")[0], "slurm_job_id": str(d["slurm_job_id"]),
                 "source": paths.relative(f)}
         vllm_lat: dict[tuple[int, str], list[float]] = {}

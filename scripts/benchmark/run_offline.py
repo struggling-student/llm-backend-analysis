@@ -79,9 +79,20 @@ def with_telemetry(cfg: dict[str, Any], cmd: list[str], env: dict[str, str], out
             "t_start_mono": t0}
 
 
-def llamacpp_runs(cfg, args, settings, model, arm, wl_key, wl, out_dir):
+def jsonl_rows(log: str) -> list[dict[str, Any]]:
+    path = Path(log)
+    return [json.loads(l) for l in path.read_text().splitlines() if l.startswith("{")] if path.exists() else []
+
+
+def build_of(arm: dict[str, Any], args: argparse.Namespace) -> str:
+    """llama.cpp build of this run: `--build` overrides the arm's own (AMX build unless the arm says otherwise)."""
+    return args.build or arm.get("build", "amx")
+
+
+def llamacpp_runs(cfg, args, settings, model, arm, wl_key, wl, out_dir, execute=None):
+    execute = execute or with_telemetry
     topo = cfg["topology"]
-    bin_dir = settings["bin_dir_amx"] if arm.get("build", "amx") == "amx" else settings["bin_dir_avx512"]
+    bin_dir = settings["bin_dir_amx"] if build_of(arm, args) == "amx" else settings["bin_dir_avx512"]
     gguf = str(Path(model["gguf_dir"]) / model["gguf"][arm["gguf_variant"]])
     kv = settings.get("cache_type", arm["kv_cache_dtype"])
     env = dict(os.environ, OMP_PROC_BIND="close", OMP_PLACES="cores", OMP_NUM_THREADS=str(topo["compute_threads"]))
@@ -96,9 +107,11 @@ def llamacpp_runs(cfg, args, settings, model, arm, wl_key, wl, out_dir):
         for name, extra in [("pp", ["-p", str(isl), "-n", "0"]),
                             ("tg", ["-p", "0", "-n", str(osl), "-d", str(isl)]),
                             ("pg", ["-p", "0", "-n", "0", "-pg", f"{isl},{osl}"])]:
-            res = with_telemetry(cfg, pre + bench + extra, env, out_dir, f"a1-{wl_key}-{name}")
+            if name not in args.bench_tests.split(","):
+                continue
+            res = execute(cfg, pre + bench + extra, env, out_dir, f"a1-{wl_key}-{name}")
             res.update({"tool": "llama-bench", "test": name, "batch": 1, "scope": SCOPE["llama-bench"],
-                        "rows": [json.loads(l) for l in Path(res["log"]).read_text().splitlines() if l.startswith("{")]})
+                        "rows": jsonl_rows(res["log"])})
             results.append(res)
     for b in cfg["offline"]["batched_sizes"]:
         ctx = b * bclib.round_up(isl + osl + cfg["online"]["ctx_margin"], 256)
@@ -106,9 +119,9 @@ def llamacpp_runs(cfg, args, settings, model, arm, wl_key, wl, out_dir):
             cmd = pre + [f"{bin_dir}/llama-batched-bench", *common, "-tb", str(topo["compute_threads"]),
                          "-c", str(ctx), "-no-kvu", "-npp", str(isl), "-ntg", str(osl), "-npl", str(b),
                          "--output-format", "jsonl"]
-            res = with_telemetry(cfg, cmd, env, out_dir, f"a2-{wl_key}-b{b}-r{rep}")
+            res = execute(cfg, cmd, env, out_dir, f"a2-{wl_key}-b{b}-r{rep}")
             res.update({"tool": "llama-batched-bench", "batch": b, "rep": rep, "scope": SCOPE["llama-batched-bench"],
-                        "rows": [json.loads(l) for l in Path(res["log"]).read_text().splitlines() if l.startswith("{")]})
+                        "rows": jsonl_rows(res["log"])})
             results.append(res)
     return results
 
@@ -165,6 +178,21 @@ def vllm_runs(cfg, args, settings, model, arm, wl_key, wl, out_dir):
     return results
 
 
+def print_commands(cfg, args, settings, arm, model) -> int:
+    """The llama.cpp command lines of a run, without starting anything (the vLLM tools are not covered)."""
+    if arm["backend"] != "llamacpp":
+        raise SystemExit("--print-commands covers llama.cpp arms only")
+
+    def show(_cfg, cmd, _env, out_dir, name):
+        print(f"# {out_dir.name}/{name}\n{shlex.join(cmd)}")
+        return {"name": name, "command": cmd, "log": str(out_dir / f"{name}.log"), "returncode": 0}
+
+    out = Path(os.environ.get("BC_DATA", "/data")) / "raw_results" / "offline" / args.campaign / args.model
+    for wl_key in args.workloads.split(","):
+        llamacpp_runs(cfg, args, settings, model, arm, wl_key, cfg["workloads"][wl_key], out / wl_key, execute=show)
+    return 0
+
+
 def _terminate(signum, _frame):
     raise SystemExit(128 + signum)
 
@@ -179,6 +207,11 @@ def main() -> int:
     p.add_argument("--set", action="append", default=[])
     p.add_argument("--skip-batch1", action="store_true")
     p.add_argument("--skip-throughput", action="store_true")
+    p.add_argument("--build", choices=["amx", "avx512"], help="llama.cpp build (default: the arm's own, the AMX build); "
+                   "the AVX-512 build is configured identically with GGML_AMX_* off")
+    p.add_argument("--bench-tests", default="pp,tg,pg", help="llama-bench tests to run (comma list of pp, tg, pg)")
+    p.add_argument("--tag", default="", help="suffix of the arm directory (ablation variants)")
+    p.add_argument("--print-commands", action="store_true", help="print the llama.cpp commands of every workload and exit")
     p.add_argument("--batched-sizes", help="override [offline] batched_sizes, comma list (empty = none)")
     p.add_argument("--config", default=str(bclib.CONFIG))
     args = p.parse_args()
@@ -186,12 +219,15 @@ def main() -> int:
     cfg = bclib.load_config(args.config)
     if args.batched_sizes is not None:
         cfg["offline"]["batched_sizes"] = [int(x) for x in args.batched_sizes.split(",") if x]
-    staging = bclib.stage_model(cfg, args.model, args.arm)
     arm, model = cfg["arms"][args.arm], cfg["models"][args.model]
     settings = bclib.backend_settings(cfg, args.arm, bclib.parse_overrides(args.set))
+    if args.print_commands:
+        return print_commands(cfg, args, settings, arm, model)
+    staging = bclib.stage_model(cfg, args.model, args.arm)
+    arm_dir = args.arm + (f"__{args.tag}" if args.tag else "")
     for wl_key in args.workloads.split(","):
         wl = cfg["workloads"][wl_key]
-        out_dir = Path(os.environ["BC_DATA"]) / "raw_results" / "offline" / args.campaign / args.model / args.arm / wl_key
+        out_dir = Path(os.environ["BC_DATA"]) / "raw_results" / "offline" / args.campaign / args.model / arm_dir / wl_key
         done = out_dir / "offline.json"
         if done.exists():
             bclib.log(f"{wl_key}: already done")
@@ -203,8 +239,9 @@ def main() -> int:
             "experiment": cfg["experiment"], "campaign": args.campaign, "kind": "offline",
             "timestamp": bclib.now_iso(), **bclib.host_facts(),
             "model": args.model, "model_id": model["hf_id"], "model_revision": model["revision"],
-            "arm": args.arm, "backend": arm["backend"], "precision": arm["precision"], "weights": arm["weights"],
-            "workload": wl_key, "isl": wl["isl"], "osl": wl["osl"], "memory_mode": cfg["topology"]["memory_mode"],
+            "arm": args.arm, "arm_dir": arm_dir, "backend": arm["backend"], "precision": arm["precision"],
+            "weights": arm["weights"], "build": build_of(arm, args) if arm["backend"] == "llamacpp" else None,
+            "bench_tests": args.bench_tests, "workload": wl_key, "isl": wl["isl"], "osl": wl["osl"], "memory_mode": cfg["topology"]["memory_mode"],
             "sockets_used": 1, "server_cpus": cfg["topology"]["server_cpus"],
             "compute_cpus": cfg["topology"]["compute_cpus"], "compute_threads": cfg["topology"]["compute_threads"],
             "numa_policy": f"membind={cfg['topology']['server_mem_node']}", "backend_settings": settings,
