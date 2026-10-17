@@ -126,7 +126,7 @@ done and useful (matches bytes per step; vLLM wins at every C) — keep it, corr
 | O4 | "Is the 0.17% CV your error bar?" | No — cross-node 0.4–1.7% and the Little's-law check are shown. | **DONE** |
 | O5 | "Isn't this just AMX vs no AMX?" | Partly, at BF16: say so; either run Experiment B or present it as a confounded engine property (acceptable for backend selection). | **PARTIAL** — hypothesis labelled; causal claim needs Experiment B (optional) |
 | O6 | "Cache mode: how do you know anything about HBM vs DDR?" | You don't yet; state it and point to Experiment D. | **PARTIAL** — stated in nb09 status table; access request not made → T4.1 |
-| O7 | "BF16 or INT8 for the thesis?" | Review recommendation: **BF16 as primary** (twice the bytes, more memory-sensitive; avoids the W8A8 fidelity drift — 5 of 16 continuations identical vs 11 for Q8_0; quality check ran on non-Max hardware). INT8 as a secondary configuration. | **DECISION** → T1.2 (nb09 only says "a separate choice") |
+| O7 | "BF16 or INT8 for the thesis?" | **Decided 2026-10-17: BF16 primary, INT8 secondary** (nb09 Decision, README). Reasons: **BF16 as primary** (twice the bytes, more memory-sensitive; avoids the W8A8 fidelity drift — 5 of 16 continuations identical vs 11 for Q8_0; quality check ran on non-Max hardware). INT8 as a secondary configuration. | **DONE** (T1.2) |
 
 ---
 
@@ -138,7 +138,6 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T1.2 | **Decide BF16 vs INT8 as the thesis primary configuration** and write the decision plus its three reasons in nb09 (Decision section). | O7 | **High** | One sentence stating the choice and the reasons in nb09 and README; no longer "a separate choice" | DECISION |
 | T1.4 | **Decide what to do with the C=1 cross-node spread** (up to 8.1%, llama.cpp BF16). It is comparable to the 512→512 BF16 single-request margin (0.89×). Either keep the existing flag in nb09 or drop "llama.cpp leads single-request throughput at BF16" to "comparable/slightly ahead, within node spread". Does not affect the decision. | P4 follow-up | Low | Wording matches the measured spread in nb03 and nb09 | OPEN |
 | T1.9 | **Repository housekeeping:** decide when to push `main` (29 commits ahead of `origin/main`, nothing pushed), remove the merged branch/worktree `review-fixes-2026-10-16` and the failed child session branch `claude/jovial-blackburn-3b9142` once confirmed redundant, and commit or discard the unrelated local change in `configs/cresco8.env` (cluster paths moved to `store_0/projects/…`; the cluster checkout and `cluster_runbook.md` must match). | — | Low | `git status` clean; branches pruned; push decision recorded | DECISION |
 
@@ -171,6 +170,7 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Date | Item | Result | Commit / evidence |
 | --- | --- | --- | --- |
+| 2026-10-17 | T1.2 — BF16 vs INT8 decision | vLLM BF16 primary, vLLM INT8 (W8A8) secondary; three reasons in nb09 Decision and the README (twice the bytes per step and the memory experiments are BF16; W8A8 reproduces 5 of 16 BF16 continuations vs 11 for Q8_0; the BF16 pair covers both models and the roofline and memory-node analyses) | uncommitted |
 | 2026-10-17 | T2.3 — Experiment A analysed (notebook 11) | vLLM BF16 keeps **0.19×–0.29×** of its throughput with the server's memory on the other socket's node (decode C=1 0.29, decode C=128 0.19, 4096→1024 C=32 0.24; llama.cpp control 0.28 at C=1); remote STREAM 96–104 GB/s (about one fifth of local). At C=1 the loss follows the bandwidth (vLLM needs 76%, llama.cpp 93% of the remote roof); at high C the modelled remote traffic is 29–48% of the roof and the ratio is below the 0.53–0.67 that bandwidth alone would allow, so the extra loss is attributed to latency (hypothesis). Remote traffic is modelled (PMU is local-only). Closes the review's "HBM relevance" gap for this regime set; does not separate HBM from DDR. nb09 claim 10, status-table rows split into measured / hypothesis / untested; 6 key numbers; figure `membind_ratio_and_traffic` | uncommitted; [nb11](../notebooks/backend_selection/11_memory_node_sensitivity.ipynb) |
 | 2026-10-16/17 | T2.2 — Experiment A run | STREAM roof 5384320; llama.cpp control 5384324; vLLM cells re-run with the NUMA shim (5384351-53) after the first attempt (5384321-23) was found not to be remote (5-10% of memory on node 1); numastat gate 99.9–100% on all 16 points of `membind`; first attempt kept as superseded `membind-v1-vllm-numa-override`; fix check `membind-shimcheck` | `e47c6db`, `a91924c`; [runbook](cluster_runbook.md) |
 | 2026-10-16 | T1.1 — Notion sync | Detailed page and roofline page updated to the post-review wording (no number changed); 12 figures re-uploaded below their predecessors; the Italian summary is in the trash and the TL;DR no longer exists, so neither was touched; 19 superseded images to delete by hand; the Italian notebook-documentation page still quotes the 0.17% CV (not one of the four, not updated) | `09e4abc`; [`notion.md`](notion.md) "Last synchronization" |
@@ -199,6 +199,5 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Priority | Task | Phase | Blocked on |
 | --- | --- | --- | --- |
-| **High** | T1.2 BF16 vs INT8 primary | 1 | your decision |
 | Medium | T3.1 AMX ablation (optional), T4.1 access request, T4.2/T4.3 HBM/DDR split | 3, 4 | cluster authorisation / administrators |
 | Low | T1.4, T1.9, T3.2, T3.3 | 1, 3 | your decision |

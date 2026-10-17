@@ -15,7 +15,9 @@ run on.
 > every concurrency, including a single request. The INT8 pair matches bytes per step and precision class, so the
 > gap is not only llama.cpp's missing BF16 AMX kernel; it does not equalize kernel efficiency — llama.cpp's Q8_0
 > kernels use their AMX-INT8 path far less effectively than vLLM's. Concurrency does *not* by itself raise total memory traffic for
-> either backend. Evidence, numbers and caveats:
+> either backend. **Thesis configuration: vLLM BF16 is primary, vLLM INT8 (W8A8) secondary** — BF16 streams twice the bytes per step and is the
+> memory-bound configuration the memory experiments use, the W8A8 checkpoint drifts from its BF16 reference earlier than Q8_0 does, and the BF16 pair
+> is the one measured on both models (reasons with numbers: notebook 09, Decision). Evidence, numbers and caveats:
 > [`notebooks/backend_selection/09_backend_selection_summary.ipynb`](notebooks/backend_selection/09_backend_selection_summary.ipynb).
 > Where each backend sits against the socket's memory and compute roofs, and how concurrency and context length move
 > it: [`notebooks/backend_selection/10_roofline.ipynb`](notebooks/backend_selection/10_roofline.ipynb).
