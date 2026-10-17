@@ -76,3 +76,9 @@ membind_remote_stream_gbs,96–104,95.9386,104.252,7,"STREAM triad with the memo
 membind_remote_roof_share_c1,76%–93%,0.757473,0.933598,2,"Modelled traffic with remote memory ÷ remote STREAM roof at C=1 (vLLM, llama.cpp)"
 membind_remote_roof_share_high_c,29%–48%,0.290159,0.479712,2,"Modelled traffic with remote memory ÷ remote STREAM roof, vLLM decode C=128 and 4096→1024 C=32"
 membind_bandwidth_only_bound_high_c,0.53×–0.67×,0.529316,0.672345,2,"Upper bound on the throughput ratio if only remote bandwidth limited the server, vLLM decode C=128 and 4096→1024 C=32"
+amx_ablation_c64_throughput_retained,25%,0.248357,0.25155,2,"vLLM BF16 throughput at C=64 with AMX removed from oneDNN's GEMMs ÷ with AMX (balanced and decode-heavy, 8B)"
+amx_ablation_peak_over_c1,6.3×–9.9×,6.32032,9.85424,2,"vLLM BF16 peak ÷ C=1 throughput with AMX removed from oneDNN's GEMMs (balanced, decode-heavy)"
+amx_ablation_peak_over_c1_with_amx,20.5×–34.1×,20.5191,34.0541,2,The same with AMX allowed (the ablation campaign's own AMX level)
+amx_ablation_step_time_ratio_c64,4.0×,3.99109,4.01055,2,Forward-step time without ÷ with AMX at C=64 (tokens per step unchanged)
+amx_lead_log_share_c16_plus,81%–92%,0.808703,0.918561,6,"Share (logarithmic) of vLLM BF16's lead over llama.cpp BF16 that disappears without AMX, C = 16…64"
+amx_lead_rest_factor_c64,1.3×–1.4×,1.26466,1.38883,2,vLLM BF16 without AMX ÷ llama.cpp BF16 at C=64 (the part of the lead that is not AMX)

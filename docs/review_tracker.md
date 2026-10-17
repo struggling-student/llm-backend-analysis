@@ -124,7 +124,7 @@ done and useful (matches bytes per step; vLLM wins at every C) — keep it, corr
 | O2 | "Concurrency does not raise memory pressure in your data. Why is vLLM still the HBM platform?" | vLLM is the only engine that reaches the bandwidth-relevant regimes (long context at high C). Back this with Experiment A, not with the "busier memory" ratio. | **PARTIAL** — wording fixed (P6); Experiment A's first run is confounded (missing preload on the remote vLLM points), re-run as `membind-v2` (T2.3b); HBM vs DDR still open (O6) |
 | O3 | "Is vLLM compute-bound or not?" | Below both roofs; "not bandwidth-bound; limited by kernel efficiency (hypothesis)". | **DONE** |
 | O4 | "Is the 0.17% CV your error bar?" | No — cross-node 0.4–1.7% and the Little's-law check are shown. | **DONE** |
-| O5 | "Isn't this just AMX vs no AMX?" | Partly, at BF16: say so; either run Experiment B or present it as a confounded engine property (acceptable for backend selection). | **PARTIAL** — hypothesis labelled; causal claim needs Experiment B (optional) |
+| O5 | "Isn't this just AMX vs no AMX?" | Partly, at BF16: say so; either run Experiment B or present it as a confounded engine property (acceptable for backend selection). | **DONE** — Experiment B measured (nb12, claims 11–12 in nb09): without AMX in oneDNN's GEMMs vLLM keeps 25% of its C=64 throughput; AMX carries 81%–92% of the lead at C = 16…64; the split of the remaining 1.3×–1.4× lead is still a hypothesis |
 | O6 | "Cache mode: how do you know anything about HBM vs DDR?" | You don't yet; state it and point to Experiment D. | **PARTIAL** — stated in nb09 status table; access request not made → T4.1 |
 | O7 | "BF16 or INT8 for the thesis?" | **Decided 2026-10-17: BF16 primary, INT8 secondary** (nb09 Decision, README). Reasons: **BF16 as primary** (twice the bytes, more memory-sensitive; avoids the W8A8 fidelity drift — 5 of 16 continuations identical vs 11 for Q8_0; quality check ran on non-Max hardware). INT8 as a secondary configuration. | **DONE** (T1.2) |
 
@@ -152,7 +152,6 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T3.3 | If Phase 3 is skipped, **record that choice**: keep the mechanism rows as "hypothesis" in the nb09 status table and say so in the thesis text. | O5 | Low | Written decision in nb09 or here | **MOOT** — Phase 3 was run (T3.1, T3.2). Remaining: move the nb09 status rows on AMX from "hypothesis" to measured/inferred (see the T3.1 Done-log row) |
 
 ### Phase 4 — Instrumentation when access becomes available
 
@@ -170,6 +169,7 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Date | Item | Result | Commit / evidence |
 | --- | --- | --- | --- |
+| 2026-10-17 | T3.3 — nb09 and nb06 AMX statements updated to the ablation | nb09: two status rows moved from "hypothesis" to measured (claim 11: 25% of the C=64 throughput, 6.3×–9.9× vs 20.5×–34.1× scaling, same batches, steps 4.0× longer) and inferred (claim 12: AMX carries 81%–92% of the lead at C = 16…64); the split of the remaining lead stays hypothesis; interpretation bullet and implications reworded; six key numbers; nb06 pointers to nb12. Checked beforehand that the ablation points are free of the LD_PRELOAD confound (0 of 30 server logs warn) | `1bec745` |
 | 2026-10-17 | T3.1 — vLLM AMX ablation (O5, P9) | Without AMX in oneDNN's GEMMs vLLM BF16 keeps **25%** of its throughput at C=64 (balanced 873 → 217 tok/s, decode 769 → 193), scales 6.3–9.9× instead of 20.5–34.1×, and a step takes **4.0–4.3×** as long while tokens per step stay the same (≤ 6%); AMX busy 0.3–11% → 0.05% → exactly 0. vLLM's own AMX kernels add ≤ 9% at C ≥ 8. AMX carries **81–92%** (log share) of vLLM's lead over llama.cpp BF16 at C=16…64; without AMX vLLM is still 1.26–1.39× ahead at C=64. Caveats: one node per curve, the balanced levels on three different nodes (AMX level vs primary campaign differs up to 14% at low C), so only effects ≥ 2× are interpreted; fallback kernels, not the same kernels slower. The nb09 status row "AMX coverage is the main reason vLLM scales" can move from hypothesis to measured | `data(raw)` 6 sweeps, jobs 5394489-94; notebook 12 §3-5 |
 | 2026-10-17 | T3.2 — llama.cpp Q8_0, AMX build vs AVX-512 build | AMX build processes prompts **1.51×–2.44×** as fast (128–8192 tokens; pass pairs within ±0.8%), AMX busy 4.0–5.1% vs 0.0%, but only 5.8–7.7% of the AMX INT8 GEMM roof (AVX-512 build 3.1–3.8%). AMX is effective in llama.cpp but far from saturated: "available" ≠ "used efficiently", consistent with notebook 08 §3. Prompt processing only; decode and served runs not done | `778df44`, `446aba9`; notebook 12 §2, job 5394480 |
 | 2026-10-17 | T1.9 — housekeeping (partly) | `configs/cresco8.env` committed (identical to the cluster checkout's file; paths verified to exist) and the runbook layout table matches it. The branches `review-fixes-2026-10-16` (3ef844e) and `claude/jovial-blackburn-3b9142` (fbbcb67) and the clean detached worktree `.claude/worktrees/jovial-blackburn-3b9142` (3ef844e) were removed (all ancestors of `main`). `main` was pushed to `origin` by you on 2026-10-17 (`926b450..07948ef`, 47 commits) | uncommitted |
@@ -204,4 +204,3 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 | Priority | Task | Phase | Blocked on |
 | --- | --- | --- | --- |
 | Medium | T4.1 access request, T4.2/T4.3 HBM/DDR split | 4 | cluster authorisation / administrators |
-| Low | T3.3 (nb09 AMX rows) | 3 | the analysis session |
