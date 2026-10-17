@@ -152,7 +152,7 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T3.3 | If Phase 3 is skipped, **record that choice**: keep the mechanism rows as "hypothesis" in the nb09 status table and say so in the thesis text. | O5 | Low | Written decision in nb09 or here | DECISION |
+| T3.3 | If Phase 3 is skipped, **record that choice**: keep the mechanism rows as "hypothesis" in the nb09 status table and say so in the thesis text. | O5 | Low | Written decision in nb09 or here | **MOOT** — Phase 3 was run (T3.1, T3.2). Remaining: move the nb09 status rows on AMX from "hypothesis" to measured/inferred (see the T3.1 Done-log row) |
 
 ### Phase 4 — Instrumentation when access becomes available
 
@@ -204,4 +204,4 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 | Priority | Task | Phase | Blocked on |
 | --- | --- | --- | --- |
 | Medium | T4.1 access request, T4.2/T4.3 HBM/DDR split | 4 | cluster authorisation / administrators |
-| Low | T3.3 | 3 | your decision |
+| Low | T3.3 (nb09 AMX rows) | 3 | the analysis session |
