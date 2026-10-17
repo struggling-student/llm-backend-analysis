@@ -59,7 +59,7 @@ the review are unchanged (0 removed, 0 values changed); 14 were added.
 
 ## Experiment A (memory-node sensitivity, 2026-10-17)
 
-- **Correction (2026-10-17, later):** the vLLM remote points of this first run ran without the image's tcmalloc/Intel OpenMP preload (the shim replaced `LD_PRELOAD`), so the vLLM ratios below are unverified; nb09 claim 10 and nb11 carry an UNVERIFIED label until the re-run `membind-v2` is analysed (tracker T2.3b). The llama.cpp control is valid.
+- **Correction (2026-10-17/18):** the vLLM remote points of the first run ran without the image's tcmalloc/Intel OpenMP preload (the shim replaced `LD_PRELOAD`). The cells were re-run as `membind-v2` and notebooks 11 and 09 now use it: vLLM keeps 0.20×–0.30× (the first run's ratios were 0.19×–0.29×, 1%–5% apart); the llama.cpp control is 0.32× on the corrected run's node. The ratios in the paragraph below are the first run's.
 - New notebook 11 and `analysis/membind.py`: vLLM BF16 keeps 0.19×–0.29× of its throughput with the server's memory on the other socket's node
   (llama.cpp control 0.28× at C=1); at high concurrency the loss exceeds what remote bandwidth alone explains (hypothesis: latency).
   nb09 gets claim 10, three status-table rows (measured / hypothesis / untested) and six key numbers; no existing number changed.

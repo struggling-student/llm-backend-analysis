@@ -672,7 +672,7 @@ def membind_figure(table: pd.DataFrame, *, title: str, subtitle: str | None = No
     fig.add_trace(go.Bar(x=labels, y=t["reference_roof_share"], marker=dict(color="rgba(0,0,0,0)", line=dict(color=colors, width=2)),
                          name="Local memory: traffic ÷ local roof", hovertemplate="%{x}<br>local: %{y:.0%}<extra></extra>"), row=1, col=2)
     fig.add_trace(go.Bar(x=labels, y=t["implied_remote_roof_share"], marker_color=colors, name="Remote memory: modelled traffic ÷ remote roof",
-                         text=[f"{v:.0%}" for v in t["implied_remote_roof_share"]], textposition="outside",
+                         text=[f"{v:.0%}" if v == v else "n/a" for v in t["implied_remote_roof_share"]], textposition="outside",
                          hovertemplate="%{x}<br>remote (modelled): %{y:.0%}<extra></extra>"), row=1, col=2)
     fig.update_yaxes(range=[0, 1.05], tickformat=".0%" , row=1, col=2)
     fig.update_yaxes(range=[0, 1.05], title_text="remote ÷ local throughput", row=1, col=1)

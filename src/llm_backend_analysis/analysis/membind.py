@@ -22,6 +22,7 @@ import pandas as pd
 
 VARIANT = re.compile(r"^mem(?P<node>\d+)_p(?P<pass>\d+)$")
 CELL = ["model", "configuration_id", "workload", "concurrency"]
+CAMPAIGN = "membind-v2"   # the corrected run (image LD_PRELOAD kept); `membind` is the first attempt, confounded
 PLACEMENT_MIN = 0.90   # share of the server's memory that must sit on the requested node
 
 
@@ -108,7 +109,7 @@ def numastat_share(path: Path, node: int) -> float | None:
     return per_node[node] / total if total and node < len(per_node) else None
 
 
-def placement_table(raw_online: Path, campaign: str = "membind") -> pd.DataFrame:
+def placement_table(raw_online: Path, campaign: str = CAMPAIGN) -> pd.DataFrame:
     """Share of memory on the requested node for every point of a campaign, from the recorded numastat files."""
     rows = []
     for f in sorted((raw_online / campaign).glob("*/*/*/*/numastat.txt")):

@@ -58,7 +58,7 @@ def test_placement_table(tmp_path):
     d = tmp_path / "membind" / "m" / "vllm-bf16__mem1_p1" / "decode" / "c001"
     d.mkdir(parents=True)
     (d / "numastat.txt").write_text("                Node 0   Node 1  Total\nTotal   1000.00   100.00 1100.00\n")
-    t = membind.placement_table(tmp_path)
+    t = membind.placement_table(tmp_path, "membind")
     assert t.iloc[0]["share_on_requested_node"] == pytest.approx(100 / 1100)
     assert not t.iloc[0]["valid"]
 

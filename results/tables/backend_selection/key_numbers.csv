@@ -70,12 +70,12 @@ llamacpp_int8_offline_share_amx_int8_roof,10%,0.101109,0.101109,1,llama.cpp Q8_0
 llamacpp_int8_amx_busy_over_modelled,2.06×,2.05628,2.05628,1,"llama.cpp Q8_0 measured AMX busy ÷ modelled AMX share, median over points with AMX busy ≥ 2%"
 kvdecode_prefill_op_share,78%,0.775493,0.775493,1,Modelled prefill share of the operations of 4096→1024 (8B)
 vllm_bf16_kvdecode_tokens_per_step_at_highest_c,255,255.012,255.012,1,vLLM BF16 tokens per forward step in 4096→1024 at its highest C (C = 64)
-membind_throughput_ratio_vllm,0.19×–0.29×,0.194072,0.293275,3,"Throughput with the server's memory on the other socket's node ÷ on the local node, vLLM BF16 (decode C=1, decode C=128, 4096→1024 C=32)"
-membind_throughput_ratio_llamacpp_c1,0.28×,0.280814,0.280814,1,"The same ratio for llama.cpp BF16, decode C=1 (control)"
+membind_throughput_ratio_vllm,0.20×–0.30×,0.204566,0.299152,3,"Throughput with the server's memory on the other socket's node ÷ on the local node, vLLM BF16 (decode C=1, decode C=128, 4096→1024 C=32)"
+membind_throughput_ratio_llamacpp_c1,0.32×,0.320835,0.320835,1,"The same ratio for llama.cpp BF16, decode C=1 (control)"
 membind_remote_stream_gbs,96–104,95.9386,104.252,7,"STREAM triad with the memory on the other socket's node, 55 threads (GB/s)"
-membind_remote_roof_share_c1,76%–93%,0.757473,0.933598,2,"Modelled traffic with remote memory ÷ remote STREAM roof at C=1 (vLLM, llama.cpp)"
-membind_remote_roof_share_high_c,29%–48%,0.290159,0.479712,2,"Modelled traffic with remote memory ÷ remote STREAM roof, vLLM decode C=128 and 4096→1024 C=32"
-membind_bandwidth_only_bound_high_c,0.53×–0.67×,0.529316,0.672345,2,"Upper bound on the throughput ratio if only remote bandwidth limited the server, vLLM decode C=128 and 4096→1024 C=32"
+membind_remote_roof_share_c1,77%–94%,0.76919,0.939819,2,"Modelled traffic with remote memory ÷ remote STREAM roof at C=1 (vLLM, llama.cpp)"
+membind_remote_roof_share_high_c,31%,0.305318,0.305318,1,"Modelled traffic with remote memory ÷ remote STREAM roof, vLLM decode C=128 (the 4096→1024 cell has no remote step counters synced yet)"
+membind_bandwidth_only_bound_high_c,0.53×–0.67×,0.53213,0.67127,2,"Upper bound on the throughput ratio if only remote bandwidth limited the server, vLLM decode C=128 and 4096→1024 C=32"
 amx_ablation_c64_throughput_retained,25%,0.248357,0.25155,2,"vLLM BF16 throughput at C=64 with AMX removed from oneDNN's GEMMs ÷ with AMX (balanced and decode-heavy, 8B)"
 amx_ablation_peak_over_c1,6.3×–9.9×,6.32032,9.85424,2,"vLLM BF16 peak ÷ C=1 throughput with AMX removed from oneDNN's GEMMs (balanced, decode-heavy)"
 amx_ablation_peak_over_c1_with_amx,20.5×–34.1×,20.5191,34.0541,2,The same with AMX allowed (the ablation campaign's own AMX level)
