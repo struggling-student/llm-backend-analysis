@@ -152,7 +152,6 @@ Rule: when a task is complete, move its row to the Done log (section 6) with the
 
 | Task | What | Closes | Priority | Acceptance criterion | Status |
 | --- | --- | --- | --- | --- | --- |
-| T3.1 | **Experiment B: vLLM AMX ablation** (`ONEDNN_MAX_CPU_ISA=AVX512_CORE_BF16`; balanced and decode-heavy, C=1…64). | O5, P9 | Medium | `EXE.AMX_BUSY` ≈ 0 verified in telemetry and `ONEDNN_VERBOSE`; scaling curve with and without AMX | **RUNNING (submitted 2026-10-17)**: levels verified (`amx-ablation-verify`, job 5394479: AMX_BUSY 0.5–2.0% → 0.007–0.02% → exactly 0); sweeps 5394489–94 (3 levels × balanced/decode, C=1…64) queued/running; analysis goes into notebook 12 sections 3–4 |
 | T3.3 | If Phase 3 is skipped, **record that choice**: keep the mechanism rows as "hypothesis" in the nb09 status table and say so in the thesis text. | O5 | Low | Written decision in nb09 or here | DECISION |
 
 ### Phase 4 — Instrumentation when access becomes available
@@ -171,6 +170,7 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Date | Item | Result | Commit / evidence |
 | --- | --- | --- | --- |
+| 2026-10-17 | T3.1 — vLLM AMX ablation (O5, P9) | Without AMX in oneDNN's GEMMs vLLM BF16 keeps **25%** of its throughput at C=64 (balanced 873 → 217 tok/s, decode 769 → 193), scales 6.3–9.9× instead of 20.5–34.1×, and a step takes **4.0–4.3×** as long while tokens per step stay the same (≤ 6%); AMX busy 0.3–11% → 0.05% → exactly 0. vLLM's own AMX kernels add ≤ 9% at C ≥ 8. AMX carries **81–92%** (log share) of vLLM's lead over llama.cpp BF16 at C=16…64; without AMX vLLM is still 1.26–1.39× ahead at C=64. Caveats: one node per curve, the balanced levels on three different nodes (AMX level vs primary campaign differs up to 14% at low C), so only effects ≥ 2× are interpreted; fallback kernels, not the same kernels slower. The nb09 status row "AMX coverage is the main reason vLLM scales" can move from hypothesis to measured | `data(raw)` 6 sweeps, jobs 5394489-94; notebook 12 §3-5 |
 | 2026-10-17 | T3.2 — llama.cpp Q8_0, AMX build vs AVX-512 build | AMX build processes prompts **1.51×–2.44×** as fast (128–8192 tokens; pass pairs within ±0.8%), AMX busy 4.0–5.1% vs 0.0%, but only 5.8–7.7% of the AMX INT8 GEMM roof (AVX-512 build 3.1–3.8%). AMX is effective in llama.cpp but far from saturated: "available" ≠ "used efficiently", consistent with notebook 08 §3. Prompt processing only; decode and served runs not done | `778df44`, `446aba9`; notebook 12 §2, job 5394480 |
 | 2026-10-17 | T1.9 — housekeeping (partly) | `configs/cresco8.env` committed (identical to the cluster checkout's file; paths verified to exist) and the runbook layout table matches it. The branches `review-fixes-2026-10-16` (3ef844e) and `claude/jovial-blackburn-3b9142` (fbbcb67) and the clean detached worktree `.claude/worktrees/jovial-blackburn-3b9142` (3ef844e) were removed (all ancestors of `main`). `main` was pushed to `origin` by you on 2026-10-17 (`926b450..07948ef`, 47 commits) | uncommitted |
 | 2026-10-17 | T1.4 — C=1 spread and the llama.cpp lead | Reworded to "comparable to slightly ahead" in nb03 (computed sentence: lead 12%–17% on 8B against a cross-node spread of up to 8.1%, 1.5×–2.1× larger), nb09 (claim 1 now also checks that the lead exceeds the spread; new key `c1_llamacpp_lead_short_prompts_8b`; interpretation, status table, Decision) and the README. **Not** worded as "within the spread": the data say the lead exceeds it, by a small factor (the spread is measured on 8B 512→512 only, one repetition) | uncommitted |
@@ -203,5 +203,5 @@ Move finished tasks here, newest first. Evidence is the commit and the notebook 
 
 | Priority | Task | Phase | Blocked on |
 | --- | --- | --- | --- |
-| Medium | T3.1 AMX ablation (optional), T4.1 access request, T4.2/T4.3 HBM/DDR split | 3, 4 | cluster authorisation / administrators |
+| Medium | T4.1 access request, T4.2/T4.3 HBM/DDR split | 4 | cluster authorisation / administrators |
 | Low | T3.3 | 3 | your decision |

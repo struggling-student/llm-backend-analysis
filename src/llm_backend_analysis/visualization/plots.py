@@ -701,3 +701,35 @@ def build_comparison_figure(df: pd.DataFrame, *, title: str, subtitle: str | Non
     fig.update_yaxes(title_text="Prompt processing (tokens/s)", rangemode="tozero")
     fig.update_xaxes(title_text="Prompt length")
     return fig
+
+
+def ablation_figure(levels: pd.DataFrame, reference: pd.DataFrame, *, title: str, subtitle: str | None = None,
+                    metric: str = "total_tok_s_mean", error: str | None = "total_tok_s_std", y_title: str = "Total tokens/s",
+                    height: int = 480) -> go.Figure:
+    """vLLM BF16 at the AMX ablation levels (analysis.amx.level_frame) against concurrency, one panel per workload, with
+    llama.cpp BF16 of the primary campaign as a reference. Error bars ±1 SD over the repetitions of one server instance."""
+    from ..analysis.amx import LEVEL_LABELS, LEVELS
+    blue, orange = theme.BACKEND_COLORS["vllm"], theme.BACKEND_COLORS["llama_cpp"]
+    style = {"amx": dict(dash="solid", symbol="circle", open=False), "noamx_gemm": dict(dash="dash", symbol="circle-open", open=True),
+             "noamx_all": dict(dash="dot", symbol="diamond-open", open=True)}
+    wls = [w for w in registry.workload_order() if w in set(levels["workload"])]
+    fig = make_subplots(rows=1, cols=len(wls), subplot_titles=[_facet_title("workload", w) for w in wls], horizontal_spacing=0.08)
+    for j, wl in enumerate(wls, start=1):
+        for lv in LEVELS:
+            g = levels[(levels["workload"] == wl) & (levels["level"] == lv)].sort_values("concurrency")
+            st = style[lv]
+            fig.add_trace(go.Scatter(
+                x=g["concurrency"], y=g[metric], mode="lines+markers", name=f"vLLM BF16 — {LEVEL_LABELS[lv]}", legendgroup=lv,
+                showlegend=(j == 1), line=dict(color=blue, dash=st["dash"], width=2), marker=dict(color=blue, symbol=st["symbol"], size=8),
+                error_y=dict(type="data", array=g[error], thickness=1, width=3, color=blue) if error else None,
+                hovertemplate=f"<b>{LEVEL_LABELS[lv]}</b><br>C = %{{x}}<br>%{{y:.4g}}<extra></extra>"), row=1, col=j)
+        r = reference[reference["workload"] == wl].sort_values("concurrency")
+        fig.add_trace(go.Scatter(
+            x=r["concurrency"], y=r[metric], mode="lines+markers", name="llama.cpp BF16 (primary campaign)", legendgroup="llama", showlegend=(j == 1),
+            line=dict(color=orange, width=2), marker=dict(color=orange, symbol="square", size=7),
+            hovertemplate="<b>llama.cpp BF16</b><br>C = %{x}<br>%{y:.4g}<extra></extra>"), row=1, col=j)
+        fig.update_xaxes(type="log", tickvals=[1, 2, 4, 8, 16, 32, 64], ticktext=["1", "2", "4", "8", "16", "32", "64"],
+                         title_text="Concurrent requests (C)", row=1, col=j)
+    fig.update_yaxes(title_text=y_title, rangemode="tozero", row=1, col=1)
+    fig.update_layout(title_text=title_text(title, subtitle), height=height)
+    return _finish(fig)

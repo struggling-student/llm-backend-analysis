@@ -93,3 +93,66 @@ def verify_table(path: Path) -> pd.DataFrame:
                          "matmul_implementations": ", ".join(f"{k} ×{n}" for k, n in sorted(matmul.items())),
                          "amx_primitives": v["onednn_amx_primitives"]})
     return pd.DataFrame(rows)
+
+
+# --------------------------------------------------------------------------- T3.1: vLLM sweeps without AMX
+LEVELS = ["amx", "noamx_gemm", "noamx_all"]
+LEVEL_LABELS = {"amx": "AMX allowed", "noamx_gemm": "oneDNN capped below AMX", "noamx_all": "every AMX path off"}
+
+
+def level_frame(points: pd.DataFrame) -> pd.DataFrame:
+    """The ablation campaign's points with `level` (= variant) and the step time (1 ÷ steps per second)."""
+    out = points[points["variant"].isin(LEVELS)].copy()
+    out["level"] = out["variant"]
+    out["step_time_s"] = 1 / out["engine_steps_per_s_mean"]
+    return out
+
+
+def level_summary(points: pd.DataFrame, throughput: str = "total_tok_s_mean") -> pd.DataFrame:
+    """Per (workload, level): throughput at C = 1 and at the highest C, peak ÷ C=1, gain of the last doubling, and
+    each level's throughput relative to the AMX level at the same C (min and max over C, and at C = 1 and the highest C)."""
+    d = level_frame(points)
+    rows = []
+    for wl, g in d.groupby("workload", sort=False):
+        ref = g[g["level"] == "amx"].set_index("concurrency")[throughput]
+        for lv in LEVELS:
+            s = g[g["level"] == lv].set_index("concurrency")[throughput].sort_index()
+            rel = s / ref.reindex(s.index)
+            rows.append({"workload": wl, "level": lv, "c1": s.iloc[0], "c_max": int(s.index[-1]), "tput_c_max": s.iloc[-1],
+                         "peak_over_c1": s.max() / s.iloc[0], "last_doubling_gain": s.iloc[-1] / s.iloc[-2] - 1,
+                         "rel_c1": rel.iloc[0], "rel_c_max": rel.iloc[-1], "rel_min": rel.min(), "rel_max": rel.max()})
+    return pd.DataFrame(rows)
+
+
+def batching_check(points: pd.DataFrame) -> pd.DataFrame:
+    """Do the levels form the same batches? Per (workload, C): largest relative difference of tokens per step to the AMX level,
+    and the step rate of each level relative to the AMX level (the step cost is what AMX changes)."""
+    d = level_frame(points)
+    rows = []
+    for (wl, c), g in d.groupby(["workload", "concurrency"]):
+        g = g.set_index("level")
+        base = g.loc["amx"]
+        for lv in ("noamx_gemm", "noamx_all"):
+            rows.append({"workload": wl, "concurrency": int(c), "level": lv,
+                         "tokens_per_step_vs_amx": g.loc[lv, "tokens_per_step_mean"] / base["tokens_per_step_mean"] - 1,
+                         "step_rate_vs_amx": g.loc[lv, "engine_steps_per_s_mean"] / base["engine_steps_per_s_mean"],
+                         "tput_vs_amx": g.loc[lv, "total_tok_s_mean"] / base["total_tok_s_mean"]})
+    return pd.DataFrame(rows)
+
+
+def lead_decomposition(level_points: pd.DataFrame, llama: pd.DataFrame, throughput: str = "total_tok_s_mean") -> pd.DataFrame:
+    """vLLM ÷ llama.cpp at equal C, split into the part AMX accounts for and the rest:
+    vLLM(AMX) ÷ llama.cpp = [vLLM(AMX) ÷ vLLM(no AMX)] × [vLLM(no AMX) ÷ llama.cpp]; `amx_log_share` is the share of the
+    logarithm of the total lead carried by the first factor. `llama` has configuration llama_cpp_bf16 on the same shapes."""
+    d = level_frame(level_points)
+    rows = []
+    for wl, g in d.groupby("workload", sort=False):
+        ll = llama[llama["workload"] == wl].set_index("concurrency")[throughput]
+        piv = g.pivot(index="concurrency", columns="level", values=throughput)
+        for c in piv.index.intersection(ll.index):
+            total = piv.loc[c, "amx"] / ll[c]
+            amx_part = piv.loc[c, "amx"] / piv.loc[c, "noamx_gemm"]
+            rows.append({"workload": wl, "concurrency": int(c), "vllm_over_llama": total, "amx_factor": amx_part,
+                         "rest_factor": piv.loc[c, "noamx_gemm"] / ll[c],
+                         "amx_log_share": np.log(amx_part) / np.log(total) if total > 1 else np.nan})
+    return pd.DataFrame(rows)

@@ -1,4 +1,14 @@
 {
+  "amx_ablation_throughput": {
+    "source_notebook": "notebooks/backend_selection/12_amx_ablations.ipynb",
+    "caption": "vLLM BF16 total tokens/s vs concurrent requests with AMX allowed, with oneDNN capped below AMX and with every AMX path off, for the balanced (512→512) and decode-heavy (128→512) workloads; llama.cpp BF16 as reference. Error bars: ±1 SD over the 3 repetitions of one server instance.",
+    "files": [
+      "amx_ablation_throughput.svg",
+      "amx_ablation_throughput.png"
+    ],
+    "width": null,
+    "height": 480
+  },
   "amx_build_prompt_processing": {
     "source_notebook": "notebooks/backend_selection/12_amx_ablations.ipynb",
     "caption": "llama.cpp Q8_0 (8B) prompt processing with the AMX build (solid) and the AVX-512 build (hatched), by prompt length; ratio above each pair.",
