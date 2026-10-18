@@ -4,6 +4,7 @@
 raw/        measurement source of truth — never edited
 metadata/   what the raw data are: configurations, campaigns, integrity manifest
 processed/  derived tables, rebuilt by `make data` (deterministic; committed so notebooks run without rebuilding)
+external/   published results of other systems (not our measurements), for notebook 13
 ```
 
 ## Raw measurements (`raw/`)
@@ -56,3 +57,19 @@ canonical `configuration_id`, `backend`, `precision`, `quantization` where appli
 
 Units: tokens/s, seconds (latency columns end in `_s`), GB/s (10⁹ B/s), GiB for working sets, fractions in
 [0, 1] for utilizations.
+
+## External references (`external/`)
+
+Published Llama-3.1-8B serving results of other CPUs and GPUs, used only by notebook 13 to place our numbers. They are
+not measurements of ours and never enter `processed/`.
+
+| File | Contents |
+| --- | --- |
+| `sources.csv` | one row per source: title, publisher, kind (audited / independent / vendor), URL, methodology URL, access date, setup notes |
+| `hardware_specs.csv` | vendor peak memory bandwidth and power rating of each system (spec-sheet URL per row) |
+| `manual_results.csv` | results that exist only as text or figures, transcribed by hand (Lenovo LP2463 digitised from its Figures 1–2, Arm, Red Hat); `value_origin` and `location` say where each value is |
+| `reference_results.csv` | the table notebook 13 reads: parsed machine-readable sources (ML.ENERGY leaderboard data, NVIDIA NIM tables, MLPerf v5.1 summaries) plus `manual_results.csv`, with derived columns marked in `value_origin`; built by `scripts/processing/build_external_references.py` |
+| `retrieval.csv` | URL, date, size and SHA-256 of every downloaded source file |
+
+The downloaded documents themselves are third-party material and stay in the git-ignored `external/.cache/`. Re-running
+the build with `--refresh` and comparing `retrieval.csv` shows whether a source changed.
