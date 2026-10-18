@@ -89,3 +89,10 @@ ablation and of the attention/GEMM decomposition and is labelled as archived sup
   to delete by hand). Changes: 15 grade-A rows (NIM BF16 1000→1000, C ≤ 100), Lenovo rows at the exact shape (still grade B, model
   named Llama 3 8B), energy from the measured node power (median 687 W) instead of the 350 W placeholder, re-exported
   `external_reference_bf16`, updated TL;DR, next steps and limitations. The other pages were not changed.
+
+- 2026-10-18, analysis at commit `6d3b1d8` (notebook 13 §4.1 after the idle-power campaign `power/idle-20261018`, Slurm job
+  5406101): targeted edits to the external-references page from `external_node_power_idle_load.csv`,
+  `external_reference_comparison.csv` (`ours_incremental_j_per_token_est`, `adv_incremental_energy`) and
+  `external_key_numbers.csv`. New §6.1 "Idle baseline" (idle node 398 W against 647–712 W under load, power above idle per
+  point, incremental J/token as a separate lower-bound estimate), one sentence in the TL;DR energy bullet, §9 next step 1
+  marked done in part. Nothing else on the page or on other pages was changed.
