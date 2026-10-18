@@ -17,6 +17,7 @@
 #   scripts/cluster/submit.sh membind-shimcheck             # one short C=1 vLLM run with memory on node 1; check numastat after
 #   scripts/cluster/submit.sh membind-stream                # memory-node sensitivity: STREAM roof with remote memory (node 1)
 #   scripts/cluster/submit.sh external-shapes [arm ...]     # notebook 13: published shapes (1000->1000, 256->256), one job per (arm, shape)
+#   scripts/cluster/submit.sh idle-power [seconds]          # notebook 13: idle node power (sleep after the node check), default 1200 s
 #   scripts/cluster/submit.sh job-energy <jobid ...>        # sacct ConsumedEnergy of finished jobs -> $BC_DATA/slurm_energy (login node, no job)
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
 #
@@ -88,6 +89,10 @@ case "$what" in
     while read -r a w t; do
       echo "external-shapes $a $w: $(sub "$t" "ext-$a-$w" scripts/benchmark/external_shapes.py --arm "$a" --workload "$w")"
     done < <("$BC_PYTHON" scripts/benchmark/external_shapes.py --jobs ${ARMS[@]+"${ARMS[@]}"}) ;;
+  idle-power)   # whole-node power with nothing running: the baseline that splits notebook 13's node energy
+    d="${1:-1200}"
+    echo "idle power ${d} s: $(sub "$(( d / 60 + 15 ))" idle-power scripts/benchmark/idle_power.py --duration "$d")"   # --time in minutes
+    echo "afterwards: scripts/cluster/submit.sh job-energy <jobid>" ;;
   job-energy)   # whole-node IPMI energy (Slurm acct_gather_energy/ipmi, DCMI sensor, 60 s updates) of finished jobs
     mkdir -p "$BC_DATA/slurm_energy"
     for j in "$@"; do
@@ -95,5 +100,5 @@ case "$what" in
         > "$BC_DATA/slurm_energy/$j.psv" && echo "$BC_DATA/slurm_energy/$j.psv" && cat "$BC_DATA/slurm_energy/$j.psv"
     done ;;
   job) t=$1 n=$2; shift 2; sub "$t" "$n" "$@" ;;
-  *) sed -n '2,21p' "$0"; exit 1 ;;
+  *) sed -n '2,22p' "$0"; exit 1 ;;
 esac
