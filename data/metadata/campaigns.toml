@@ -12,7 +12,7 @@
 #               the primary analysis
 #
 # prepared = true marks a campaign that is declared before its raw data exist (validation then does not demand data,
-# and fails once data exist while the flag is still set). Carried by online/external-shapes until its data are synced.
+# and fails once data exist while the flag is still set). No campaign carries it at the moment.
 #
 # Processing reads every campaign (nothing is silently dropped) and stamps each row
 # with its campaign and role; the notebooks select campaigns explicitly by role.
@@ -88,7 +88,6 @@ description = "T3.1: short C = 1 and C = 8 points per ablation level with ONEDNN
 
 [online.external-shapes]
 role = "external_match"
-prepared = true
 description = "Notebook 13: vLLM BF16 (8B) at exactly two published shapes, NVIDIA NIM 1000->1000 at C = 1, 5, 25, 50, 100, 128 and Lenovo LP2463 256->256 at C = 1..128 (configs/experiment.toml [external_shapes]); fixed concurrency list, 3 repetitions, primary layout. Phases record the node's Slurm ConsumedEnergy. Not part of the primary analysis."
 
 [offline.amx-build]
