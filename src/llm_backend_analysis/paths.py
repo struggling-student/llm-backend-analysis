@@ -18,6 +18,7 @@ RAW_TELEMETRY = RAW / "telemetry"
 RAW_ENVIRONMENT = RAW / "environment"
 METADATA = DATA / "metadata"
 PROCESSED = DATA / "processed"
+EXTERNAL = DATA / "external"  # published results of other systems (notebook 13), not measurements of ours
 
 NOTEBOOKS = ROOT / "notebooks"
 RESULTS = ROOT / "results"

@@ -21,6 +21,7 @@ interactive Plotly output and a PNG fallback per figure (for viewers that do not
 | [`09_backend_selection_summary`](backend_selection/09_backend_selection_summary.ipynb) | Synthesis for the supervisors: three figures → about eight measured claims → labelled interpretation (inferred / hypothesis) → decision → table of what is measured, inferred, hypothesized or untested → thesis implications |
 | [`10_roofline`](backend_selection/10_roofline.ipynb) | Roofline: which regimes are memory- or compute-bound, how close each backend gets to the socket's roofs, why long-context decode stays memory-bound; supporting figures in an appendix |
 | [`11_memory_node_sensitivity`](backend_selection/11_memory_node_sensitivity.ipynb) | Does vLLM's throughput respond to the memory system? Same cores, server memory on the other socket's node (about one fifth of the bandwidth, higher latency); remote traffic modelled |
+| [`13_external_references`](backend_selection/13_external_references.ipynb) | How far off are we? Published Llama-3.1-8B results of other CPUs (Xeon 6, Arm, MLPerf CPU) and GPUs (L40S, H100, H200, B200) paired with our nearest points: throughput, TTFT, TPOT, energy per token (ours estimated) and single-stream bandwidth use |
 
 Primary model: Llama-3.1-8B-Instruct; Llama-3.2-1B-Instruct is the cross-check. Direct backend comparisons are formed
 within one precision: the BF16 pair (both models) and the INT8 pair (vLLM W8A8 vs llama.cpp Q8_0, 8B).

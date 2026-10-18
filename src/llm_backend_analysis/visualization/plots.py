@@ -733,3 +733,35 @@ def ablation_figure(levels: pd.DataFrame, reference: pd.DataFrame, *, title: str
     fig.update_yaxes(title_text=y_title, rangemode="tozero", row=1, col=1)
     fig.update_layout(title_text=title_text(title, subtitle), height=height)
     return _finish(fig)
+
+
+def external_reference_figure(series: pd.DataFrame, *, panels: Sequence[tuple[str, str]], title: str, subtitle: str | None = None,
+                              height: int = 520) -> go.Figure:
+    """Our curves next to published ones, against concurrency on log-log axes, one panel per metric.
+
+    `series` has one row per point: `label`, `group` (source, one colour), `marker` (symbol), `dash`, `origin`
+    ("ours" or "external"), `concurrency` and the metric columns named in `panels` as (column, y title). Our curves use
+    the backend colours; each external source gets one of the extra colours and each system a symbol."""
+    fig = make_subplots(rows=1, cols=len(panels), horizontal_spacing=0.09)
+    groups = [g for g in dict.fromkeys(series.loc[series["origin"] == "external", "group"])]
+    colors = {g: theme.EXTRA_COLORS[i % len(theme.EXTRA_COLORS)] for i, g in enumerate(groups)}
+    for j, (metric, y_title) in enumerate(panels, start=1):
+        for label, g in series.groupby("label", sort=False):
+            g = g.dropna(subset=[metric]).sort_values("concurrency")
+            if g.empty:
+                continue
+            first = g.iloc[0]
+            color = first["color"] if first["origin"] == "ours" else colors[first["group"]]
+            fig.add_trace(go.Scatter(
+                x=g["concurrency"], y=g[metric], mode="lines+markers", name=label, legendgroup=label,
+                showlegend=label not in {t.name for t in fig.data},
+                line=dict(color=color, dash=first["dash"], width=2.4 if first["origin"] == "ours" else 1.6),
+                marker=dict(color=color, symbol=first["marker"], size=8 if first["origin"] == "ours" else 7),
+                hovertemplate=f"<b>{label}</b><br>C = %{{x}}<br>%{{y:.4g}}<extra></extra>"), row=1, col=j)
+        values = series[metric].dropna()
+        ticks = log_ticks(values)
+        fig.update_yaxes(type="log", title_text=y_title, tickvals=ticks, ticktext=[f"{t:g}" for t in ticks], row=1, col=j)
+        cs = [c for c in (1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048) if c <= series["concurrency"].max() * 1.01]
+        fig.update_xaxes(type="log", tickvals=cs, ticktext=[str(c) for c in cs], title_text="Concurrent requests (C)", row=1, col=j)
+    fig.update_layout(title_text=title_text(title, subtitle), height=height, legend=dict(font=dict(size=11)))
+    return _finish(fig)

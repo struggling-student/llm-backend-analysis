@@ -1,0 +1,27 @@
+system,precision_group,workload,time_per_token_s,time_basis,weight_gb,roof_gbs,roof_kind,origin,source_id,precision,engine_version,effective_gbs,roof_share
+Intel Xeon 6732P,bf16,256→256,0.0659196,1 / per-user tok/s (includes TTFT share),15.0098,,vendor peak,external,lenovo_lp2463,bf16,0.21.0+cpu,227.699,
+Intel Xeon 6960P,bf16,256→256,0.0347222,1 / per-user tok/s (includes TTFT share),15.0098,,vendor peak,external,lenovo_lp2463,bf16,0.21.0+cpu,432.284,
+Intel Xeon 6972P,bf16,256→256,0.0352361,1 / per-user tok/s (includes TTFT share),15.0098,,vendor peak,external,lenovo_lp2463,bf16,0.21.0+cpu,425.98,
+NVIDIA H100 SXM 80GB,bf16,1000→1000,0.00652,mean ITL,15.0098,3350,vendor peak,external,nvidia_nim,bf16,1.8.0,2302.12,0.687201
+NVIDIA H100 SXM 80GB,bf16,1000→1000,0.00693,mean ITL,15.0098,3350,vendor peak,external,nvidia_nim,fp16,1.3.0,2165.92,0.646544
+NVIDIA H100 SXM 80GB,bf16,200→200,0.00654,mean ITL,15.0098,3350,vendor peak,external,nvidia_nim,fp16,1.3.0,2295.08,0.6851
+NVIDIA H100 SXM 80GB,bf16,500→2000,0.00694,mean ITL,15.0098,3350,vendor peak,external,nvidia_nim,fp16,1.3.0,2162.8,0.645613
+NVIDIA H100 SXM 80GB,8bit,1000→1000,0.00453,mean ITL,8.03328,3350,vendor peak,external,nvidia_nim,fp8,1.8.0,1773.35,0.529359
+NVIDIA H100 SXM 80GB,8bit,200→200,0.00463,mean ITL,8.03328,3350,vendor peak,external,nvidia_nim,fp8,1.8.0,1735.05,0.517925
+NVIDIA H100 SXM 80GB,8bit,500→2000,0.00456,mean ITL,8.03328,3350,vendor peak,external,nvidia_nim,fp8,1.8.0,1761.68,0.525876
+NVIDIA H200 SXM 141GB,bf16,1000→1000,0.00711,mean ITL,15.0098,4800,vendor peak,external,nvidia_nim,bf16,1.8.0,2111.09,0.43981
+NVIDIA H200 SXM 141GB,8bit,1000→1000,0.00424,mean ITL,8.03328,4800,vendor peak,external,nvidia_nim,fp8,1.8.0,1894.64,0.394717
+NVIDIA H200 SXM 141GB,8bit,200→200,0.00435,mean ITL,8.03328,4800,vendor peak,external,nvidia_nim,fp8,1.8.0,1846.73,0.384736
+NVIDIA H200 SXM 141GB,8bit,500→2000,0.00425,mean ITL,8.03328,4800,vendor peak,external,nvidia_nim,fp8,1.8.0,1890.18,0.393788
+NVIDIA L40S 48GB (PCIe),bf16,1000→1000,0.02205,mean ITL,15.0098,864,vendor peak,external,nvidia_nim,bf16,1.8.0,680.719,0.787869
+NVIDIA L40S 48GB (PCIe),8bit,1000→1000,0.01397,mean ITL,8.03328,864,vendor peak,external,nvidia_nim,fp8,1.8.0,575.038,0.665553
+NVIDIA L40S 48GB (PCIe),8bit,200→200,0.01375,mean ITL,8.03328,864,vendor peak,external,nvidia_nim,fp8,1.8.0,584.239,0.676202
+NVIDIA L40S 48GB (PCIe),8bit,500→2000,0.01406,mean ITL,8.03328,864,vendor peak,external,nvidia_nim,fp8,1.8.0,571.357,0.661293
+"Xeon CPU Max 9480, 1 socket (ours, vLLM · BF16)",bf16,128→512,0.0539445,median TPOT,15.0098,502.319,measured STREAM (HBM cache),ours,this repository,bf16,,278.246,0.553923
+"Xeon CPU Max 9480, 1 socket (ours, llama.cpp · BF16)",bf16,128→512,0.0452723,median TPOT,15.0098,502.319,measured STREAM (HBM cache),ours,this repository,bf16,,331.546,0.660031
+"Xeon CPU Max 9480, 1 socket (ours, llama.cpp · INT8 (Q8_0))",8bit,128→512,0.0323027,median TPOT,7.97476,502.319,measured STREAM (HBM cache),ours,this repository,int8,,246.876,0.491472
+"Xeon CPU Max 9480, 1 socket (ours, vLLM · INT8 (W8A8))",8bit,128→512,0.0261333,median TPOT,8.03328,502.319,measured STREAM (HBM cache),ours,this repository,int8,,307.397,0.611955
+"Xeon CPU Max 9480, 1 socket (ours, vLLM · BF16)",bf16,512→512,0.0528296,median TPOT,15.0098,502.319,measured STREAM (HBM cache),ours,this repository,bf16,,284.118,0.565613
+"Xeon CPU Max 9480, 1 socket (ours, llama.cpp · BF16)",bf16,512→512,0.0432241,median TPOT,15.0098,502.319,measured STREAM (HBM cache),ours,this repository,bf16,,347.256,0.691306
+"Xeon CPU Max 9480, 1 socket (ours, llama.cpp · INT8 (Q8_0))",8bit,512→512,0.031854,median TPOT,7.97476,502.319,measured STREAM (HBM cache),ours,this repository,int8,,250.354,0.498396
+"Xeon CPU Max 9480, 1 socket (ours, vLLM · INT8 (W8A8))",8bit,512→512,0.0259226,median TPOT,8.03328,502.319,measured STREAM (HBM cache),ours,this repository,int8,,309.895,0.616928
