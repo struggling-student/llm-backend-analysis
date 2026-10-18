@@ -10,6 +10,8 @@
 #   failed      an attempt that did not produce usable measurements
 #   external_match  measured at the shape and concurrencies of a published result (notebook 13); never part of
 #               the primary analysis
+#   baseline    a platform baseline used to split another measurement (idle node power for notebook 13's node
+#               energy); never part of the primary analysis
 #
 # prepared = true marks a campaign that is declared before its raw data exist (validation then does not demand data,
 # and fails once data exist while the flag is still set). No campaign carries it at the moment.
@@ -131,3 +133,7 @@ description = "GEMM ceilings on the server layout (Slurm job 5317636, scripts/be
 [quality.quality]
 role = "validation"
 description = "INT8 quality/AMX sanity check: 16 prompts x 64 greedy tokens for all four arms, 8B, on a cresco8_cpu node (Xeon Platinum 8592+, not Xeon Max)."
+
+[power.idle-20261018]
+role = "baseline"
+description = "Idle node power for notebook 13 (job 5406101, cresco8-hbm01, 2026-10-18, `submit.sh idle-power`): exclusive cache-mode node, nothing running for 1200 s after the job.sbatch node check; sstat ConsumedEnergyRaw, scontrol CurrentWatts and the all-CPU busy share every 30 s (Slurm IPMI DCMI sensor, whole node, 60 s updates). Splits the node energy of the external-shapes points into idle and load parts."
