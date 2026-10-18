@@ -12,6 +12,7 @@ tables exported next to it, and embeds only figures from
 | *Perché vLLM — sintesi della selezione del backend* (IT; **in the trash as of 2026-10-16**) | concise reasoning: obiettivo, confronto, evidenze, concorrenza e memoria, ruolo di llama.cpp, limitazioni, decisione | `key_numbers.csv`, `evidence_summary.csv` | `backend_ratio_vs_concurrency`, `throughput_and_memory_traffic` |
 | *MSc Thesis — HBM-Aware LLM Inference*, section "TL;DR — Perché vLLM" (IT; **no longer present**, the page is blank) | short summary for the supervisors | `key_numbers.csv` | `throughput_vs_concurrency` |
 | *Roofline analysis: vLLM vs llama.cpp on Xeon Max (HBM cache mode)* (EN; listed under "Deprecated" since 2026-10-16) | roofline of the two backends: roofs of the socket (STREAM, measured AMX GEMMs, vLLM projection kernels), placement of every 8B point, movement with concurrency and context length, operation-model check, implications | `key_numbers.csv` (`roof_*`, `roofline_*`), `roofline_points.csv`, `roofline_compute_ceilings.csv` | the six exports of notebook 10 |
+| *External references: Llama-3.1-8B on other CPUs and GPUs vs our Xeon Max (BF16 and INT8)* (EN) | published results of other systems (Xeon 6, Arm, MLPerf CPU; L40S, H100, H200, B200) paired with our nearest points: throughput, TTFT, TPOT, energy per token (ours a 350 W placeholder), single-stream bandwidth use, numbered references | `external_key_numbers.csv`, `external_reference_comparison.csv`, `external_decode_bandwidth.csv`, `key_numbers.csv` (`roof_*`); sources in `data/external/sources.csv` | `external_reference_bf16` (notebook 13) |
 
 Hierarchy: repository raw data → processing → notebooks → detailed page → Italian summary → thesis TL;DR. Each
 level only summarizes the one below it. The roofline page sits next to the detailed page (same level); the other
@@ -75,3 +76,9 @@ ablation and of the attention/GEMM decomposition and is labelled as archived sup
    (`git diff --stat results/figures`).
 3. Revisit statements flagged "✗ revisit" in the notebooks' claims tables before changing wording.
 4. Add a line to "Last synchronization" above.
+
+- 2026-10-18, analysis at commit `f466009` (notebook 13): new page *External references: Llama-3.1-8B on other CPUs and GPUs vs
+  our Xeon Max (BF16 and INT8)* under Thesis (Notion id `3fdb4f5c3f968132b82bf026f9bb23ef`). Its body is generated from the
+  exported tables (no typed numbers). Contents: TL;DR, setup, sources with grades, overview figure `external_reference_bf16`,
+  CPU (Lenovo LP2463, Arm, MLPerf CPU) and GPU (NIM, ML.ENERGY, Red Hat MLPerf) tables, energy (ours estimated), latency,
+  decode bandwidth, next steps, limitations and 16 references. The other pages were not changed and do not link to it yet.
