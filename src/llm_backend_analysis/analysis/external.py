@@ -8,9 +8,16 @@ meaning the external system is better: throughput external ÷ ours, latency and 
 ratios divide the external value by its GPUs or sockets (ours is one socket); they are missing where the source does
 not say how many sockets ran (Lenovo LP2463).
 
-Our energy is not measured (RAPL is not readable on CRESCO8). `POWER_W_ASSUMED` is a placeholder, the TDP of the one
-socket the server runs on; it is an upper bound for that socket's package and leaves out DRAM, the idle second socket
-and the platform. Replace it by a measured average power when one exists; every energy column follows.
+Shapes of published results that we re-measured exactly (campaign `external-shapes`, workloads with
+`scope = "external"`) are candidates of the shape match; a row pairs only with a workload its configuration has data for,
+so those rows reach grade A (same shape and concurrency) and the rest keep their nearest primary shape.
+
+Energy. RAPL is not readable on CRESCO8, but Slurm records the node's energy through IPMI (DCMI sensor, whole node: both
+sockets, memory, platform; 60 s updates). The external-shapes points store it per phase, so they carry a measured average
+node power (`node_power_w`); a point with a window of at least `MIN_POWER_WINDOW_S` uses its own power. Every other point
+uses one power: the median node power of the measured points (`measured_power_w`) or, without any, `POWER_W_ASSUMED`, the
+TDP of the one socket the server runs on. The node boundary includes the idle second socket and the platform, so it is an
+upper bound of the server's own power.
 """
 
 from __future__ import annotations
@@ -36,6 +43,8 @@ SAME_PRECISION = {"bf16": "bf16", "w8a8": "w8a8"}
 SHORT_CONTEXT_ISL = 1024     # decode-bandwidth comparison: prompts short enough that weights dominate the traffic
 PEAK_SCENARIOS = {"mlperf_offline", "mlperf_server"}
 POWER_W_ASSUMED = 350.0      # Xeon CPU Max 9480 TDP (data/external/hardware_specs.csv); not a measurement
+MEASURED_CAMPAIGN = "external-shapes"
+MIN_POWER_WINDOW_S = 600.0   # 60 s IPMI updates shift the window by at most one interval: <= 10% error at 600 s
 GRADE_A_DISTANCE = 0.35      # shape distance ≤ ln(1.4): ISL and OSL within about 1.2× each
 GRADE_B_DISTANCE = 1.5
 GRADE_TEXT = {"A": "same model, precision, shape and concurrency", "B": "same model and precision class, different shape",
@@ -65,6 +74,21 @@ def shape_distance(isl_ext: float, osl_ext: float, isl: float, osl: float) -> fl
     if not (isl_ext is None or (isinstance(isl_ext, float) and math.isnan(isl_ext))):
         d += abs(math.log(isl_ext / isl))
     return d
+
+
+def measured_power_w(points: pd.DataFrame) -> pd.Series:
+    """Average node power (W) of the points with a measured energy window of at least MIN_POWER_WINDOW_S."""
+    if "node_power_w" not in points:
+        return pd.Series(dtype=float)
+    ok = points["node_power_w"].notna() & (points["node_power_window_s"] >= MIN_POWER_WINDOW_S)
+    return points.loc[ok, "node_power_w"]
+
+
+def candidate_workloads(points: pd.DataFrame, configuration_id: str) -> pd.DataFrame:
+    """Our workloads (primary and external-match shapes) for which `configuration_id` has points."""
+    have = set(points.loc[points["configuration_id"] == configuration_id, "workload"])
+    w = registry.workloads(include_external=True)
+    return w[w["workload"].isin(have)]
 
 
 def nearest_workload(isl_ext: float, osl_ext: float, workloads: pd.DataFrame) -> tuple[str, float]:
@@ -105,7 +129,8 @@ def _our_values(points: pd.DataFrame, configuration_id: str, workload: str, c, p
     else:
         r = g[g["concurrency"] == nearest_concurrency(c, g["concurrency"])].iloc[0]
     return {"concurrency": int(r["concurrency"]), "max_concurrency": int(g["concurrency"].max()), "output_tok_s": r["output_tok_s_mean"], "total_tok_s": r["total_tok_s_mean"],
-            "ttft_s": r["ttft_s_p50_mean"], "tpot_s": r["tpot_s_p50_mean"]}
+            "ttft_s": r["ttft_s_p50_mean"], "tpot_s": r["tpot_s_p50_mean"], "campaign": r.get("campaign"),
+            "node_power_w": r.get("node_power_w", np.nan), "node_power_window_s": r.get("node_power_window_s", np.nan)}
 
 
 def _basis(peak: bool, c_ext, ours: dict) -> str:
@@ -117,17 +142,20 @@ def _basis(peak: bool, c_ext, ours: dict) -> str:
 
 
 def compare(refs: pd.DataFrame, points: pd.DataFrame, power_w: float = POWER_W_ASSUMED) -> pd.DataFrame:
-    """One row per external measurement with our nearest point (vLLM and llama.cpp of the same precision group)."""
-    workloads = registry.workloads()
+    """One row per external measurement with our nearest point (vLLM and llama.cpp of the same precision group).
+
+    `points` may hold the primary campaign and the external-match campaign; each row pairs with the nearest workload
+    its selected configuration has data for. `power_w` applies to points without a measured node power."""
     rows = []
     for _, r in refs.iterrows():
-        wl, dist = nearest_workload(r["isl"], r["osl"], workloads)
         peak = r["scenario"] in PEAK_SCENARIOS or pd.isna(r["concurrency"])
         main_id, other_id = OURS[r["precision_group"]]
+        wl, dist = nearest_workload(r["isl"], r["osl"], candidate_workloads(points, main_id))
         a = _our_values(points, main_id, wl, r["concurrency"], peak)
         b = _our_values(points, other_id, wl, r["concurrency"], peak)
-        rows.append({**r.to_dict(), "our_workload": wl, "shape_distance": dist,
+        rows.append({**r.to_dict(), "our_workload": wl, "shape_distance": dist, "our_campaign": a["campaign"],
                      "our_basis": _basis(peak, r["concurrency"], a),
+                     "ours_node_power_w": a["node_power_w"], "ours_node_power_window_s": a["node_power_window_s"],
                      "our_configuration": main_id, "our_concurrency": a["concurrency"],
                      "ours_output_tok_s": a["output_tok_s"], "ours_total_tok_s": a["total_tok_s"], "ours_ttft_s": a["ttft_s"],
                      "ours_tpot_s": a["tpot_s"],
@@ -136,7 +164,10 @@ def compare(refs: pd.DataFrame, points: pd.DataFrame, power_w: float = POWER_W_A
     df = pd.DataFrame(rows)
     df["grade"] = df.apply(grade, axis=1)
     df["power_w_assumed"] = power_w
-    df["ours_energy_j_per_token_est"] = power_w / df["ours_output_tok_s"]
+    own = df["ours_node_power_w"].notna() & (df["ours_node_power_window_s"] >= MIN_POWER_WINDOW_S)
+    df["ours_power_w"] = df["ours_node_power_w"].where(own, power_w)
+    df["ours_power_basis"] = np.where(own, "measured at this point (node, IPMI)", "one power for all points")
+    df["ours_energy_j_per_token_est"] = df["ours_power_w"] / df["ours_output_tok_s"]
     df["adv_throughput"] = df["output_tok_s"] / df["ours_output_tok_s"]
     df["adv_throughput_per_device"] = df["output_tok_s_per_device"] / df["ours_output_tok_s"]
     # Prompt plus output tokens per second: less sensitive to the shape mismatch than output tok/s alone (MLPerf's
@@ -195,4 +226,4 @@ def energy_curves(comp: pd.DataFrame) -> pd.DataFrame:
     e = comp[comp["energy_j_per_output_token"].notna()].copy()
     return e[["source_id", "hardware", "hardware_class", "precision", "workload", "concurrency", "output_tok_s",
               "energy_j_per_output_token", "implied_power_w", "power_w", "power_boundary", "our_workload", "our_concurrency",
-              "ours_output_tok_s", "ours_energy_j_per_token_est", "adv_energy", "grade"]]
+              "ours_output_tok_s", "ours_power_w", "ours_power_basis", "ours_energy_j_per_token_est", "adv_energy", "grade"]]

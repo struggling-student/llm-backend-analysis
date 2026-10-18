@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import pytest
 
@@ -42,3 +43,12 @@ def test_every_tuned_configuration_has_a_settings_match_in_the_primary_campaign(
     tuned = set(loaders.tuning_runs()["configuration_id"])
     assert set(check["configuration_id"]) == tuned
     assert reps["settings"].map(len).gt(2).all()  # every repetition records its server settings
+
+
+def test_node_power_spans_the_repetitions_and_needs_energy_readings():
+    from llm_backend_analysis.data.processing.online import node_power
+    phases = [{"phase": "idle", "t_start": 0, "t_end": 10, "energy_j_start": 0, "energy_j_end": 0},
+              {"phase": "rep1", "t_start": 100, "t_end": 400, "energy_j_start": 1000, "energy_j_end": 181000},
+              {"phase": "rep2", "t_start": 403, "t_end": 700, "energy_j_start": 181000, "energy_j_end": 361000}]
+    assert node_power(phases) == (600.0, 600)
+    assert all(map(math.isnan, node_power([{"phase": "rep1", "t_start": 0, "t_end": 1}])))

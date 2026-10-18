@@ -61,6 +61,20 @@ def littles_law_total_tok_s(concurrency: float, e2e_mean_s: float, isl: int, osl
     return concurrency / e2e_mean_s * (isl + osl)
 
 
+def node_power(phases: list[dict[str, Any]]) -> tuple[float, float]:
+    """Average node power (W) over the measured repetitions of a point and the window it covers (s).
+
+    From the Slurm ConsumedEnergy that run_online.py reads at the start and end of every phase (IPMI DCMI sensor:
+    the whole node, updated every 60 s). The window runs from the start of the first repetition to the end of the
+    last, so the 60 s update interval shifts it by at most one interval: the relative error is at most 60 s / window."""
+    reps = [p for p in phases if p["phase"].startswith("rep")]
+    if not reps or reps[0].get("energy_j_start") is None or reps[-1].get("energy_j_end") is None:
+        return np.nan, np.nan
+    window = reps[-1]["t_end"] - reps[0]["t_start"]
+    energy = reps[-1]["energy_j_end"] - reps[0]["energy_j_start"]
+    return (energy / window if window > 0 and energy > 0 else np.nan), window
+
+
 def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.DataFrame
                    ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return (repetitions, requests)."""
@@ -86,6 +100,7 @@ def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.
         ws_gib = _working_set_gib(model, conf.harness_precision, keys["isl"], keys["osl"], c)
         base = lookup(ws_gib)
         job = str(meta.get("slurm_job_id", ""))
+        power_w, power_window_s = node_power(meta.get("phases", []))
         for rep in meta.get("reps", []):
             s, win = rep["summary"], rep["summary"]["window"]
             agg = window_aggregate(tel, win["start"], win["end"]) if win["start"] else {}
@@ -105,6 +120,7 @@ def process_online(lookup: Callable[[float], dict[str, float]], node_checks: pd.
                    "working_set_gib_model": ws_gib, **base, **agg,
                    "idle_mem_total_gbs": idle_agg.get("mem_total_gbs"),
                    "idle_cpu_busy_compute": idle_agg.get("cpu_busy_compute_mean"),
+                   "node_power_w": power_w, "node_power_window_s": power_window_s,
                    "source": paths.relative(meta_path.parent)}
             for metric in ("ttft_s", "tpot_s", "e2e_s", "itl_s"):
                 for q in ("mean", "p50", "p95", "p99"):
@@ -166,7 +182,7 @@ def aggregate_points(reps: pd.DataFrame, reqs: pd.DataFrame) -> pd.DataFrame:
             row[f"{m}_min"], row[f"{m}_max"], row[f"{m}_ci95"] = v.min(), v.max(), _ci95(v)
             row[f"{m}_cv"] = v.std(ddof=1) / v.mean() if v.mean() else np.nan
         for k in ("working_set_gib_model", "stream_triad_gbs_at_ws", "stream_pmu_total_gbs_at_ws",
-                  "stream_pmu_total_gbs_max"):
+                  "stream_pmu_total_gbs_max", "node_power_w", "node_power_window_s"):   # per point, not per repetition
             if k in g:
                 row[k] = g[k].iloc[0]
         for k in ("bw_util_vs_stream_at_ws", "bw_util_vs_stream_max", "bytes_per_output_token_mb",

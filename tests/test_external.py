@@ -67,6 +67,30 @@ def test_compare_grades_and_bases():
     assert mlperf["our_basis"] == "peak over C" and mlperf["grade"] == "C"
 
 
+def test_compare_prefers_an_exact_external_shape_with_data_and_its_measured_power():
+    ext = pd.DataFrame([{"configuration_id": "vllm_bf16", "workload": "ext1000", "concurrency": c, "output_tok_s_mean": out,
+                         "total_tok_s_mean": 2 * out, "ttft_s_p50_mean": 0.5, "tpot_s_p50_mean": c / out, "campaign": external.MEASURED_CAMPAIGN,
+                         "node_power_w": w, "node_power_window_s": win}
+                        for c, out, w, win in ((1, 17.0, 600.0, 1200.0), (100, 650.0, 800.0, 300.0))])
+    pts = pd.concat([_points().assign(campaign="main"), ext], ignore_index=True)
+    c1 = external.compare(_ref(isl=1000, osl=1000, concurrency=1), pts, power_w=700.0).iloc[0]
+    assert c1["our_workload"] == "ext1000" and c1["shape_distance"] == 0 and c1["grade"] == "A"
+    assert c1["ours_power_w"] == 600.0 and c1["ours_energy_j_per_token_est"] == pytest.approx(600 / 17)
+    assert pd.isna(c1["other_output_tok_s"])   # llama.cpp was not run at this shape
+    c100 = external.compare(_ref(isl=1000, osl=1000, concurrency=100), pts, power_w=700.0).iloc[0]
+    assert c100["grade"] == "A" and c100["ours_power_w"] == 700.0   # window too short for its own power
+    fp8 = external.compare(_ref(isl=1000, osl=1000, precision="fp8", precision_group="8bit"),
+                           pts.replace({"vllm_bf16": "vllm_int8", "llama_cpp_bf16": "llama_cpp_int8"})).iloc[0]
+    assert fp8["our_workload"] == "ext1000"
+    assert external.measured_power_w(pts).tolist() == [600.0]
+
+
+def test_external_shapes_stay_out_of_the_primary_workload_list():
+    assert "ext1000" not in registry.workload_order()
+    assert {"ext1000", "ext256"} <= set(registry.workloads(include_external=True)["workload"])
+    assert registry.workload_label("ext256", short=True) == "256→256"
+
+
 def test_reference_table_is_consistent():
     refs = external.references()
     assert refs["precision_group"].notna().all()
