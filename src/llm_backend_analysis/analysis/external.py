@@ -17,7 +17,9 @@ sockets, memory, platform; 60 s updates). The external-shapes points store it pe
 node power (`node_power_w`); a point with a window of at least `MIN_POWER_WINDOW_S` uses its own power. Every other point
 uses one power: the median node power of the measured points (`measured_power_w`) or, without any, `POWER_W_ASSUMED`, the
 TDP of the one socket the server runs on. The node boundary includes the idle second socket and the platform, so it is an
-upper bound of the server's own power.
+upper bound of the server's own power. The node's idle power (campaign kind `power`, `submit.sh idle-power`: the same
+sensor with nothing running, `idle_power`) splits it: power above idle ÷ output tok/s is the incremental energy per token,
+an estimate of what serving adds on top of keeping the node on (a lower bound of the server's share: its socket idles too).
 """
 
 from __future__ import annotations
@@ -45,6 +47,7 @@ PEAK_SCENARIOS = {"mlperf_offline", "mlperf_server"}
 POWER_W_ASSUMED = 350.0      # Xeon CPU Max 9480 TDP (data/external/hardware_specs.csv); not a measurement
 MEASURED_CAMPAIGN = "external-shapes"
 MIN_POWER_WINDOW_S = 600.0   # 60 s IPMI updates shift the window by at most one interval: <= 10% error at 600 s
+IDLE_SETTLE_S = 120.0        # idle samples before this follow the node check (STREAM) and may still carry its readings
 GRADE_A_DISTANCE = 0.35      # shape distance ≤ ln(1.4): ISL and OSL within about 1.2× each
 GRADE_B_DISTANCE = 1.5
 GRADE_TEXT = {"A": "same model, precision, shape and concurrency", "B": "same model and precision class, different shape",
@@ -82,6 +85,22 @@ def measured_power_w(points: pd.DataFrame) -> pd.Series:
         return pd.Series(dtype=float)
     ok = points["node_power_w"].notna() & (points["node_power_window_s"] >= MIN_POWER_WINDOW_S)
     return points.loc[ok, "node_power_w"]
+
+
+def idle_power(samples: pd.DataFrame) -> pd.DataFrame:
+    """One row per idle-power job: average node power from the job's energy counter between the first and the last
+    sample after IDLE_SETTLE_S, the node's CurrentWatts readings over the same samples, and the highest CPU busy share."""
+    rows = []
+    for (campaign, host, job), g in samples.groupby(["campaign", "host", "slurm_job_id"], sort=True):
+        g = g[(g["t_s"] >= IDLE_SETTLE_S) & g["energy_j"].notna()].sort_values("t_s")
+        if len(g) < 2:
+            continue
+        window = g["t_s"].iloc[-1] - g["t_s"].iloc[0]
+        rows.append({"campaign": campaign, "host": host, "slurm_job_id": job, "samples": len(g), "window_s": window,
+                     "idle_power_w": (g["energy_j"].iloc[-1] - g["energy_j"].iloc[0]) / window,
+                     "current_watts_median": g["current_watts"].median(), "current_watts_min": g["current_watts"].min(),
+                     "current_watts_max": g["current_watts"].max(), "cpu_busy_share_max": g["cpu_busy_share"].max()})
+    return pd.DataFrame(rows)
 
 
 def candidate_workloads(points: pd.DataFrame, configuration_id: str) -> pd.DataFrame:
@@ -141,11 +160,13 @@ def _basis(peak: bool, c_ext, ours: dict) -> str:
     return "our highest C" if c_ext > ours["max_concurrency"] else "nearest C"
 
 
-def compare(refs: pd.DataFrame, points: pd.DataFrame, power_w: float = POWER_W_ASSUMED) -> pd.DataFrame:
+def compare(refs: pd.DataFrame, points: pd.DataFrame, power_w: float = POWER_W_ASSUMED,
+            idle_power_w: float = np.nan) -> pd.DataFrame:
     """One row per external measurement with our nearest point (vLLM and llama.cpp of the same precision group).
 
     `points` may hold the primary campaign and the external-match campaign; each row pairs with the nearest workload
-    its selected configuration has data for. `power_w` applies to points without a measured node power."""
+    its selected configuration has data for. `power_w` applies to points without a measured node power;
+    `idle_power_w` (the node's measured idle power) gives the incremental energy per token, power above idle ÷ tok/s."""
     rows = []
     for _, r in refs.iterrows():
         peak = r["scenario"] in PEAK_SCENARIOS or pd.isna(r["concurrency"])
@@ -168,6 +189,10 @@ def compare(refs: pd.DataFrame, points: pd.DataFrame, power_w: float = POWER_W_A
     df["ours_power_w"] = df["ours_node_power_w"].where(own, power_w)
     df["ours_power_basis"] = np.where(own, "measured at this point (node, IPMI)", "one power for all points")
     df["ours_energy_j_per_token_est"] = df["ours_power_w"] / df["ours_output_tok_s"]
+    df["idle_power_w"] = idle_power_w
+    df["ours_power_above_idle_w"] = df["ours_power_w"] - idle_power_w
+    df["ours_incremental_j_per_token_est"] = df["ours_power_above_idle_w"] / df["ours_output_tok_s"]
+    df["adv_incremental_energy"] = df["ours_incremental_j_per_token_est"] / df["energy_j_per_output_token"]
     df["adv_throughput"] = df["output_tok_s"] / df["ours_output_tok_s"]
     df["adv_throughput_per_device"] = df["output_tok_s_per_device"] / df["ours_output_tok_s"]
     # Prompt plus output tokens per second: less sensitive to the shape mismatch than output tok/s alone (MLPerf's
@@ -226,4 +251,5 @@ def energy_curves(comp: pd.DataFrame) -> pd.DataFrame:
     e = comp[comp["energy_j_per_output_token"].notna()].copy()
     return e[["source_id", "hardware", "hardware_class", "precision", "workload", "concurrency", "output_tok_s",
               "energy_j_per_output_token", "implied_power_w", "power_w", "power_boundary", "our_workload", "our_concurrency",
-              "ours_output_tok_s", "ours_power_w", "ours_power_basis", "ours_energy_j_per_token_est", "adv_energy", "grade"]]
+              "ours_output_tok_s", "ours_power_w", "ours_power_basis", "ours_energy_j_per_token_est", "adv_energy",
+              "idle_power_w", "ours_power_above_idle_w", "ours_incremental_j_per_token_est", "adv_incremental_energy", "grade"]]

@@ -113,6 +113,12 @@ def node_checks() -> pd.DataFrame:
     return load_table("node_checks")
 
 
+def node_idle_power(campaign: str | None = None) -> pd.DataFrame:
+    """Idle-node power samples (one row per sample), every campaign of kind `power` unless one is named."""
+    df = _read("node_idle_power")
+    return (df[df["campaign"] == campaign] if campaign else df).reset_index(drop=True)
+
+
 def tuning_runs(campaign: str | None = "tuning") -> pd.DataFrame:
     df = _read("tuning_runs")
     return _sorted(add_labels(df[df["campaign"] == campaign] if campaign else df), ["variant", "concurrency"])

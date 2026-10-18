@@ -21,6 +21,8 @@ Byte-identical copies of the cluster outputs (`$BC_DATA` on CRESCO8 scratch), sy
 | `stream/<campaign>/stream_calibration.json` | `scripts/benchmark/stream_calibration.py` | STREAM triad runs at 4–96 GiB, 55/56 threads |
 | `quality/quality/<model>/` | `scripts/benchmark/quality_check.py` | generated texts, agreement summary, AMX activity, server logs |
 | `telemetry/<kind>/<campaign>/…/<point>.jsonl` | `scripts/benchmark/telemetry.py` | 1 s samples: core PMU counters, CPU busy per core, RSS, NUMA usage, server metrics |
+| `power/idle-<date>/idle-<host>-<job>.json` | `scripts/benchmark/idle_power.py` (`submit.sh idle-power`) | idle exclusive node, a sample every 30 s: job energy (sstat ConsumedEnergyRaw, J), latest node power (scontrol CurrentWatts, W), all-CPU busy share; IPMI DCMI sensor of the whole node, 60 s updates |
+| `environment/slurm_energy/<job>.psv` | `submit.sh job-energy` | sacct ConsumedEnergy and elapsed time of finished jobs (whole node) |
 | `environment/nodes/<host>-<job>.json` | `scripts/benchmark/capture_env.py` | per-job environment manifest (kernel, CPU flags, versions, hashes) |
 | `environment/node_checks/<host>-<job>.json` | `scripts/cluster/job.sbatch` | per-job 10 s STREAM node health check |
 | `environment/models/<model>/manifest.json` | `scripts/benchmark/prepare_models.py`, `quantize_w8a8.py` | model files, sizes, SHA-256 |
@@ -53,6 +55,7 @@ canonical `configuration_id`, `backend`, `precision`, `quantization` where appli
 | `tuning_runs.csv` | tuning point | `variant`, `is_default_variant`, `total_tok_s`, `tpot_s_p50`, server settings and command |
 | `pmu_overhead.csv` | PMU on/off run | `pmu_enabled`, `run_order`, throughput and latency |
 | `quality_check.csv` | (configuration, reference) | identical continuations, common-prefix words, AMX busy fraction |
+| `node_idle_power.csv` | idle-power sample | `host`, `slurm_job_id`, `t_s`, `energy_j` (cumulative job energy), `current_watts`, `cpu_busy_share` |
 | `hardware_ceilings.csv` | compute-ceiling record (hw-bench and GEMM job) | `kernel`, `dtype`, `binding`, `gemm_m/n/k`, `threads`, `gops`, `amx_confirmed`, `accepted` and `reject_reason` (hw-bench's acceptance rules) |
 
 Units: tokens/s, seconds (latency columns end in `_s`), GB/s (10⁹ B/s), GiB for working sets, fractions in

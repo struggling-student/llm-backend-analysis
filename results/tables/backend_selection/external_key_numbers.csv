@@ -24,5 +24,13 @@ ext_lenovo_implied_power_w,340–429,340.062,428.822,17,"Average power implied b
 ours_node_power_w,647–712,647.382,711.95,7,"Measured average node power (W; Slurm IPMI, whole node) of the external-shapes points with windows of at least 10 minutes"
 ours_node_power_w_median,687,687.127,687.127,1,"Median measured node power (W), used for every point without its own measured power"
 ours_node_power_w_sacct,599–671,599.468,671.19,2,"Whole-job average node power (W) from sacct ConsumedEnergy ÷ elapsed, external-shapes jobs"
+ours_node_idle_power_w,398,398.25,398.25,1,"Idle node power (W; Slurm IPMI energy counter, whole node, nothing running, 20 min after the node check), campaign power/idle-20261018"
+ours_node_idle_current_watts,398–399,398,399,2,Idle node: range of the scontrol CurrentWatts readings (W) over the same samples
+ours_node_power_above_idle_w,249–314,249.133,313.701,7,"Node power under load minus idle power (W), external-shapes points with windows of at least 10 minutes"
+ours_node_power_above_idle_share,38%–44%,0.384831,0.440622,7,"(Load − idle) ÷ load node power, same points"
+ours_incremental_energy_j_per_token_est,0.47–16.58,0.465994,16.5833,7,"Incremental J per output token (estimate): (node power − idle) ÷ output tok/s, same points"
+ours_incremental_energy_est_j_per_token_pairs,0.41–4.11,0.412466,4.10759,37,"Incremental J per output token (estimate) at the energy-publishing pairs (vLLM BF16, paired C)"
+ext_energy_h100_over_ours_incremental_est,3.88×–5.88×,3.87806,5.87604,11,"Our incremental J/token (above idle) ÷ ML.ENERGY H100 J/token (GPU only), paired C"
+ext_energy_xeon6_96c_over_ours_incremental_est,1.14×–1.28×,1.1378,1.27596,6,"Our incremental J/token (above idle) ÷ Xeon 6972P J/token (Lenovo), same shape and C"
 ext_decode_bw_share_ours,49%–69%,0.491472,0.691306,8,"Our C=1 decode: weight bytes ÷ median TPOT as a share of the measured STREAM roof (all four configurations, 128→512 and 512→512)"
 ext_decode_bw_share_gpu_bf16,44%–79%,0.43981,0.787869,3,"NIM BF16 C=1 (L40S, H100, H200): weight bytes ÷ mean ITL as a share of vendor peak bandwidth"

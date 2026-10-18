@@ -85,6 +85,21 @@ def test_compare_prefers_an_exact_external_shape_with_data_and_its_measured_powe
     assert external.measured_power_w(pts).tolist() == [600.0]
 
 
+def test_idle_power_skips_the_settling_samples_and_splits_the_energy():
+    samples = pd.DataFrame({"campaign": "idle-x", "host": "n1", "slurm_job_id": "1", "t_s": [0.0, 60.0, 120.0, 720.0, 1320.0],
+                            "energy_j": [0.0, 60_000.0, 90_000.0, 330_000.0, 570_000.0],
+                            "current_watts": [900.0, 600.0, 410.0, 400.0, 390.0], "cpu_busy_share": [None, 0.5, 0.01, 0.0, 0.0]})
+    idle = external.idle_power(samples).iloc[0]
+    assert idle["samples"] == 3 and idle["window_s"] == 1200.0
+    assert idle["idle_power_w"] == pytest.approx(400.0)
+    assert idle["current_watts_median"] == 400.0 and idle["cpu_busy_share_max"] == pytest.approx(0.01)
+    c = external.compare(_ref(), _points(), power_w=700.0, idle_power_w=400.0).iloc[0]
+    assert c["ours_power_above_idle_w"] == pytest.approx(300.0)
+    assert c["ours_incremental_j_per_token_est"] == pytest.approx(300 / 600)
+    assert c["adv_incremental_energy"] == pytest.approx((300 / 600) / 0.1)
+    assert pd.isna(external.compare(_ref(), _points())["ours_incremental_j_per_token_est"]).all()   # no idle baseline
+
+
 def test_external_shapes_stay_out_of_the_primary_workload_list():
     assert "ext1000" not in registry.workload_order()
     assert {"ext1000", "ext256"} <= set(registry.workloads(include_external=True)["workload"])

@@ -112,6 +112,7 @@ data/raw/online/<campaign>/<model>/<arm>[__<variant>]/<workload>/c<C>/   metadat
 data/raw/offline/<campaign>/<model>/<arm>/<workload>/offline.json
 data/raw/telemetry/<kind>/<campaign>/…/<point>.jsonl                      1 s telemetry samples
 data/raw/stream/<campaign>/stream_calibration.json
+data/raw/power/<campaign>/idle-<host>-<job>.json                           idle node power samples (IPMI, whole node)
 data/raw/environment/{nodes,node_checks,models}/                          node manifests, per-job STREAM checks, model hashes
 ```
 

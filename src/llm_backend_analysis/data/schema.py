@@ -45,6 +45,9 @@ TABLES: dict[str, tuple[list[str], list[str]]] = {
     "hardware_ceilings": (["campaign", "campaign_role", "host", "socket_scope", "socket", "threads", "kernel", "gops",
                            "accepted", "source"],
                           ["source"]),
+    "node_idle_power": (["campaign", "campaign_role", "host", "slurm_job_id", "t_s", "energy_j", "current_watts",
+                         "cpu_busy_share", "source"],
+                        ["campaign", "host", "slurm_job_id", "t_s"]),
 }
 
 
