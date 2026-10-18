@@ -58,6 +58,15 @@ ablation and of the attention/GEMM decomposition and is labelled as archived sup
     `step_cost_vs_batch`, `throughput_and_memory_traffic`; the first `llama_cpp_int8_over_bf16`; the first `memory_traffic_components`);
     roofline page 4 (the first of each re-exported figure). The images still pending from 2026-10-11 are included in the count.
 
+- 2026-10-18, analysis at commit `7b220f0` (tracker task T3.3 and the corrected memory-node run):
+  - **Detailed page:** new section 18 (AMX ablation of vLLM BF16, notebook 12; llama.cpp Q8_0 AMX build vs AVX-512 build; memory-node sensitivity,
+    notebook 11, corrected run `membind-v2`), each statement labelled measured / inferred / hypothesis with the caveats; the 'no AMX ablation' and
+    'HBM sensitivity not yet shown' statements replaced (§9, §13); §14 and the §15 table extended (two rows); a TL;DR bullet; the update banner.
+  - **Roofline page:** the 'response of vLLM to the memory system not yet shown' sentence replaced by the measured result; banner.
+  - **Figures added** (not replacing anything): `amx_ablation_throughput`, `amx_build_prompt_processing`, `membind_ratio_and_traffic` on the detailed page.
+    No image needs deleting for this sync; the 19 superseded images of the 2026-10-16 sync are still to be deleted by hand.
+  - The Italian page "Analisi dei backend LLM — documentazione completa dei notebook" was not touched.
+
 ## Updating after new results
 
 1. `make data notebooks validate`.
