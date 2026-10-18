@@ -18,6 +18,8 @@ skip is recorded. Results are resumable: finished points are not rerun.
 `--mem-node N` moves the server's memory (numactl --membind) to node N while the cores stay on socket 0; with
 N = 1 every server memory access crosses the socket interconnect (memory-node sensitivity, scripts/benchmark/membind_sensitivity.py).
 `--print-commands` prints the server and client command lines of every requested point and exits.
+Every idle and repetition phase records the job's Slurm ConsumedEnergy (whole node, IPMI, 60 s updates) at its
+start and end (`energy_j_start`, `energy_j_end`; None outside Slurm or when the node reports none).
 """
 
 from __future__ import annotations
@@ -234,9 +236,9 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
             tel_cmd.append("--no-pmu")
         tel = subprocess.Popen(tel_cmd, stdout=open(point_dir / "telemetry.log", "w"), stderr=subprocess.STDOUT)
         meta["telemetry_command"] = tel_cmd
-        phases: list[dict[str, Any]] = [{"phase": "idle", "t_start": time.monotonic()}]
+        phases: list[dict[str, Any]] = [{"phase": "idle", "t_start": time.monotonic(), "energy_j_start": bclib.slurm_energy_j()}]
         time.sleep(cfg["telemetry"]["idle_baseline_s"])
-        phases[-1]["t_end"] = time.monotonic()
+        phases[-1].update(t_end=time.monotonic(), energy_j_end=bclib.slurm_energy_j())
         idle_busy = idle_core_busy(tel_path, phases[-1]["t_start"], phases[-1]["t_end"], topo["compute_cpus"])
         meta["idle_compute_core_busy"] = idle_busy
         if idle_busy is not None and idle_busy > 0.10:
@@ -273,10 +275,10 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
             rcmd = client_cmd(cfg, args.model, args.arm, wl, c, port,
                               ["--num-requests", str(n_req), "--stagger-s", f"{stagger:.3f}",
                                "--out", str(out), "--summary", str(summ)])
-            phases.append({"phase": f"rep{r}", "t_start": time.monotonic()})
+            phases.append({"phase": f"rep{r}", "t_start": time.monotonic(), "energy_j_start": bclib.slurm_energy_j()})
             bclib.log(f"C={c} rep {r}/{reps}: {n_req} requests, stagger {stagger:.1f}s")
             rc = run_json(rcmd, clog)
-            phases[-1]["t_end"] = time.monotonic()
+            phases[-1].update(t_end=time.monotonic(), energy_j_end=bclib.slurm_energy_j())
             s = json.loads(summ.read_text())
             s["command"] = rcmd
             s["returncode"] = rc

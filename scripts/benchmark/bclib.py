@@ -153,6 +153,21 @@ def host_facts() -> dict[str, Any]:
     }
 
 
+def slurm_energy_j() -> float | None:
+    """Energy the node has consumed so far in this job's batch step (Slurm ConsumedEnergyRaw, joules), or None.
+
+    CRESCO8 reads it through acct_gather_energy/ipmi (DCMI sensor: the whole node, both sockets, memory and
+    platform), updated every 60 s, so a difference over a phase is shifted by up to one interval. Never fatal."""
+    job = os.environ.get("SLURM_JOB_ID")
+    if not job:
+        return None
+    out = run_capture(["sstat", "-j", f"{job}.batch", "--noheader", "--parsable2", "--format=ConsumedEnergyRaw"], timeout=20)
+    try:
+        return float(out.splitlines()[0].strip())
+    except (IndexError, ValueError):
+        return None
+
+
 def port_free(port: int, host: str = "127.0.0.1") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

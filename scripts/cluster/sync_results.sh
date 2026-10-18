@@ -21,6 +21,9 @@ rsync -a --exclude '*.attempt-*' "$HOST:$REMOTE/raw_results/" "$RAW/"
 rsync -a --exclude '*.attempt-*' "$HOST:$REMOTE/telemetry/" "$RAW/telemetry/"
 rsync -a "$HOST:$REMOTE/environment/" "$RAW/environment/nodes/"
 rsync -a "$HOST:$REMOTE/node_checks/" "$RAW/environment/node_checks/" 2>/dev/null || true
+# sacct ConsumedEnergy of finished jobs (`submit.sh job-energy`), absent until the first such call.
+mkdir -p "$RAW/environment/slurm_energy"
+rsync -a "$HOST:$REMOTE/slurm_energy/" "$RAW/environment/slurm_energy/" 2>/dev/null || true
 rsync -a --include '*/' --include 'manifest.json' --include 'preparation.log' --exclude '*' \
   "$HOST:$REMOTE/models/" "$RAW/environment/models/"
 # Hardware compute ceilings from hw-bench (cache-mode campaign used by notebook 10): full-socket, 56-thread records only.

@@ -16,6 +16,8 @@
 #   scripts/cluster/submit.sh amx-llamacpp                  # T3.2: llama.cpp Q8_0 prompt processing, AMX vs AVX-512 build
 #   scripts/cluster/submit.sh membind-shimcheck             # one short C=1 vLLM run with memory on node 1; check numastat after
 #   scripts/cluster/submit.sh membind-stream                # memory-node sensitivity: STREAM roof with remote memory (node 1)
+#   scripts/cluster/submit.sh external-shapes [arm ...]     # notebook 13: published shapes (1000->1000, 256->256), one job per (arm, shape)
+#   scripts/cluster/submit.sh job-energy <jobid ...>        # sacct ConsumedEnergy of finished jobs -> $BC_DATA/slurm_energy (login node, no job)
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
 #
 # Defaults: models=llama31_8b,llama32_1b  arms=vllm-bf16,llamacpp-bf16,llamacpp-q8_0
@@ -81,6 +83,17 @@ case "$what" in
     echo "membind shimcheck: $(sub 00:45:00 mb-shimcheck scripts/benchmark/run_online.py --model llama31_8b --arm vllm-bf16 --workload decode --campaign membind-shimcheck --concurrency 1 --reps 1 --num-requests 2 --mem-node 1)" ;;
   membind-stream)
     echo "membind stream: $(sub 02:00:00 stream-membind1 scripts/benchmark/stream_calibration.py --mem-node 1 --threads 55 --campaign calibration-membind1)" ;;
+  external-shapes)   # arms default to [external_shapes].arms (vllm-bf16); vllm-w8a8 is optional
+    ARMS=(); for a in "$@"; do ARMS+=(--arm "$a"); done
+    while read -r a w t; do
+      echo "external-shapes $a $w: $(sub "$t" "ext-$a-$w" scripts/benchmark/external_shapes.py --arm "$a" --workload "$w")"
+    done < <("$BC_PYTHON" scripts/benchmark/external_shapes.py --jobs ${ARMS[@]+"${ARMS[@]}"}) ;;
+  job-energy)   # whole-node IPMI energy (Slurm acct_gather_energy/ipmi, DCMI sensor, 60 s updates) of finished jobs
+    mkdir -p "$BC_DATA/slurm_energy"
+    for j in "$@"; do
+      sacct -j "$j" --parsable2 --format=JobID,JobName,NodeList,State,Start,End,Elapsed,ElapsedRaw,ConsumedEnergy,ConsumedEnergyRaw \
+        > "$BC_DATA/slurm_energy/$j.psv" && echo "$BC_DATA/slurm_energy/$j.psv" && cat "$BC_DATA/slurm_energy/$j.psv"
+    done ;;
   job) t=$1 n=$2; shift 2; sub "$t" "$n" "$@" ;;
-  *) sed -n '2,15p' "$0"; exit 1 ;;
+  *) sed -n '2,21p' "$0"; exit 1 ;;
 esac

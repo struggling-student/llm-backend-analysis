@@ -140,3 +140,28 @@ scripts/cluster/submit.sh membind                                 # one job per 
 
 Submitting needs the user's explicit authorisation (tracker T2.2). Afterwards `make sync` and `make checksums`; processing
 treats the new arm directories as variants, and the analysis (T2.3) forms the ratios.
+
+## External-reference shapes (notebook 13; prepared, not run)
+
+Question: how does our server compare with a published result at **exactly** its shape and concurrency? Notebook 13 pairs
+every published Llama-3.1-8B result with our nearest primary point, and none matched, so every pair is grade B or C. Two
+published sweeps are re-measured with the primary harness and layout (socket 0, cores 0–54 + front end 55, membind 0, client
+on socket 1, 3 repetitions, fixed concurrency list): NVIDIA NIM 1000→1000 at C = 1, 5, 25, 50, 100, 128 and Lenovo LP2463
+256→256 at C = 1, 2, 4, …, 128 (`configs/experiment.toml` `[external_shapes]`, workloads `ext1000` and `ext256` with
+`scope = "external"`, so the primary notebooks do not see them). Campaign `external-shapes`, one job per (arm, shape);
+vLLM BF16 by default, vLLM W8A8 optional.
+
+Energy: CRESCO8 records Slurm `ConsumedEnergy` through IPMI (DCMI sensor, whole node, 60 s updates). `run_online.py` reads
+it with `sstat` at the start and end of every idle and repetition phase (`phases[].energy_j_start/end` in `metadata.json`),
+and `submit.sh job-energy` stores the per-job `sacct` totals in `$BC_DATA/slurm_energy/` (synced to
+`data/raw/environment/slurm_energy/`).
+
+```bash
+uv run python scripts/benchmark/external_shapes.py --dry-run      # every command line, nothing started (any machine)
+scripts/cluster/submit.sh external-shapes                         # vllm-bf16: ext1000 (10 h limit, ~3.5 h), ext256 (4 h limit, ~1.5 h)
+scripts/cluster/submit.sh external-shapes vllm-w8a8               # optional INT8 counterpart
+scripts/cluster/submit.sh job-energy <jobid> ...                  # after the jobs end (login node, sacct only)
+```
+
+Submitting needs the user's explicit authorisation. Afterwards `make sync checksums`, drop `prepared = true` from
+`[online.external-shapes]` in `data/metadata/campaigns.toml`, then `make data notebooks validate`.

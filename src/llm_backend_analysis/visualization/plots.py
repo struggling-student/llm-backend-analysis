@@ -83,7 +83,7 @@ def _facet_values(df: pd.DataFrame, facet: str) -> list:
 def _facet_title(facet: str, value, compact: bool = True) -> str:
     if facet == "workload":
         label = registry.workload_label(value)
-        note = registry.workloads().set_index("workload").loc[value, "panel_note"]
+        note = registry.workloads(include_external=True).set_index("workload").loc[value, "panel_note"]
         head, _, shape = label.rpartition(" ")
         shape = f"{shape} ({note})" if note else shape
         return f"{head}<br>{shape}" if compact and head else (f"{label} ({note})" if note else label)

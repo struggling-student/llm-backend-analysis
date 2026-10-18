@@ -130,18 +130,24 @@ def campaign_role(kind: str, campaign: str) -> str:
 
 
 # --------------------------------------------------------------------------- workloads / models / topology
-def workloads() -> pd.DataFrame:
-    """Workload shapes in declaration order: key, isl, osl, label, short label (ISL→OSL)."""
+def workloads(include_external: bool = False) -> pd.DataFrame:
+    """Workload shapes in declaration order: key, isl, osl, label, short label (ISL→OSL).
+
+    Shapes with `scope = "external"` (measured only to match published results, notebook 13) are left out unless
+    `include_external`; they come after the primary shapes in the order, so primary orders and styles do not move."""
     rows = []
     for i, (key, w) in enumerate(experiment_config()["workloads"].items()):
+        scope = w.get("scope", "primary")
+        if scope == "external" and not include_external:
+            continue
         rows.append({"workload": key, "isl": w["isl"], "osl": w["osl"], "order": i,
                      "workload_label": w["label"].replace("->", "→"), "shape": f"{w['isl']}→{w['osl']}",
-                     "panel_note": w.get("panel_note", "")})
+                     "panel_note": w.get("panel_note", ""), "scope": scope})
     return pd.DataFrame(rows)
 
 
 def workload_label(workload: str, short: bool = False) -> str:
-    w = workloads().set_index("workload").loc[workload]
+    w = workloads(include_external=True).set_index("workload").loc[workload]
     return w["shape"] if short else w["workload_label"]
 
 

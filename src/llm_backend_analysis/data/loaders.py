@@ -38,7 +38,7 @@ def add_labels(df: pd.DataFrame) -> pd.DataFrame:
         out["configuration_label"] = out["configuration_id"].map(registry.configuration_label)
         out["configuration_order"] = out["configuration_id"].map(order)
     if "workload" in out:
-        w = registry.workloads().set_index("workload")
+        w = registry.workloads(include_external=True).set_index("workload")
         out["workload_label"] = out["workload"].map(w["workload_label"])
         out["workload_shape"] = out["workload"].map(w["shape"])
         out["workload_order"] = out["workload"].map(w["order"])

@@ -169,6 +169,20 @@ panel_note = "mostly prefill"   # shown in panel titles: ~78% of the operations 
 # shape as the c48-4096-1024 cell of the tiered-KV report.
 enabled = true
 
+# Shapes of published results (notebook 13), measured only in the [external_shapes] campaign. `scope = "external"`
+# keeps them out of the primary workload list (registry.workloads()), so the primary notebooks do not change.
+[workloads.ext1000]
+isl = 1000
+osl = 1000
+label = "External match 1000->1000 (NVIDIA NIM)"
+scope = "external"
+
+[workloads.ext256]
+isl = 256
+osl = 256
+label = "External match 256->256 (Lenovo LP2463)"
+scope = "external"
+
 # ---------------------------------------------------------------------------
 # Experiment B: online serving, closed loop.
 # ---------------------------------------------------------------------------
@@ -343,3 +357,30 @@ workloads = ["decode", "balanced", "prefill", "longctx"]
 builds = ["amx", "avx512"]
 passes = 2
 tests = "pp"                              # llama-bench prompt processing only
+
+# ---------------------------------------------------------------------------
+# External-reference shapes (notebook 13; driver scripts/benchmark/external_shapes.py). No primary shape matches a
+# published Llama-3.1-8B result, so every pair of notebook 13 was grade B or C. Two published sweeps are re-measured at
+# exactly their shape and concurrencies with the primary harness and layout (fixed concurrency list, no adaptivity,
+# 3 repetitions): NVIDIA NIM 1000->1000 (H100/H200/L40S; C = 150-250 lie beyond our sweep) and Lenovo LP2463
+# 256->256 (vLLM CPU on Xeon 6). One job per (arm, workload). Each phase records the node's Slurm ConsumedEnergy
+# (IPMI DCMI, whole node, 60 s updates), so notebook 13 can replace its 350 W placeholder. Not part of the primary
+# analysis.
+# ---------------------------------------------------------------------------
+[external_shapes]
+campaign = "external-shapes"
+model = "llama31_8b"
+arms = ["vllm-bf16"]                     # default of `submit.sh external-shapes`
+optional_arms = ["vllm-w8a8"]            # `submit.sh external-shapes vllm-w8a8`: an INT8 counterpart of NIM's FP8 rows (grade B, not A)
+
+[[external_shapes.cells]]
+workload = "ext1000"
+source_id = "nvidia_nim"
+concurrency = [1, 5, 25, 50, 100, 128]
+time_limit = "10:00:00"                  # ~3.5 h projected from the BF16 balanced/decode sweeps of `main`
+
+[[external_shapes.cells]]
+workload = "ext256"
+source_id = "lenovo_lp2463"
+concurrency = [1, 2, 4, 8, 16, 32, 64, 128]
+time_limit = "04:00:00"                  # ~1.5 h projected
