@@ -1,0 +1,24 @@
+key,text,low,high,n,description
+power_idle_server_socket_w,156,156.484,156.484,1,"Idle server socket (RAPL package 0 + DRAM 0), W, settled opening idle, cresco8-hbm14 flat mode"
+power_idle_node_w,398,398.105,398.105,1,"Idle node (BMC Sys Power), W, settled opening idle"
+power_idle_platform_w,88,87.9789,87.9789,1,"Idle platform outside sockets and DRAM (BMC Sys − CPU − Mem), W"
+power_meter_cpu_diff_w,-7.7–11.3,-7.65538,11.3346,51,"BMC CPU Power − RAPL package 0 + 1 (W), every window with ≥ 3 BMC reads"
+power_meter_mem_diff_w,-1.9–1.0,-1.85719,1.00372,51,"BMC Mem Power − RAPL DRAM 0 + 1 (W), every window with ≥ 3 BMC reads"
+power_slurm_over_bmc_sys_load,0.82–0.89,0.823104,0.889344,2,Slurm node energy rate ÷ BMC Sys Power over the repetitions of each placement
+power_server_package_load_w,349.0–349.5,348.969,349.549,8,"Server package (RAPL package 0, incl. HBM) under load, every point, HBM and DDR placement (W); limit 350 W"
+power_server_ddr_hbm_w,21.6–22.1,21.6097,22.081,4,Server DDR (RAPL DRAM 0) with the server's memory on HBM (W)
+power_server_ddr_ddr_w,49.0–63.8,48.9527,63.7981,4,Server DDR (RAPL DRAM 0) with the server's memory on DDR (W)
+power_node_load_w,669–737,668.571,737.366,8,"Node power under load (BMC Sys Power), every point (W)"
+power_core_ghz,2.02–2.51,2.02033,2.50941,8,"Effective core clock under load (telemetry), every point (GHz)"
+power_server_above_idle_w,214–257,214.389,256.761,8,"Server socket above idle (RAPL package 0 + DRAM 0 − idle), W, every point"
+power_node_above_idle_w,270–339,270.465,339.261,8,"Node above idle (BMC Sys − idle Sys), W, every point"
+power_ipmi_over_rapl_above_idle,1.26–1.37,1.25988,1.36763,8,Node above idle (BMC) ÷ server socket above idle (RAPL)
+power_j_per_token_server_hbm,0.49–16.86,0.491872,16.8602,4,"J per output token at the server socket (RAPL package 0 + DRAM 0), HBM placement, C = 1…128"
+power_j_per_token_server_ddr,0.65–29.48,0.649356,29.4769,4,"J per output token at the server socket, DDR placement, C = 1…128"
+power_j_per_token_server_above_idle_hbm,0.28–9.75,0.284672,9.75175,4,"J per output token, server socket above idle, HBM placement"
+power_j_per_token_node_hbm,0.91–30.37,0.910026,30.3703,4,"J per output token at the node (BMC Sys), HBM placement"
+power_hbm_over_ddr_throughput,1.23×–1.57×,1.23126,1.57026,4,"Output tok/s, server memory on HBM ÷ on DDR (flat mode, same cores), C = 1…128"
+power_hbm_over_ddr_server_j,0.57–0.76,0.571979,0.757477,4,"Server-socket J per output token, HBM ÷ DDR"
+power_ddr_saving_w,27–42,26.8717,42.1884,4,Server DDR power saved when the server's memory is on HBM (W)
+power_node_saving_w,39–64,39.0263,64.4677,4,Node power saved when the server's memory is on HBM (W)
+power_flat_hbm_over_cache_throughput,1.08–1.19,1.07834,1.19255,4,"vLLM BF16 decode output tok/s: flat mode, memory on HBM (hbm14) ÷ cache mode (main campaign), same C"

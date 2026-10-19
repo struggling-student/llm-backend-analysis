@@ -119,6 +119,16 @@
     "width": null,
     "height": 500
   },
+  "power_hbm_ddr_breakdown": {
+    "source_notebook": "notebooks/backend_selection/14_power_rapl_ipmi.ipynb",
+    "caption": "vLLM BF16 decode 128→512 on cresco8-hbm14 (flat mode), server memory on HBM (node 2) or DDR (node 0): left, steady-state power by domain (RAPL package 0 incl. HBM, RAPL DRAM 0, client socket, platform from the BMC) with the idle node level; right, J per output token at the server socket, above idle, and at the node.",
+    "files": [
+      "power_hbm_ddr_breakdown.svg",
+      "power_hbm_ddr_breakdown.png"
+    ],
+    "width": 1300,
+    "height": 560
+  },
   "ridge_ratio_vs_concurrency": {
     "source_notebook": "notebooks/backend_selection/10_roofline.ipynb",
     "caption": "Operational intensity divided by each configuration's ridge point vs concurrency (8B); above 1 = compute-bound side.",
