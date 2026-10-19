@@ -56,6 +56,7 @@ canonical `configuration_id`, `backend`, `precision`, `quantization` where appli
 | `pmu_overhead.csv` | PMU on/off run | `pmu_enabled`, `run_order`, throughput and latency |
 | `quality_check.csv` | (configuration, reference) | identical continuations, common-prefix words, AMX busy fraction |
 | `node_idle_power.csv` | idle-power sample | `host`, `slurm_job_id`, `t_s`, `energy_j` (cumulative job energy), `current_watts`, `cpu_busy_share` |
+| `power_phases.csv` | measured window of a power-meter campaign (idle window, or one repetition of an online point over its whole `rep` or `steady` window) | `phase`, `window`, `duration_s`, `rapl_pkg{0,1}_w` (RAPL package incl. on-package HBM), `rapl_ram{0,1}_w` (DDR), `rapl_unc0_mhz`, `ipmi_{sys,cpu,mem,psu}_w` (BMC), `slurm_node_w`, `output_tok_s` |
 | `hardware_ceilings.csv` | compute-ceiling record (hw-bench and GEMM job) | `kernel`, `dtype`, `binding`, `gemm_m/n/k`, `threads`, `gops`, `amx_confirmed`, `accepted` and `reject_reason` (hw-bench's acceptance rules) |
 
 Units: tokens/s, seconds (latency columns end in `_s`), GB/s (10⁹ B/s), GiB for working sets, fractions in

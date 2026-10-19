@@ -48,6 +48,9 @@ TABLES: dict[str, tuple[list[str], list[str]]] = {
     "node_idle_power": (["campaign", "campaign_role", "host", "slurm_job_id", "t_s", "energy_j", "current_watts",
                          "cpu_busy_share", "source"],
                         ["campaign", "host", "slurm_job_id", "t_s"]),
+    "power_phases": (["campaign", "campaign_role", "phase", "window", "duration_s", "rapl_pkg0_w", "rapl_ram0_w",
+                      "ipmi_sys_w", "source"],
+                     ["campaign", "slurm_job_id", "arm_dir", "concurrency", "phase", "window"]),
 }
 
 

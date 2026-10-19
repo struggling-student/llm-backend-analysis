@@ -119,6 +119,12 @@ def node_idle_power(campaign: str | None = None) -> pd.DataFrame:
     return (df[df["campaign"] == campaign] if campaign else df).reset_index(drop=True)
 
 
+def power_phases(campaign: str | None = None) -> pd.DataFrame:
+    """RAPL and BMC power per idle window and per repetition (rep and steady windows) of the power-meter campaigns."""
+    df = _read("power_phases")
+    return (df[df["campaign"] == campaign] if campaign else df).reset_index(drop=True)
+
+
 def tuning_runs(campaign: str | None = "tuning") -> pd.DataFrame:
     df = _read("tuning_runs")
     return _sorted(add_labels(df[df["campaign"] == campaign] if campaign else df), ["variant", "concurrency"])

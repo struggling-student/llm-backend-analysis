@@ -52,3 +52,14 @@ def test_node_power_spans_the_repetitions_and_needs_energy_readings():
               {"phase": "rep2", "t_start": 403, "t_end": 700, "energy_j_start": 181000, "energy_j_end": 361000}]
     assert node_power(phases) == (600.0, 600)
     assert all(map(math.isnan, node_power([{"phase": "rep1", "t_start": 0, "t_end": 1}])))
+
+
+def test_meter_means_keep_only_readings_inside_the_window():
+    from llm_backend_analysis.data.processing.power import meter_means
+    rapl = [{"t_mono": t, "interval_s": 1.0, "pkg_w": {"0": w, "1": 100.0}, "ram_w": {"0": 20.0, "1": 19.0},
+             "unc_mhz": {"0": 1600.0}, "pkg_tmp_c": {"0": 50.0}} for t, w in ((10.0, 200.0), (11.0, 300.0), (12.0, 999.0))]
+    ipmi = [{"t_mono_start": 9.0, "t_mono_end": 11.0, "watts": {"Sys Power": 500.0}},
+            {"t_mono_start": 9.5, "t_mono_end": 13.0, "watts": {"Sys Power": 900.0}}]
+    m = meter_means(rapl, ipmi, 9.0, 11.0)
+    assert m["rapl_pkg0_w"] == 250.0 and m["rapl_n"] == 2 and m["ipmi_sys_w"] == 500.0 and m["ipmi_n"] == 1
+    assert m["ipmi_cpu_w"] is None

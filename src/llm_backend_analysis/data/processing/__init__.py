@@ -15,7 +15,7 @@ from ... import paths
 from .hardware import process_hardware
 from .offline import process_offline
 from .online import aggregate_points, process_online, read_sweeps
-from .power import process_idle_power
+from .power import process_idle_power, process_power_phases
 from .stream import process_stream, read_node_checks, sustainable_lookup
 from .validation_runs import process_pmu_overhead, process_quality, process_tuning
 
@@ -32,6 +32,7 @@ OUTPUTS = {
     "quality_check": "quality_check.csv",
     "hardware_ceilings": "hardware_ceilings.csv",
     "node_idle_power": "node_idle_power.csv",
+    "power_phases": "power_phases.csv",
 }
 
 
@@ -52,6 +53,7 @@ def build_tables() -> dict[str, pd.DataFrame]:
         "quality_check": process_quality(),
         "hardware_ceilings": process_hardware(),
         "node_idle_power": process_idle_power(),
+        "power_phases": process_power_phases(),
     }
 
 
