@@ -384,3 +384,24 @@ workload = "ext256"
 source_id = "lenovo_lp2463"
 concurrency = [1, 2, 4, 8, 16, 32, 64, 128]
 time_limit = "04:00:00"                  # ~1.5 h projected
+
+# ---------------------------------------------------------------------------
+# Power on the flat-mode node cresco8-hbm14 (driver scripts/benchmark/power_flat.py; 2026-10-19). The admins granted
+# passwordless sudo there for turbostat (RAPL: package incl. on-package HBM, and DRAM) and `ipmitool sensor` (BMC: Sys,
+# CPU, Mem, PSU power). One job: idle baseline, vLLM BF16 decode with the server's memory on HBM (node 2), the same
+# with memory on DDR (node 0), closing idle. Same cores (socket 0), client on socket 1. Answers how the power splits
+# between package (HBM) and DRAM (DDR), compares RAPL with IPMI minus idle, and gives J/token on HBM vs DDR. Flat
+# mode is not the primary memory mode (cache), so the points are a sensitivity campaign.
+# ---------------------------------------------------------------------------
+[power_flat]
+campaign = "power-flat-20261019"
+node = "cresco8-hbm14"
+model = "llama31_8b"
+arm = "vllm-bf16"
+workload = "decode"
+concurrency = [1, 16, 64, 128]
+placements = [2, 0]                      # HBM node of socket 0, then DDR node of socket 0
+idle_start_s = 900
+idle_end_s = 300
+power_cpus = "55,111"                    # turbostat reads one CPU per package (55 = server front end, 111 = client socket)
+time_limit = "05:00:00"                  # ~2.7 h projected (DDR decode is slower than HBM)

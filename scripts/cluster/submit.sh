@@ -19,6 +19,7 @@
 #   scripts/cluster/submit.sh external-shapes [arm ...]     # notebook 13: published shapes (1000->1000, 256->256), one job per (arm, shape)
 #   scripts/cluster/submit.sh idle-power [seconds]          # notebook 13: idle node power (sleep after the node check), default 1200 s
 #   scripts/cluster/submit.sh job-energy <jobid ...>        # sacct ConsumedEnergy of finished jobs -> $BC_DATA/slurm_energy (login node, no job)
+#   scripts/cluster/submit.sh power-flat                    # RAPL + IPMI power on flat-mode cresco8-hbm14, server memory on HBM vs DDR
 #   scripts/cluster/submit.sh job <time> <name> <script.py> [args]   # anything else (path from repo root)
 #
 # Defaults: models=llama31_8b,llama32_1b  arms=vllm-bf16,llamacpp-bf16,llamacpp-q8_0
@@ -99,6 +100,11 @@ case "$what" in
       sacct -j "$j" --parsable2 --format=JobID,JobName,NodeList,State,Start,End,Elapsed,ElapsedRaw,ConsumedEnergy,ConsumedEnergyRaw \
         > "$BC_DATA/slurm_energy/$j.psv" && echo "$BC_DATA/slurm_energy/$j.psv" && cat "$BC_DATA/slurm_energy/$j.psv"
     done ;;
+  power-flat)   # pinned to the one node with sudo for turbostat/ipmitool; BC_ALLOW_FLAT admits its flat mode
+    read -r NODE TL < <("$BC_PYTHON" -c 'import sys; sys.path.insert(0, "scripts/benchmark"); import bclib; s = bclib.load_config()["power_flat"]; print(s["node"], s["time_limit"])')
+    echo "power flat $NODE: $(BC_ALLOW_FLAT=1 sbatch --parsable --partition="$PARTITION" --account="$SLURM_ACCOUNT" --time="$TL" \
+      --job-name=bc-power-flat --nodelist="$NODE" --output="$BC_DATA/slurm-logs/%x-%j.out" --export="ALL,BC_ROOT=$BC_ROOT,BC_ALLOW_FLAT=1" \
+      scripts/cluster/job.sbatch scripts/benchmark/power_flat.py)" ;;
   job) t=$1 n=$2; shift 2; sub "$t" "$n" "$@" ;;
-  *) sed -n '2,22p' "$0"; exit 1 ;;
+  *) sed -n '2,23p' "$0"; exit 1 ;;
 esac

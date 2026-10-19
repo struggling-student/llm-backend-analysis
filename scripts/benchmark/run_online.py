@@ -18,6 +18,8 @@ skip is recorded. Results are resumable: finished points are not rerun.
 `--mem-node N` moves the server's memory (numactl --membind) to node N while the cores stay on socket 0; with
 N = 1 every server memory access crosses the socket interconnect (memory-node sensitivity, scripts/benchmark/membind_sensitivity.py).
 `--print-commands` prints the server and client command lines of every requested point and exits.
+`--power` also records RAPL and BMC power for every point (scripts/benchmark/power_sampler.py) into
+telemetry/.../c<C>.power.jsonl; it needs passwordless sudo for turbostat and ipmitool (cresco8-hbm14 only).
 Every idle and repetition phase records the job's Slurm ConsumedEnergy (whole node, IPMI, 60 s updates) at its
 start and end (`energy_j_start`, `energy_j_end`; None outside Slurm or when the node reports none).
 """
@@ -161,6 +163,10 @@ def idle_core_busy(tel_path: Path, t0: float, t1: float, cpus: str) -> float | N
     return sum(vals) / len(vals) if vals else None
 
 
+def power_path(tel_path: Path) -> Path:
+    return tel_path.with_name(tel_path.stem + ".power.jsonl")
+
+
 def requests_for(cfg: dict[str, Any], c: int, override: int | None) -> tuple[int, int]:
     o = cfg["online"]
     waves = o["waves_small_c"] if c <= 16 else o["waves_large_c"]
@@ -195,7 +201,7 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
         "arm": args.arm, "backend": backend, "precision": arm["precision"], "weights": arm["weights"],
         "workload": wl_key, "isl": wl["isl"], "osl": wl["osl"], "concurrency": c,
         "num_requests_per_rep": n_req, "waves": waves, "repetitions": reps,
-        "memory_mode": topo["memory_mode"], "sockets_used": 1, "socket": topo["socket"],
+        "memory_mode": args.memory_mode or topo["memory_mode"], "sockets_used": 1, "socket": topo["socket"],
         "server_cpus": topo["server_cpus"], "compute_cpus": topo["compute_cpus"],
         "compute_threads": topo["compute_threads"], "numa_policy": f"membind={topo['server_mem_node']}",
         "server_mem_node_override": args.mem_node,
@@ -211,6 +217,7 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
     server = subprocess.Popen(cmd, env=env, stdout=open(point_dir / "server.log", "w"), stderr=subprocess.STDOUT,
                               start_new_session=True)
     tel = None
+    pw = None
     try:
         health = f"http://127.0.0.1:{port}/health"
         while not http_ok(health):
@@ -236,6 +243,12 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
             tel_cmd.append("--no-pmu")
         tel = subprocess.Popen(tel_cmd, stdout=open(point_dir / "telemetry.log", "w"), stderr=subprocess.STDOUT)
         meta["telemetry_command"] = tel_cmd
+        if args.power:   # RAPL (turbostat) and BMC (ipmitool) power, next to the telemetry file
+            pw_path = power_path(tel_path)
+            pw_cmd = ["taskset", "-c", topo["client_cpus"], os.environ.get("BC_PYTHON", sys.executable),
+                      str(SCRIPTS / "power_sampler.py"), "--out", str(pw_path), "--cpus", args.power_cpus]
+            pw = subprocess.Popen(pw_cmd, stdout=open(point_dir / "power.log", "w"), stderr=subprocess.STDOUT)
+            meta.update(power_command=pw_cmd, power_file=str(pw_path))
         phases: list[dict[str, Any]] = [{"phase": "idle", "t_start": time.monotonic(), "energy_j_start": bclib.slurm_energy_j()}]
         time.sleep(cfg["telemetry"]["idle_baseline_s"])
         phases[-1].update(t_end=time.monotonic(), energy_j_end=bclib.slurm_energy_j())
@@ -307,6 +320,12 @@ def run_point(cfg: dict[str, Any], args: argparse.Namespace, wl_key: str, c: int
         bclib.log(f"point failed: {exc}")
         return meta
     finally:
+        if pw is not None:
+            pw.send_signal(signal.SIGTERM)
+            try:
+                pw.wait(90)   # an ipmitool read in flight takes up to ~10 s
+            except subprocess.TimeoutExpired:
+                pw.kill()
         if tel is not None:
             tel.send_signal(signal.SIGTERM)
             try:
@@ -349,6 +368,10 @@ def main() -> int:
     p.add_argument("--ignore-budget", action="store_true")
     p.add_argument("--no-pmu", action="store_true", help="telemetry without core PMU counters (overhead check)")
     p.add_argument("--mem-node", type=int, help="override topology.server_mem_node (numactl --membind of the server)")
+    p.add_argument("--memory-mode", help="override topology.memory_mode in the metadata (e.g. flat on cresco8-hbm14)")
+    p.add_argument("--power", action="store_true", help="also record RAPL and BMC power (scripts/benchmark/power_sampler.py; "
+                   "needs passwordless sudo for turbostat and ipmitool)")
+    p.add_argument("--power-cpus", default="55,111", help="one CPU per package for turbostat")
     p.add_argument("--print-commands", action="store_true",
                    help="print the server and client commands of each point and exit (nothing is started or staged)")
     p.add_argument("--config", default=str(bclib.CONFIG))
@@ -387,8 +410,9 @@ def main() -> int:
             if point_dir.exists():
                 stamp = time.strftime("%Y%m%dT%H%M%S")
                 point_dir.rename(point_dir.with_name(point_dir.name + f".attempt-{stamp}"))
-                if tel_path.exists():
-                    tel_path.rename(tel_path.with_name(tel_path.name + f".attempt-{stamp}"))
+                for f in (tel_path, power_path(tel_path)):
+                    if f.exists():
+                        f.rename(f.with_name(f.name + f".attempt-{stamp}"))
             meta = run_point(cfg, args, args.workload, c, settings, point_dir, tel_path, prev)
         sweep_log.append({"concurrency": c, "status": meta.get("status"),
                           "steady_total_tok_s_median": meta.get("steady_total_tok_s_median")})

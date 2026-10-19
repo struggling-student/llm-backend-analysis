@@ -14,7 +14,7 @@
 #               energy); never part of the primary analysis
 #
 # prepared = true marks a campaign that is declared before its raw data exist (validation then does not demand data,
-# and fails once data exist while the flag is still set). No campaign carries it at the moment.
+# and fails once data exist while the flag is still set). Carried by the power-flat-20261019 campaigns until their data are synced.
 #
 # Processing reads every campaign (nothing is silently dropped) and stamps each row
 # with its campaign and role; the notebooks select campaigns explicitly by role.
@@ -137,3 +137,13 @@ description = "INT8 quality/AMX sanity check: 16 prompts x 64 greedy tokens for 
 [power.idle-20261018]
 role = "baseline"
 description = "Idle node power for notebook 13 (job 5406101, cresco8-hbm01, 2026-10-18, `submit.sh idle-power`): exclusive cache-mode node, nothing running for 1200 s after the job.sbatch node check; sstat ConsumedEnergyRaw, scontrol CurrentWatts and the all-CPU busy share every 30 s (Slurm IPMI DCMI sensor, whole node, 60 s updates). Splits the node energy of the external-shapes points into idle and load parts."
+
+[online.power-flat-20261019]
+role = "sensitivity"
+prepared = true
+description = "Power on the flat-mode node cresco8-hbm14 (configs/experiment.toml [power_flat], scripts/benchmark/power_flat.py): vLLM BF16 decode 128->512 at C = 1, 16, 64, 128 with the server's memory on HBM (node 2, arm directory vllm-bf16__mem2) and on DDR (node 0, vllm-bf16__mem0), same cores; every point records RAPL (turbostat: package incl. HBM, DRAM) and BMC power (ipmitool sensor) in telemetry/.../c<C>.power.jsonl. Flat mode, so not part of the primary analysis."
+
+[power.power-flat-20261019]
+role = "baseline"
+prepared = true
+description = "Idle meters of the power-flat job on cresco8-hbm14 (flat mode): RAPL (turbostat) and BMC (ipmitool sensor) for 900 s before and 300 s after the HBM/DDR runs (meters-idle-{start,end}-<host>-<job>.jsonl); run summary with numastat checks in run-<host>-<job>.json."

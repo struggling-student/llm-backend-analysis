@@ -18,11 +18,18 @@ export PYTHONUNBUFFERED=1
 
 echo "job ${SLURM_JOB_ID} on $(hostname) at $(date -Is): $*"
 
-# 1. The experiment is defined for cache mode: two NUMA nodes, both with CPUs.
+# 1. The experiment is defined for cache mode: two NUMA nodes, both with CPUs. BC_ALLOW_FLAT=1 admits a flat-mode
+#    node (HBM as memory-only NUMA nodes) for runs that ask for it explicitly (power-flat on cresco8-hbm14).
+BC_MEMORY_MODE=cache
 if numactl -H | grep -qE '^node [0-9]+ cpus:\s*$'; then
-  echo "ERROR: memory-only NUMA nodes present -> flat mode node; this experiment needs cache mode" >&2
-  exit 3
+  BC_MEMORY_MODE=flat
+  if [[ "${BC_ALLOW_FLAT:-0}" != 1 ]]; then
+    echo "ERROR: memory-only NUMA nodes present -> flat mode node; this experiment needs cache mode" >&2
+    exit 3
+  fi
+  echo "flat mode node admitted (BC_ALLOW_FLAT=1)"
 fi
+export BC_MEMORY_MODE
 
 # 2. Exclusive node: remove servers a previous job on this node may have left behind.
 #    vLLM renames its worker processes (VLLM::Worker, VLLM::EngineCore), so match those too.
@@ -53,8 +60,9 @@ PY
 )
 echo "node check: STREAM triad 8 GiB, 55 threads, socket 0: ${NODE_GBS} GB/s"
 # Healthy cache-mode nodes give ~495-510 GB/s. A clearly lower value means the
-# server cores or memory are not in the state the experiment assumes.
-if [[ "${BC_SKIP_NODE_CHECK:-0}" != 1 ]] && awk "BEGIN{exit !(${NODE_GBS} < 450)}"; then
+# server cores or memory are not in the state the experiment assumes. In flat mode node 0 is DDR only, so the
+# value is recorded but the cache-mode threshold does not apply.
+if [[ "${BC_SKIP_NODE_CHECK:-0}" != 1 && "$BC_MEMORY_MODE" == cache ]] && awk "BEGIN{exit !(${NODE_GBS} < 450)}"; then
   echo "ERROR: node check ${NODE_GBS} GB/s < 450 GB/s; refusing to run on $(hostname -s)" >&2
   exit 4
 fi
