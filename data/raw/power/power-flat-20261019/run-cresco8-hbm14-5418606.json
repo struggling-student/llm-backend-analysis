@@ -1,0 +1,167 @@
+{
+  "timestamp": "2026-10-19T12:42:21+0200",
+  "hostname": "cresco8-hbm14.portici.enea.it",
+  "slurm_job_id": "5418606",
+  "kernel": "5.14.0-427.13.1.el9_4.x86_64",
+  "python": "3.12.11",
+  "numa_nodes": "available: 4 nodes (0-3)",
+  "perf_event_paranoid": "2",
+  "cpu_model": "Intel(R) Xeon(R) CPU Max 9480",
+  "campaign": "power-flat-20261019",
+  "config": {
+    "campaign": "power-flat-20261019",
+    "node": "cresco8-hbm14",
+    "model": "llama31_8b",
+    "arm": "vllm-bf16",
+    "workload": "decode",
+    "concurrency": [
+      1,
+      16,
+      64,
+      128
+    ],
+    "placements": [
+      2,
+      0
+    ],
+    "idle_start_s": 900,
+    "idle_end_s": 300,
+    "power_cpus": "55,111",
+    "time_limit": "05:00:00"
+  },
+  "preflight_problems": [],
+  "phases": [
+    {
+      "phase": "idle-start",
+      "t_start": 607476.525997886,
+      "t_end": 608387.288063635,
+      "energy_j_start": 34173.0,
+      "energy_j_end": 402723.0,
+      "sampler_rc": 0,
+      "file": "/lpor1/store_0/usr/crainic/projects/backend-comparison/raw_results/power/power-flat-20261019/meters-idle-start-cresco8-hbm14-5418606.jsonl"
+    },
+    {
+      "phase": "idle-end",
+      "t_start": 615671.253511983,
+      "t_end": 615981.652347843,
+      "energy_j_start": 5047220.0,
+      "energy_j_end": 5160597.0,
+      "sampler_rc": 0,
+      "file": "/lpor1/store_0/usr/crainic/projects/backend-comparison/raw_results/power/power-flat-20261019/meters-idle-end-cresco8-hbm14-5418606.jsonl"
+    }
+  ],
+  "runs": [
+    {
+      "node": 2,
+      "tag": "mem2",
+      "rc": 0,
+      "t_start": 608387.383987256,
+      "t_end": 611608.952907421,
+      "command": [
+        "/lpor1/store_0/usr/crainic/runtimes/venvs/llm-bench/bin/python",
+        "/afs/enea.it/por/user/crainic/dev/llm-backend-analysis/scripts/benchmark/run_online.py",
+        "--model",
+        "llama31_8b",
+        "--arm",
+        "vllm-bf16",
+        "--workload",
+        "decode",
+        "--campaign",
+        "power-flat-20261019",
+        "--concurrency",
+        "1,16,64,128",
+        "--mem-node",
+        "2",
+        "--tag",
+        "mem2",
+        "--power",
+        "--power-cpus",
+        "55,111",
+        "--memory-mode",
+        "flat"
+      ],
+      "points": [
+        {
+          "concurrency": 1,
+          "status": "ok",
+          "share_on_node": 0.9990833809457761,
+          "ok": true
+        },
+        {
+          "concurrency": 16,
+          "status": "ok",
+          "share_on_node": 0.9991403277802755,
+          "ok": true
+        },
+        {
+          "concurrency": 64,
+          "status": "ok",
+          "share_on_node": 0.9992775081700775,
+          "ok": true
+        },
+        {
+          "concurrency": 128,
+          "status": "ok",
+          "share_on_node": 0.9994245505588145,
+          "ok": true
+        }
+      ]
+    },
+    {
+      "node": 0,
+      "tag": "mem0",
+      "rc": 0,
+      "t_start": 611608.956603732,
+      "t_end": 615671.235056443,
+      "command": [
+        "/lpor1/store_0/usr/crainic/runtimes/venvs/llm-bench/bin/python",
+        "/afs/enea.it/por/user/crainic/dev/llm-backend-analysis/scripts/benchmark/run_online.py",
+        "--model",
+        "llama31_8b",
+        "--arm",
+        "vllm-bf16",
+        "--workload",
+        "decode",
+        "--campaign",
+        "power-flat-20261019",
+        "--concurrency",
+        "1,16,64,128",
+        "--mem-node",
+        "0",
+        "--tag",
+        "mem0",
+        "--power",
+        "--power-cpus",
+        "55,111",
+        "--memory-mode",
+        "flat"
+      ],
+      "points": [
+        {
+          "concurrency": 1,
+          "status": "ok",
+          "share_on_node": 1.0,
+          "ok": true
+        },
+        {
+          "concurrency": 16,
+          "status": "ok",
+          "share_on_node": 1.0,
+          "ok": true
+        },
+        {
+          "concurrency": 64,
+          "status": "ok",
+          "share_on_node": 1.0,
+          "ok": true
+        },
+        {
+          "concurrency": 128,
+          "status": "ok",
+          "share_on_node": 1.0,
+          "ok": true
+        }
+      ]
+    }
+  ]
+}
